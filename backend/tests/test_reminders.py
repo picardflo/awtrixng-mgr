@@ -152,6 +152,9 @@ async def test_the_icon_is_installed_before_the_alert_is_sent():
     order: list[str] = []
 
     class Clock:
+        async def set_power(self, on):
+            order.append("power")
+
         async def ensure_icon(self, icon):
             order.append(f"install:{icon}")
             return True
@@ -162,7 +165,7 @@ async def test_the_icon_is_installed_before_the_alert_is_sent():
     await pass_.send(
         a_reminder(icon="44689"), {1: Clock()}, local(2026, 10, 5, 7, 30)
     )
-    assert order == ["install:44689", "notify"]
+    assert order == ["install:44689", "power", "notify"]
 
 
 @pytest.mark.asyncio
@@ -171,6 +174,9 @@ async def test_an_icon_that_cannot_be_installed_does_not_drop_the_alert():
     sent: list[str] = []
 
     class Clock:
+        async def set_power(self, on):
+            return None
+
         async def ensure_icon(self, icon):
             from app.core.errors import AwtrixNgError
 
@@ -189,6 +195,9 @@ async def test_an_icon_that_cannot_be_installed_does_not_drop_the_alert():
 @pytest.mark.asyncio
 async def test_no_icon_means_no_install_call():
     class Clock:
+        async def set_power(self, on):
+            return None
+
         async def ensure_icon(self, icon):
             raise AssertionError("nothing to install")
 
@@ -204,6 +213,9 @@ async def test_one_unreachable_display_does_not_stop_the_others():
     """A reminder on two clocks must still reach the one that answers."""
 
     class Ok:
+        async def set_power(self, on):
+            return None
+
         async def ensure_icon(self, icon):
             return True
 
@@ -211,6 +223,9 @@ async def test_one_unreachable_display_does_not_stop_the_others():
             return None
 
     class Broken:
+        async def set_power(self, on):
+            return None
+
         async def ensure_icon(self, icon):
             return True
 
@@ -603,3 +618,54 @@ class TestThePreviewAgrees:
         assert pass_.payload_for(reminder, today).to_json()["text"] == (
             f"PRET {case[language]}"
         )
+
+
+@pytest.mark.asyncio
+async def test_the_panel_is_lit_before_the_alert():
+    """Because the firmware will not do it.
+
+    Notifications carry `wakeup`, and measured on NG 1.1.2 that key is
+    accepted and does nothing: with the panel off the framebuffer is composed
+    — 36 pixels lit — and `power` stays false. The alert is heard and never
+    seen.
+
+    Florian chose, on 5 October 2026, to switch the panel on and leave it on:
+    restoring the previous state would hide the alert at the moment it
+    matters, and a 06:30 alarm that fades after ten seconds wakes nobody.
+    """
+    lit: list[bool] = []
+
+    class Clock:
+        async def set_power(self, on):
+            lit.append(on)
+
+        async def ensure_icon(self, icon):
+            return True
+
+        async def notify(self, payload):
+            return None
+
+    await pass_.send(a_reminder(), {1: Clock()}, local(2026, 10, 5, 7, 30))
+    assert lit == [True]
+
+
+@pytest.mark.asyncio
+async def test_a_panel_that_refuses_to_light_does_not_drop_the_alert():
+    """Same rule as the icon: a reminder seen dimly beats no reminder."""
+    sent: list[str] = []
+
+    class Clock:
+        async def set_power(self, on):
+            from app.core.errors import AwtrixNgError
+
+            raise AwtrixNgError("busy", code="device.unreachable")
+
+        async def ensure_icon(self, icon):
+            return True
+
+        async def notify(self, payload):
+            sent.append("notify")
+
+    fired = await pass_.send(a_reminder(), {1: Clock()}, local(2026, 10, 5, 7, 30))
+    assert sent == ["notify"]
+    assert fired.sent_to == [1]

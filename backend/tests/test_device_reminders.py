@@ -163,3 +163,30 @@ async def test_wakeup_does_not_light_a_panel_that_is_off(client):
         assert any(await client.get_screen())
     finally:
         await client.set_power(was_on)
+
+
+async def test_the_reminder_pass_lights_the_panel_itself(client):
+    """End to end, on hardware: panel off, reminder sent, panel on.
+
+    This is the whole point of the measurement above. `wakeup` is inert, so
+    the application switches the panel on before notifying — Florian's call,
+    5 October 2026 — and leaves it on, because restoring the previous state
+    would hide the alert at the moment it matters.
+    """
+    was_on = (await client.get_display())["power"]
+    try:
+        await client.set_power(False)
+        assert (await client.get_display())["power"] is False
+
+        from datetime import datetime
+
+        fired = await reminder_pass.send(a_reminder(), {1: client}, datetime.now())
+        await asyncio.sleep(SETTLE_SECONDS)
+
+        assert fired.sent_to == [1]
+        assert (await client.get_display())["power"] is True, (
+            "the pass must light the panel: the firmware does not"
+        )
+        assert any(await client.get_screen())
+    finally:
+        await client.set_power(was_on)

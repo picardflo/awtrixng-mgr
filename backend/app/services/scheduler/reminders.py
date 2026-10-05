@@ -239,6 +239,33 @@ async def send(
                         exc.message,
                     )
 
+            # Light the panel, because the firmware will not.
+            #
+            # Notifications carry `wakeup`, and measured on NG 1.1.2 that key
+            # is accepted and does nothing: with the panel off the firmware
+            # composes the frame — 36 pixels lit — and leaves `power` false.
+            # The alert is heard and never seen. Brightness at zero behaves the
+            # same, with or without the key.
+            #
+            # So the application does it. Florian's call, 5 October 2026:
+            # switch on, and *stay* on. Restoring the previous state would hide
+            # the alert at the moment it matters — a 06:30 alarm that fades
+            # after ten seconds wakes nobody.
+            #
+            # Written unconditionally rather than read-then-write: one request
+            # instead of two, and it is idempotent (measured: `power: true` on
+            # a lit panel answers ok and changes nothing).
+            try:
+                await client.set_power(True)
+            except AwtrixNgError as exc:
+                # Same rule as the icon: never drop the alert for this.
+                log.warning(
+                    "reminder %s: could not light device %s (%s)",
+                    reminder.name,
+                    device_id,
+                    exc.message,
+                )
+
             await client.notify(payload)
             sent.append(device_id)
         except AwtrixNgError as exc:

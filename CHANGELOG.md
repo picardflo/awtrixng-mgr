@@ -5,6 +5,33 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.5.0]
+
+**Un rappel allume la matrice avant de sonner.** Parce que le firmware ne le
+fait pas : `wakeup` est accepté et inerte, mesuré en 0.4.1.
+
+### Changé
+- Avant chaque notification de rappel, l'application écrit `power: true` sur
+  l'afficheur, **et le laisse allumé**. Décision de Florian le 5 octobre 2026,
+  entre quatre options : remettre l'afficheur comme il était cacherait
+  l'alerte au moment précis où elle compte — un réveil de 6 h 30 qui s'efface
+  au bout de dix secondes ne réveille personne.
+- Écrit sans lire d'abord : une requête au lieu de deux, et c'est idempotent —
+  mesuré, `power: true` sur un panneau allumé répond `ok` et ne change rien.
+- **Un échec n'abandonne jamais l'alerte.** Même règle que l'icône : un rappel
+  vu faiblement vaut mieux qu'un rappel pas vu du tout.
+
+### Vérifié de bout en bout sur matériel
+Panneau coupé, rappel envoyé par le planificateur, panneau rallumé et texte à
+l'écran. Plus quatre tests unitaires : la matrice est allumée **avant** la
+notification, l'ordre est pinned, et un afficheur qui refuse de s'allumer
+reçoit quand même son alerte.
+
+### Ce que ça change pour l'exploitant
+Une horloge éteinte peut désormais **se rallumer d'elle-même** quand un rappel
+tombe, y compris la nuit. C'est voulu. Le mode chambre baisse la luminosité,
+il ne coupe pas le panneau — les deux ne se gênent donc pas.
+
 ## [0.4.1]
 
 Les rappels et le buzzer, éprouvés contre une horloge réelle pour la première
