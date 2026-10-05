@@ -365,6 +365,10 @@ export interface DeviceSettings {
   date_year: "none" | "twoDigit" | "fourDigit";
   date_show_weekday: boolean;
   date_month_names: boolean;
+  /** The row of marks along the bottom of the Time app. Nested under
+   *  `weekdayBar` in the firmware. */
+  weekday_bar: boolean;
+  week_starts_monday: boolean;
 }
 
 export interface DeviceSettingsResult {

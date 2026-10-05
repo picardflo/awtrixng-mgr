@@ -112,6 +112,14 @@ class DeviceSettings(BaseModel):
     date_show_weekday: bool = False
     date_month_names: bool = False
 
+    # -- The weekday bar ------------------------------------------------------
+    #
+    # The row of marks along the bottom of the Time app. Nested under
+    # `weekdayBar` in the firmware, with its own colours — only the two that
+    # change what is shown are offered here.
+    weekday_bar: bool = True
+    week_starts_monday: bool = True
+
 
 #: Our name -> the firmware's. One table, read both ways, so a key cannot be
 #: spelled one way when reading and another when writing.
@@ -180,6 +188,12 @@ def read(raw: dict[str, Any], system: dict[str, Any] | None = None) -> DeviceSet
     scroll = raw.get("scroll")
     if isinstance(scroll, dict) and "speed" in scroll:
         values["scroll_speed"] = scroll["speed"]
+    bar = raw.get("weekdayBar")
+    if isinstance(bar, dict):
+        if "show" in bar:
+            values["weekday_bar"] = bar["show"]
+        if "startOnMonday" in bar:
+            values["week_starts_monday"] = bar["startOnMonday"]
 
     try:
         return DeviceSettings(**values)
@@ -212,6 +226,16 @@ def changes(current: DeviceSettings, wanted: DeviceSettings) -> dict[str, Any]:
     if current.scroll_speed != wanted.scroll_speed:
         # Nested, and the firmware refuses an unknown sub-key by name.
         diff["scroll"] = {"speed": wanted.scroll_speed}
+
+    bar: dict[str, Any] = {}
+    if current.weekday_bar != wanted.weekday_bar:
+        bar["show"] = wanted.weekday_bar
+    if current.week_starts_monday != wanted.week_starts_monday:
+        bar["startOnMonday"] = wanted.week_starts_monday
+    if bar:
+        # Partial inside the object too: the firmware keeps the four colours
+        # it is not sent, and sending them would freeze someone's choice.
+        diff["weekdayBar"] = bar
     return diff
 
 

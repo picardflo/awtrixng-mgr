@@ -300,6 +300,12 @@ export function DeviceSettingsPanel({ deviceId }: { deviceId: number }) {
             </select>
           </Field>
         </div>
+        {/* Each label's key is the field's own name in camelCase, and a test
+            checks it. Twice now a toggle has carried a label describing some
+            other setting — "Semaine dès lundi" switching the weekday on —
+            which compiles, reads correctly, and does the wrong thing. Deriving
+            the key from the field is what makes that a failing test rather
+            than something to spot by eye. */}
         <div className="flex flex-wrap gap-x-4 gap-y-1.5">
           <Toggle
             label={t("device.settings.uppercase")}
@@ -312,14 +318,24 @@ export function DeviceSettingsPanel({ deviceId }: { deviceId: number }) {
             onChange={(celsius) => patch({ celsius })}
           />
           <Toggle
-            label={t("device.settings.mondayFirst")}
+            label={t("device.settings.dateShowWeekday")}
             checked={draft.date_show_weekday}
             onChange={(date_show_weekday) => patch({ date_show_weekday })}
           />
           <Toggle
-            label={t("device.settings.showWeekday")}
+            label={t("device.settings.dateMonthNames")}
             checked={draft.date_month_names}
             onChange={(date_month_names) => patch({ date_month_names })}
+          />
+          <Toggle
+            label={t("device.settings.weekdayBar")}
+            checked={draft.weekday_bar}
+            onChange={(weekday_bar) => patch({ weekday_bar })}
+          />
+          <Toggle
+            label={t("device.settings.weekStartsMonday")}
+            checked={draft.week_starts_monday}
+            onChange={(week_starts_monday) => patch({ week_starts_monday })}
           />
         </div>
       </section>

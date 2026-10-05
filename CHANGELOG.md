@@ -5,6 +5,41 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.6.1]
+
+Trois textes du panneau des réglages **mentaient**, vus sur la capture de
+Florian. Deux d'entre eux disaient faire une chose et en faisaient une autre.
+
+### Corrigé
+- **« Semaine dès lundi » allumait l'affichage du jour**, et **« Afficher le
+  jour » allumait les noms de mois**. Les deux cases compilaient, se lisaient
+  parfaitement, et agissaient ailleurs. C'est la forme exacte du défaut
+  `{{ quality_code }}` du projet précédent, qui avait coûté une soirée.
+- L'aide du volume disait encore « De 0 à 30, et non un pourcentage » sous un
+  curseur gradué en pourcents. Sur NG, c'est bien 0 à 100.
+
+### Ajouté
+- **La barre des jours** et **Semaine dès lundi**, qui existent dans NG sous
+  `weekdayBar` et que personne n'exposait. L'écriture est partielle à
+  l'intérieur de l'objet aussi : les quatre couleurs qu'on n'envoie pas sont
+  conservées, plutôt que figées sur notre avis.
+- **Un test qui rend ce défaut détectable.** Rien ne peut vérifier qu'une
+  traduction décrit bien un champ ; ce qui se vérifie, c'est que **la clé qui
+  la nomme est le nom du champ**. Le panneau dérive donc l'une de l'autre, et
+  le test refuse un interrupteur étiqueté d'après un autre réglage. Éprouvé en
+  réintroduisant la panne — il la nomme :
+
+  ```
+  a toggle is labelled after another setting:
+    weekStartsMonday sets date_show_weekday (expected device.settings.dateShowWeekday)
+  ```
+
+### Au passage
+`week_starts_monday` avait été listé comme un reste d'AWTRIX 3. Il n'en est
+pas un : NG le garde sous `weekdayBar.startOnMonday`. **Un nom qui survit à
+une migration n'est pas la même chose qu'un réglage qui y survit**, et la liste
+des noms morts le dit maintenant.
+
 ## [0.6.0]
 
 **Le mode chambre est scindé.** NG a rendu la moitié « luminosité » inutile ;

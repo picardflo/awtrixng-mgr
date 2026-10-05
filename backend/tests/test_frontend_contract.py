@@ -172,7 +172,12 @@ def test_the_settings_panel_matches_the_schema():
 @pytest.mark.parametrize(
     "dead",
     # AWTRIX 3's names. Each one compiled and would have done nothing.
-    ["volume", "time_format", "date_format", "week_starts_monday", "show_weekday"],
+    #
+    # `week_starts_monday` is **not** here, and was briefly: it looks like one
+    # of these and is not. NG keeps it as `weekdayBar.startOnMonday`, nested
+    # with the bar's own colours. A name surviving a migration is not the same
+    # thing as a setting surviving it.
+    ["volume", "time_format", "date_format", "show_weekday", "transition_effect_code"],
 )
 def test_no_awtrix3_setting_survives_in_the_panel(dead: str):
     assert dead not in declared_in_typescript("DeviceSettings")
@@ -186,3 +191,58 @@ def test_the_quiet_hours_panel_matches_its_schema():
     declared = declared_in_typescript("QuietHours")
     assert declared == set(QuietHours.model_fields)
     assert "brightness" not in declared
+
+
+# -- A label that describes some other setting --------------------------------
+#
+# Twice now, and neither time did anything complain. A toggle read
+# "Semaine dès lundi" and switched the weekday display on; another read
+# "Afficher le jour" and switched the month names. Both compiled, both read
+# perfectly to someone opening the page, and both did the wrong thing — the
+# same shape of defect as `{{ quality_code }}` on the previous project, which
+# cost an evening.
+#
+# Nothing can check that a *translation* describes a field. What can be checked
+# is that the key naming it is the field's own name, which is why the panel
+# derives one from the other.
+
+PANEL = (
+    Path(__file__).resolve().parents[2]
+    / "frontend" / "src" / "features" / "devices" / "DeviceSettings.tsx"
+)
+
+
+def camel(field: str) -> str:
+    head, *rest = field.split("_")
+    return head + "".join(word.capitalize() for word in rest)
+
+
+def toggles() -> list[tuple[str, str]]:
+    """(translation key, field) for every Toggle in the settings panel."""
+    source = PANEL.read_text(encoding="utf-8")
+    return re.findall(
+        r'label=\{t\("device\.settings\.(\w+)"\)\}\s*\n\s*checked=\{draft\.(\w+)\}',
+        source,
+    )
+
+
+def test_the_panel_has_toggles_to_check():
+    """Guards the regex above: a refactor that changes the shape would make
+    every assertion below vacuously true."""
+    assert len(toggles()) >= 6
+
+
+def test_every_toggle_is_labelled_after_the_field_it_sets():
+    wrong = [
+        f"{key} sets {field} (expected device.settings.{camel(field)})"
+        for key, field in toggles()
+        if key != camel(field)
+    ]
+    assert not wrong, "a toggle is labelled after another setting: " + "; ".join(wrong)
+
+
+def test_every_toggle_sets_a_field_that_exists():
+    from app.schemas.device_settings import DeviceSettings
+
+    unknown = {field for _, field in toggles()} - set(DeviceSettings.model_fields)
+    assert not unknown, f"the panel toggles settings that do not exist: {sorted(unknown)}"
