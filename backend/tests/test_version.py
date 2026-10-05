@@ -5,6 +5,7 @@ package declares another, and the mismatch is found months later while trying
 to work out which build is actually deployed.
 """
 
+import json
 import re
 import tomllib
 from pathlib import Path
@@ -23,6 +24,11 @@ def test_the_version_looks_like_a_version():
 def test_the_backend_package_agrees():
     data = tomllib.loads((ROOT / "backend" / "pyproject.toml").read_text())
     assert data["project"]["version"] == __version__
+
+
+def test_the_frontend_package_agrees():
+    data = json.loads((ROOT / "frontend" / "package.json").read_text())
+    assert data["version"] == __version__
 
 
 def test_the_changelog_mentions_it():

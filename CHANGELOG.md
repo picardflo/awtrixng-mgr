@@ -5,6 +5,79 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.3.0]
+
+**L'application entière, portée sur AWTRIX NG.** Backend, planificateur,
+connecteurs, API REST et interface React viennent d'awtrixhub ; tout ce qui
+parle au firmware a été réécrit, et **chaque option a été essayée sur une
+horloge réelle** plutôt que traduite sur le papier.
+
+### Ajouté
+- Le modèle de données, les migrations, le planificateur, les six connecteurs
+  (météo, qualité de l'air, UV, pollens, carburants, vacances scolaires,
+  lune), l'API REST, l'interface React et ses tests.
+- **`overlay`** dans les options d'affichage — pluie, neige, bruine, orage,
+  tonnerre, givre, dessinés par le firmware par-dessus le texte. Propre à NG.
+- **L'interrupteur de matrice** : `GET /api/v1/display` et
+  `PATCH /api/v1/display {"power": …}`, exposés par `/api/devices/{id}/power`.
+  AWTRIX 3 n'avait que `/api/sleep`, une veille minutée.
+- `GET /api/devices/{id}/apps` remplace `/loop` et donne l'**origine** de
+  chaque app.
+- **964 tests** : 871 backend, 93 frontend, plus 22 qui tournent contre une
+  horloge réelle — dont un par type de widget.
+
+### Retiré, parce que le matériel dit que ça ne fait rien
+- **`center`** — NG n'a aucune clé de centrage. Mesuré : il centre **lui-même**
+  tout texte qui tient. « A » tombe colonnes 14-16, « ABC » colonnes 10-20,
+  exactement où un centrage les mettrait. L'aperçu suit désormais le firmware
+  au lieu d'offrir un interrupteur sans effet.
+- **`rainbow`** — `palette` colore les *effets*, pas le texte. Poussé
+  `{"text":"ARC","palette":"Rainbow"}`, relu l'écran : une seule couleur.
+- **`lifetimeMode`** — n'existe plus. Le marquage « périmé » d'AWTRIX 3
+  disparaît : une app qui cesse d'être rafraîchie s'efface.
+- **Le panneau des apps natives** — NG n'offre aucun moyen de les désactiver.
+  `DELETE /api/v1/apps/Battery` répond `{"ok":true}` et ne fait rien, et aucun
+  des 42 réglages ne les gouverne. Un panneau qui ne peut rien est pire
+  qu'absent.
+- Les treize migrations héritées, remplacées par une seule. L'une d'elles
+  ajoutait précisément `center` et `rainbow`.
+
+### Changé
+- `no_scroll` devient **`scroll_mode`** (`wrap`, `bounce`, `static`, `loop`),
+  `push_icon` devient **`icon_mode`** (`fixed`, `pushOnce`, `push`), et
+  `text_case` passe d'un entier à `inherit` / `upper` / `asTyped`. Les trois
+  listes viennent du 422 de l'appareil, pas de la documentation.
+- Les formats de date et d'heure, qui étaient des chaînes `strftime`, sont
+  devenus des choix structurés — `dateOrder`, `dateSeparator`, `dateYearMode`,
+  `timeSeparatorMode`.
+- Le mode chambre écrit `brightness`/`autoBrightness`/`soundEnabled`. **ADR-022
+  rejugée et maintenue** : sondé `/schedules`, `/automations`, `/timers`,
+  `/alarms`, `/cron`, `/dnd` — tous 404, le firmware n'a aucune planification.
+- `DisplayOptions` refuse désormais une clé inconnue. Un `center=True` oublié
+  dans le connecteur scolaire avait survécu au portage parce que Pydantic les
+  ignore en silence — le défaut même qu'on reprochait à AWTRIX 3.
+- Le gabarit par défaut du widget scolaire passe de `{{ summary }}` à
+  `Sem. {{ week }}` : « Semaine A » fait 35 colonnes là où l'icône en laisse
+  23, donc il défilait. Un coup d'œil à une horloge ne devrait pas attendre
+  que le texte revienne.
+- La barre de séries n'est plus coupée à 11 ou 16 valeurs : mesuré, NG en
+  dessine les 15 dernières et ignore le reste — la même queue que le découpage
+  gardait.
+
+### Mesuré, et qui reste à surveiller
+- **`PUT /api/v1/apps/order` est cassée** en 1.1.2 : seule méthode autorisée,
+  et *tout* corps JSON — `{}` compris — répond `invalidJson`. Donc pas de
+  réordonnancement natif ; on garde la méthode d'awtrixhub, supprimer puis
+  republier dans l'ordre.
+- **Panneau éteint, le framebuffer continue d'être dessiné.** Un aperçu bâti
+  sur `/display/screen` montrerait l'heure sur une horloge noire. Se fier à
+  `power`.
+- **`PATCH /api/v1/display` ne valide presque rien** : `{"zz":"ZZZ"}` répond
+  `{"ok":true}`. Comme `progress` et `barChart`, l'appareil ne rattrape pas.
+- Pousser une app nommée comme une native la **masque** — `Battery` devient
+  `origin: "pushed"`. Nos noms sont préfixés, donc hors d'atteinte, mais c'est
+  une raison de plus de l'être.
+
 ## [0.2.0]
 
 Une **ligne de commande**, parce que 0.1.0 n'était testable que par `pytest` ou

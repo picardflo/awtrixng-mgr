@@ -6,7 +6,7 @@ throughout: the firmware gains fields between releases, and a reader that
 breaks on an unknown one would turn a firmware update into an outage.
 """
 
-from typing import Any
+from typing import Any, ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -47,7 +47,7 @@ class Capabilities(BaseModel):
     """GET /api/v1/capabilities — what this firmware can actually do.
 
     This route is the reason the project no longer hard-codes effect and
-    transition lists the way awtrixhub had to. A display that gains an effect
+    transition lists the way awtrixng-mgr had to. A display that gains an effect
     in a firmware update offers it without a release here.
     """
 
@@ -71,7 +71,7 @@ class AppEntry(BaseModel):
     `origin` is what makes reconciliation safe: it separates the firmware's
     own apps ("builtin") from pushed ones, so a sweep of orphans cannot touch
     Time or Battery. AWTRIX 3's /api/loop gave names and positions only, which
-    is how awtrixhub ended up needing a name prefix to tell its own apps apart.
+    is how awtrixng-mgr ended up needing a name prefix to tell its own apps apart.
     """
 
     model_config = ConfigDict(extra="allow", populate_by_name=True)
@@ -83,9 +83,26 @@ class AppEntry(BaseModel):
     present: bool | None = None
     origin: str | None = None
 
+    #: The only origin we are allowed to reclaim. Measured values so far are
+    #: "builtin" and "pushed"; a firmware release may add others, and a
+    #: destructive operation must not inherit an unknown one by default.
+    PUSHED: ClassVar[str] = "pushed"
+
     @property
     def is_builtin(self) -> bool:
         return self.origin == "builtin"
+
+    @property
+    def is_pushed(self) -> bool:
+        """True only for an app something pushed over the API.
+
+        A whitelist, deliberately. The blacklist version — "anything that is
+        not builtin" — would quietly claim every origin NG grows later,
+        starting with whatever a Berry script's apps are called. For code that
+        deletes, the question has to be "is it certainly ours", never "is it
+        probably not someone else's".
+        """
+        return self.origin == self.PUSHED
 
 
 class FileEntry(BaseModel):

@@ -1,0 +1,48 @@
+{
+  "_comment": "Read by backend/tests/test_reminders.py and countdown.test.ts next door. It sits inside frontend/src rather than in a shared/ directory at the repository root because the frontend image builds with frontend/ as its context: anything outside is invisible to `npm run build`, and the build fails. The backend only reads it from its tests, which run from the repository. Each case now carries both languages: the countdown is prose, and was hard-coded French until someone noticed an English installation saying J-406.",
+  "target": "2027-11-15",
+  "cases": [
+    {
+      "today": "2026-10-03",
+      "days": 408,
+      "fr": "J-408",
+      "en": "D-408"
+    },
+    {
+      "today": "2027-11-14",
+      "days": 1,
+      "fr": "J-1",
+      "en": "D-1"
+    },
+    {
+      "today": "2027-11-15",
+      "days": 0,
+      "fr": "JOUR J",
+      "en": "D-DAY"
+    },
+    {
+      "today": "2027-11-16",
+      "days": -1,
+      "fr": "J+1",
+      "en": "D+1"
+    },
+    {
+      "today": "2027-11-18",
+      "days": -3,
+      "fr": "J+3",
+      "en": "D+3"
+    },
+    {
+      "today": "2027-03-28",
+      "days": 232,
+      "fr": "J-232",
+      "en": "D-232"
+    },
+    {
+      "today": "2027-10-31",
+      "days": 15,
+      "fr": "J-15",
+      "en": "D-15"
+    }
+  ]
+}

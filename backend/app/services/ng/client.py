@@ -4,7 +4,7 @@ Destructive endpoints stay absent on purpose: nothing here erases the
 filesystem, resets settings or triggers a firmware update. A bug in a
 scheduler must not be able to brick a display.
 
-**App names no longer need padding.** awtrixhub named its apps `ah000123`
+**App names no longer need padding.** awtrixng-mgr named its apps `ah000123`
 because AWTRIX 3 deleted by *prefix*: removing `ah1` would have taken `ah12`
 with it. Measured on NG 1.1.2, that hazard is gone — pushing `zz1`, `zz12` and
 `zz1x`, then deleting `zz1`, left the other two standing. The fixed width is
@@ -87,6 +87,32 @@ class NgClient:
         screen = await self._t.get("/display/screen")
         return list(screen.get("pixels") or [])
 
+    async def get_display(self) -> dict[str, Any]:
+        """Panel state: power, brightness, the active overlay, the moodlight."""
+        return await self._t.get("/display")
+
+    async def set_power(self, on: bool) -> None:
+        """Turn the matrix on or off.
+
+        **New in NG, and it has no AWTRIX 3 equivalent.** The old firmware
+        offered only `/api/sleep`, a deep sleep for a number of seconds — a
+        battery measure, not a switch. This is a switch: the panel goes dark,
+        `matrixPower` says so, and nothing is lost.
+
+        Measured, because `PATCH /api/v1/display` is one of the routes that
+        does **not** refuse what it does not know — `{"zz": "ZZZ"}` answers
+        `{"ok": true}`. Only `power` and `overlay` are validated there. So a
+        typo in this call would fail silently, which is why it takes a bool
+        and builds the body itself.
+        """
+        await self._t.request("PATCH", "/display", json={"power": bool(on)})
+        log.info("matrix power %s", "on" if on else "off")
+
+    async def set_brightness(self, level: int) -> None:
+        """Panel brightness, 0–255. Overridden within seconds when the
+        display's `autoBrightness` setting is on."""
+        await self._t.request("PATCH", "/display", json={"brightness": int(level)})
+
     async def get_logs(self, since: int = 0) -> tuple[list[str], int]:
         """Boot log, and the cursor to pass next time.
 
@@ -108,12 +134,14 @@ class NgClient:
 
         `origin` does the heavy lifting here: a builtin app can no longer be
         mistaken for an orphan, which is the failure that twice wiped a
-        display on the previous project.
+        display on the previous project. The test is a whitelist — the app has
+        to be `pushed` — so an origin NG grows later is left alone rather than
+        swept up.
         """
         return [
             app.name
             for app in await self.get_apps()
-            if not app.is_builtin and is_managed(app.name)
+            if app.is_pushed and is_managed(app.name)
         ]
 
     async def push_app(self, name: str, payload: NgPayload) -> None:

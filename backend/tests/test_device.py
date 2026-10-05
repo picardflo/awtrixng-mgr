@@ -112,6 +112,56 @@ async def test_a_pushed_app_appears_and_can_be_removed(client):
     assert TEST_APP not in {app.name for app in await client.get_apps()}
 
 
+async def test_the_matrix_can_be_switched_off_and_on(client):
+    """A switch AWTRIX 3 never had: it offered only a timed deep sleep.
+
+    Left off, this is also how a display ends up dark with no obvious cause —
+    the firmware logs nothing when the panel is powered down, so an owner who
+    finds a black clock has only the buttons to go on.
+    """
+    was_on = (await client.get_display())["power"]
+    try:
+        await client.set_power(False)
+        assert (await client.get_display())["power"] is False
+        assert (await client.get_device()).matrix_power is False
+
+        await client.set_power(True)
+        assert (await client.get_display())["power"] is True
+        assert (await client.get_device()).matrix_power is True
+    finally:
+        await client.set_power(was_on)
+
+
+async def test_the_framebuffer_keeps_drawing_while_the_panel_is_off(client):
+    """A dark clock still answers with pixels.
+
+    The firmware goes on composing frames; only the LEDs stop. So a live
+    preview built on `/display/screen` alone would cheerfully show the time on
+    a display nobody can see — which is exactly the situation where someone is
+    looking at the preview to work out what is wrong.
+
+    Whether anything is visible is `power`, never the pixels.
+    """
+    was_on = (await client.get_display())["power"]
+    try:
+        await client.set_power(False)
+        assert any(await client.get_screen()), "pinned because it is a trap, not a feature"
+        assert (await client.get_display())["power"] is False
+    finally:
+        await client.set_power(was_on)
+
+
+async def test_the_display_route_does_not_refuse_an_unknown_key(client):
+    """Pinned because it is a trap, not because it is good.
+
+    Most of NG validates strictly and names the offending field. `PATCH
+    /api/v1/display` does not: an unknown key answers {"ok": true}. Code that
+    writes here cannot rely on the device to catch a typo, which is why the
+    client builds these bodies itself rather than passing a dict through.
+    """
+    assert await client._t.request("PATCH", "/display", json={"zzUnknown": 1}) == {"ok": True}
+
+
 async def test_the_screen_can_be_read_back(client):
     """The whole point of the live preview: what the matrix is actually
     showing, not what we believe we sent."""

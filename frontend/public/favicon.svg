@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="awtrixng-mgr">
+  <!-- The nine pixels of the header mark, in the same order. Kept in step with
+       src/logo.ts by a test: a favicon that drifts from the logo is the kind of
+       detail nobody notices and everybody feels. -->
+  <rect width="32" height="32" rx="6" fill="#0b0f14"/>
+  <rect x="3" y="3" width="8" height="8" rx="1.5" fill="#3ddc84"/>
+  <rect x="12" y="3" width="8" height="8" rx="1.5" fill="#4aa8ff"/>
+  <rect x="21" y="3" width="8" height="8" rx="1.5" fill="#f5a524"/>
+  <rect x="3" y="12" width="8" height="8" rx="1.5" fill="#4aa8ff"/>
+  <rect x="12" y="12" width="8" height="8" rx="1.5" fill="#3ddc84"/>
+  <rect x="21" y="12" width="8" height="8" rx="1.5" fill="#f4526b"/>
+  <rect x="3" y="21" width="8" height="8" rx="1.5" fill="#f5a524"/>
+  <rect x="12" y="21" width="8" height="8" rx="1.5" fill="#f4526b"/>
+  <rect x="21" y="21" width="8" height="8" rx="1.5" fill="#3ddc84"/>
+</svg>

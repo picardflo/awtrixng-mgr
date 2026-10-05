@@ -1,6 +1,6 @@
 [project]
 name = "awtrixng-mgr"
-version = "0.2.0"
+version = "0.3.0"
 description = "Middleware between your services and AWTRIX NG displays"
 requires-python = ">=3.11"
 dependencies = [
@@ -44,6 +44,8 @@ addopts = "-m 'not device'"
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+# Alembic revisions are generated code: not reformatted by hand.
+extend-exclude = ["app/db/migrations/versions"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]

@@ -1,0 +1,92 @@
+"""Shapes for the reminder API."""
+
+from datetime import date, datetime, time
+
+from pydantic import BaseModel, Field, field_validator
+
+from app.schemas.widget_data import ScrollMode
+
+#: Monday is 0, as everywhere else in Python.
+WEEKDAYS = range(7)
+
+
+class ReminderBase(BaseModel):
+    name: str = Field(min_length=1)
+    message: str = Field(min_length=1)
+    icon: str | None = None
+    color: str | None = None
+    at: time
+    #: Days it fires on. Empty would be a reminder that never rings, which is
+    #: a mistake rather than an intention.
+    days: list[int] = Field(default_factory=lambda: [0, 1, 2, 3, 4], min_length=1)
+    #: 1 = every week. Above that, `anchor` says which weeks.
+    every_weeks: int = Field(default=1, ge=1, le=8)
+    anchor: date | None = None
+    #: Set, it rings that day only and `days`/`every_weeks` are ignored.
+    on_date: date | None = None
+    #: Set, the message may use {{ countdown }}, {{ days }} and {{ date }}.
+    countdown_to: date | None = None
+    duration_seconds: int = Field(default=10, ge=1, le=120)
+    #: `center` and `rainbow` are gone with AWTRIX 3: measured on NG, there is
+    #: no centring key, and `palette` colours effects rather than text.
+    scroll_mode: ScrollMode = "wrap"
+    scroll_speed: int = Field(default=100, ge=0, le=500)
+    background: str | None = None
+    repeat_count: int = Field(default=0, ge=0, le=10)
+    repeat_every_minutes: int = Field(default=2, ge=1, le=60)
+    melody: str | None = None
+    #: Keeps its melody while the display is in bedroom mode. Off by default,
+    #: because that is what bedroom mode has to mean.
+    rings_at_night: bool = False
+    enabled: bool = True
+
+    @field_validator("days")
+    @classmethod
+    def _real_days(cls, value: list[int]) -> list[int]:
+        unknown = sorted(set(value) - set(WEEKDAYS))
+        if unknown:
+            raise ValueError(f"not days of the week: {unknown}")
+        return sorted(set(value))
+
+
+class ReminderCreate(ReminderBase):
+    device_ids: list[int] = Field(default_factory=list)
+
+
+class ReminderUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1)
+    message: str | None = Field(default=None, min_length=1)
+    icon: str | None = None
+    color: str | None = None
+    at: time | None = None
+    days: list[int] | None = None
+    every_weeks: int | None = Field(default=None, ge=1, le=8)
+    anchor: date | None = None
+    on_date: date | None = None
+    countdown_to: date | None = None
+    duration_seconds: int | None = Field(default=None, ge=1, le=120)
+    scroll_mode: ScrollMode | None = None
+    scroll_speed: int | None = Field(default=None, ge=0, le=500)
+    background: str | None = None
+    repeat_count: int | None = Field(default=None, ge=0, le=10)
+    repeat_every_minutes: int | None = Field(default=None, ge=1, le=60)
+    melody: str | None = None
+    rings_at_night: bool | None = None
+    enabled: bool | None = None
+    device_ids: list[int] | None = None
+
+
+class ReminderRead(ReminderBase):
+    id: int
+    device_ids: list[int]
+    last_fired_at: datetime | None
+    #: When it will next ring, so the list answers the obvious question
+    #: without anyone counting on their fingers.
+    next_at: datetime | None
+
+
+class FireResult(BaseModel):
+    ok: bool
+    message: str
+    code: str
+    params: dict = Field(default_factory=dict)

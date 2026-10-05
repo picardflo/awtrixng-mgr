@@ -4,10 +4,11 @@
 servant de middleware entre des services externes et un ou plusieurs afficheurs
 [AWTRIX NG](https://github.com/Blueforcer/awtrix-ng).
 
-> **État : socle.** Version 0.2.0 — le client AWTRIX NG est écrit, vérifié
-> sur une horloge réelle, et pilotable en ligne de commande. Il n'y a encore ni
-> API REST, ni interface web, ni planificateur. Voir le
-> [CHANGELOG](CHANGELOG.md).
+> **État : fonctionnel.** Version 0.3.0 — l'application complète, portée
+> d'awtrixhub sur AWTRIX NG : connecteurs, planificateur, API REST, interface
+> React. Chaque option d'affichage a été essayée sur une horloge réelle.
+> Le `docker compose` n'a pas pu être construit ici (pas de Docker sur la
+> machine de dev). Voir le [CHANGELOG](CHANGELOG.md).
 
 ---
 
@@ -51,6 +52,8 @@ Ce qui disparaît : la couche qui parlait à AWTRIX 3, remplacée par un client
   qu'il refuse en le nommant, et **ce qu'il accepte sans le valider**.
 - [`docs/architecture.md`](docs/architecture.md) — les décisions prises, et
   celles héritées d'awtrixhub qui restent à rejuger.
+- [`docs/ng-vs-awtrix3.md`](docs/ng-vs-awtrix3.md) — ce que le portage a
+  retiré, changé et gagné, option par option, avec la mesure qui le justifie.
 
 ## Développer
 
@@ -59,7 +62,10 @@ cd backend
 python3 -m venv --without-pip .venv            # pas de python3-venv ici
 curl -sS https://bootstrap.pypa.io/get-pip.py | .venv/bin/python
 .venv/bin/pip install -e '.[dev]'
-.venv/bin/python -m pytest                     # la suite, sans matériel
+.venv/bin/python -m pytest                     # 873 tests, sans matériel
+
+cd ../frontend && npm install && npm run build
+npx vitest run                                 # 93 tests
 ```
 
 Les tests qui parlent à une horloge réelle sont désélectionnés par défaut. Ils
@@ -69,6 +75,11 @@ refusent par leur nom les afficheurs en service :
 ```bash
 AWTRIXNG_TEST_HOST=mon-horloge.local .venv/bin/python -m pytest -m device
 ```
+
+Parmi eux, `tests/test_device_widgets.py` rend **chaque type de widget** à
+partir de ses données d'exemple, le pousse, et relit la matrice. C'est ce qui
+distingue « le payload est celui qu'on attendait » de « l'afficheur en fait
+quelque chose ».
 
 ## Parler à une horloge, sans interface
 

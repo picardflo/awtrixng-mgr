@@ -1,0 +1,39 @@
+services:
+  awtrixng-mgr-backend:
+    build: ./backend
+    container_name: awtrixng-mgr-backend
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Europe/Paris}
+      AWTRIXNG_LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      # Laisser vide : la clé est générée dans /data au premier démarrage.
+      AWTRIXNG_SECRET_KEY: ${AWTRIXNG_SECRET_KEY:-}
+      # Langue des mots affichés sur les horloges, pas celle de l'interface.
+      AWTRIXNG_LANGUAGE: ${AWTRIXNG_LANGUAGE:-en}
+      # Jeton de lecture pour un tableau de bord : n'ouvre que /api/summary.
+      AWTRIXNG_API_TOKEN: ${AWTRIXNG_API_TOKEN:-}
+      # Vide = aucune authentification (ADR-019).
+      AWTRIXNG_PASSWORD: ${AWTRIXNG_PASSWORD:-}
+      AWTRIXNG_SECURE_COOKIE: ${AWTRIXNG_SECURE_COOKIE:-true}
+    volumes:
+      - ./data:/data
+    networks:
+      - home.docker
+
+  awtrixng-mgr-frontend:
+    build: ./frontend
+    container_name: awtrixng-mgr-frontend
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Europe/Paris}
+    depends_on:
+      awtrixng-mgr-backend:
+        condition: service_healthy
+    networks:
+      - home.docker
+
+# Réseau partagé avec Caddy, qui publie awtrixng-mgr.home.lan vers
+# awtrixng-mgr-frontend:80. Aucun port n'est exposé sur l'hôte.
+networks:
+  home.docker:
+    external: true
