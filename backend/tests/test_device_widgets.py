@@ -178,3 +178,69 @@ async def test_the_weather_overlay_reaches_the_matrix(client, code, label, expec
     if expected is None:
         return
     assert added > 0, f"{label}: the firmware accepted overlay={expected} and drew nothing"
+
+
+def _bottom_row_segments(pixels: list[int], width: int = 32) -> list[tuple[int, int]]:
+    """Runs of lit pixels on the bottom row, as (first column, length)."""
+    row = [pixels[7 * width + column] for column in range(width)]
+    runs: list[tuple[int, int]] = []
+    start: int | None = None
+    for column, pixel in enumerate(row):
+        if pixel and start is None:
+            start = column
+        elif not pixel and start is not None:
+            runs.append((start, column - start))
+            start = None
+    if start is not None:
+        runs.append((start, width - start))
+    return runs
+
+
+@pytest.mark.parametrize(
+    ("with_icon", "builtin"),
+    # The firmware draws its own weekday bar under both, and narrows it when
+    # something occupies the left of the panel: Time carries a nine-column
+    # block, Date does not.
+    [(True, "Time"), (False, "Date")],
+)
+async def test_the_weekday_bar_matches_the_firmware_s_own(client, with_icon, builtin):
+    """Our seven day segments against the ones the display draws for itself.
+
+    Florian's idea, and the point of it is that the two line up when they
+    follow each other in the rotation. Comparing against the firmware rather
+    than against a constant means a firmware that moves its bar fails this
+    test instead of quietly disagreeing with ours.
+
+    The geometry was derived here by measurement before this comparison was
+    written, and came out the same: three pixels per day with nothing to the
+    left, two when an icon takes the first nine columns.
+    """
+    import asyncio
+
+    from app.connectors import registry
+
+    registry.load_all()
+    descriptor = registry.widget_descriptor("school.week")
+    display = descriptor.default_display
+    if not with_icon:
+        display = display.model_copy(update={"show_icon": False})
+
+    payload = render(descriptor.sample_data, display)
+    assert payload is not None
+    payload.duration_ms = HOLD_MS
+    if payload.icon:
+        await client.ensure_icon(payload.icon)
+
+    await client.push_app(TEST_APP, payload)
+    await client.switch_to(TEST_APP)
+    await asyncio.sleep(SETTLE_SECONDS)
+    ours = _bottom_row_segments(await client.get_screen())[-7:]
+
+    await client.switch_to(builtin)
+    await asyncio.sleep(SETTLE_SECONDS)
+    theirs = _bottom_row_segments(await client.get_screen())[-7:]
+
+    print(f"\n--- {builtin} draws {theirs}\n    we draw      {ours}")
+    assert ours == theirs, (
+        f"our weekday bar no longer lines up with the one {builtin} draws"
+    )

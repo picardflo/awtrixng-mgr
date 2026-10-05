@@ -5,6 +5,30 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.10.1]
+
+Florian a montré une capture de son app Time et demandé si la semaine scolaire
+pouvait faire pareil. Elle le fait déjà — et la vérification a donné mieux
+qu'un oui.
+
+### Le firmware adapte sa propre barre, exactement comme nous
+```
+Time, bloc de 9 colonnes à gauche : (10,2) (13,2) (16,2) (19,2) (22,2) (25,2) (28,2)
+Date, rien à gauche               : (2,3)  (6,3)  (10,3) (14,3) (18,3) (22,3) (26,3)
+semaine scolaire, avec icône      : (10,2) (13,2) (16,2) (19,2) (22,2) (25,2) (28,2)
+semaine scolaire, sans icône      : (2,3)  (6,3)  (10,3) (14,3) (18,3) (22,3) (26,3)
+```
+
+La géométrie avait été déduite ici **par la mesure**, avant de savoir que le
+firmware faisait la même chose : trois pixels par jour quand rien n'occupe la
+gauche, deux quand une icône prend les neuf premières colonnes.
+
+### Ajouté
+Deux tests sur matériel qui comparent notre barre à **celle que l'appareil
+dessine pour lui-même**, dans les deux configurations. Comparer au firmware
+plutôt qu'à une constante : une version qui déplacerait sa barre fait échouer
+le test au lieu de diverger en silence.
+
 ## [0.10.0]
 
 ### La barre des jours, idée de Florian
