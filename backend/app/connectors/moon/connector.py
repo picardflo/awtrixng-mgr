@@ -74,6 +74,18 @@ class MoonConnector(Connector):
                 default_display=DisplayOptions(
                     text="{{ illumination }}%",
                     duration=8,
+                    # The bar was computed from the first version and never
+                    # switched on — the projection has filled `progress` with
+                    # the lit fraction all along, under a comment saying it
+                    # "shows the same thing as the icon, in another form".
+                    #
+                    # Illumination is the one reading here that is already a
+                    # percentage, so the scale needs no inventing.
+                    show_progress=True,
+                    # Large is the font of a widget that has a bar: measured,
+                    # it draws the seven rows above it and fills the panel
+                    # exactly. Without a bar it sits one row high.
+                    font="large",
                 ),
                 # Fixed rather than computed at import: a descriptor that
                 # changed with the date would make two installations disagree

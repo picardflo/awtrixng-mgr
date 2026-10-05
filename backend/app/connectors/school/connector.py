@@ -122,6 +122,11 @@ class SchoolConnector(Connector):
                     text="Sem. {{ week }}",
                     icon=ICON,
                     duration=8,
+                    # Large is the font of a widget that has a bar: it draws
+                    # the seven rows above it and fills the panel exactly.
+                    # Measured — with the small font the text sat squeezed
+                    # against the bar, rows 1 to 7 with row 0 empty.
+                    font="large",
                     show_progress=True,
                     progress_color="#3ddc84",
                     progress_background="#000000",

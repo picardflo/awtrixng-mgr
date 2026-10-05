@@ -114,6 +114,10 @@ def aqi_band(value: float | None) -> Band:
 
 UV_ICON = 64310
 
+#: Where the index stops having bands and becomes "extreme". A bar is drawn
+#: against this, and anything above fills it — which is what extreme means.
+UV_CEILING = 11.0
+
 UV_BANDS: tuple[tuple[float, Band], ...] = (
     (3, Band("low", UV_ICON, "#6fd504")),
     (6, Band("moderate", UV_ICON, "#f9ff1b")),

@@ -328,3 +328,54 @@ def test_the_track_wash_matches_the_preview():
         "#17132e",
         "#2e2e2e",
     ]
+
+
+class TestTheFontRule:
+    """The large font is the font of a widget that has a bar.
+
+    Measured on a TC001, rows occupied by the text:
+
+        small, no bar      1..5    centred
+        large, no bar      0..6    one row high
+        large, with bar    0..7    fills the panel exactly
+
+    So it is not a matter of taste. `large` draws the seven rows above the
+    progress bar, which is a perfect fit when there is one and a lopsided one
+    when there is not. Width is unaffected either way — the same measurement
+    gave identical column counts for both fonts, which is why the choice costs
+    nothing horizontally.
+    """
+
+    def widgets(self):
+        from app.connectors import registry
+
+        registry.load_all()
+        return [w for d in registry.descriptors() for w in d.widgets]
+
+    def test_every_widget_with_a_bar_uses_the_large_font(self):
+        wrong = [
+            w.type
+            for w in self.widgets()
+            if w.default_display.show_progress and w.default_display.font != "large"
+        ]
+        assert not wrong, f"these have a bar and sit squeezed above it: {wrong}"
+
+    def test_no_widget_uses_the_large_font_without_a_bar(self):
+        """It would sit one row high, with nothing underneath to balance it."""
+        wrong = [
+            w.type
+            for w in self.widgets()
+            if w.default_display.font == "large" and not w.default_display.show_progress
+        ]
+        assert not wrong, f"these would sit one row high: {wrong}"
+
+    def test_a_bar_needs_something_to_fill_it(self):
+        """A widget that asks for a bar and never computes one shows nothing
+        where the bar should be — which is how the sun and the moon spent the
+        whole of the previous project."""
+        missing = [
+            w.type
+            for w in self.widgets()
+            if w.default_display.show_progress and w.sample_data.progress is None
+        ]
+        assert not missing, f"these ask for a bar with no value behind it: {missing}"

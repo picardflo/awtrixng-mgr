@@ -47,6 +47,21 @@ FORECAST_DAYS = 2
 #: The three that read the air-quality host rather than the forecast one.
 AIR_WIDGETS = frozenset({"weather.air", "weather.uv", "weather.pollen"})
 
+
+def _scaled(value: float | None, ceiling: float) -> int | None:
+    """A reading as a percentage of its scale, clamped at both ends.
+
+    Only for indices that *have* a ceiling. Pollen is counted in grains per
+    cubic metre with no official top, so it gets no bar rather than a bar
+    against a number someone invented.
+    """
+    if value is None or ceiling <= 0:
+        return None
+    try:
+        return max(0, min(100, round(float(value) / ceiling * 100)))
+    except (TypeError, ValueError):
+        return None
+
 CONFIG_SCHEMA = [
     FormField(
         name="place",
@@ -69,6 +84,10 @@ def _project_air(
         uv = current.get("uv_index")
         band = air.uv_band(uv)
         return WidgetData(
+            # The index runs 0 to 11, and "11+" is a band of its own named
+            # extreme. A bar that fills at 11 and stays full above says
+            # exactly that: off the scale, which is the worst there is.
+            progress=_scaled(uv, air.UV_CEILING),
             values={
                 "uv": uv,
                 "level_code": band.code,
@@ -99,7 +118,12 @@ def _project_air(
 
     aqi = current.get("european_aqi")
     band = air.aqi_band(aqi)
+    # The European index is already a 0-100 scale, and **it does go above
+    # 100** — it is the maximum of five pollutants, a lesson paid for on the
+    # previous project. Full bar means "past the scale", which is the honest
+    # reading.
     return WidgetData(
+        progress=_scaled(aqi, 100),
         values={
             "aqi": aqi,
             "quality_code": band.code,
@@ -310,13 +334,16 @@ class WeatherConnector(Connector):
                     Variable(name="o3", label="Ozone (µg/m³)", example="72"),
                     Variable(name="so2", label="Sulphur dioxide (µg/m³)", example="1.7"),
                 ],
-                default_display=DisplayOptions(text="{{ aqi }}", duration=8),
+                default_display=DisplayOptions(
+                    text="{{ aqi }}", duration=8, show_progress=True, font="large"
+                ),
                 default_refresh=air.CACHE_SECONDS,
                 sample_data=WidgetData(
                     values={
                         "aqi": 30, "quality": "Fair", "quality_code": "fair",
                         "pm2_5": 10.1, "pm10": 17.3, "no2": 7.6, "o3": 72.0, "so2": 1.7,
                     },
+                    progress=30,  # the index is already a 0-100 scale
                     hint_icon=str(air.AQI_BANDS[1][1].icon),
                     hint_color=air.AQI_BANDS[1][1].colour,
                 ),
@@ -331,10 +358,13 @@ class WeatherConnector(Connector):
                 ],
                 # Rounded in the template rather than in the data: someone may
                 # want the decimal.
-                default_display=DisplayOptions(text="UV {{ uv | round }}", duration=8),
+                default_display=DisplayOptions(
+                    text="UV {{ uv | round }}", duration=8, show_progress=True, font="large"
+                ),
                 default_refresh=air.CACHE_SECONDS,
                 sample_data=WidgetData(
                     values={"uv": 3.1, "level": "Moderate", "level_code": "moderate"},
+                    progress=28,  # 3.1 of a ceiling of 11
                     hint_icon=str(air.UV_ICON),
                     hint_color=air.UV_BANDS[1][1].colour,
                 ),

@@ -5,6 +5,52 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.8.0]
+
+Une règle, mesurée, appliquée aux onze widgets.
+
+### La grande police est la police d'un widget qui a une barre
+Rangées occupées par le texte, relevées sur le Bureau :
+
+| | rangées | équilibre |
+|---|---|---|
+| petite, sans barre | 1..5 | centré |
+| **grande, sans barre** | 0..6 | **une rangée trop haut** |
+| **grande, avec barre** | 0..7 | **remplissage exact** |
+
+Ce n'est donc pas une affaire de goût. `large` dessine les sept rangées
+au-dessus de la barre : parfait quand il y en a une, bancal sinon. Et la
+largeur est **identique** entre les deux polices — le choix ne coûte rien
+horizontalement, ce qui est la mesure qui débloque tout le reste.
+
+Trois tests l'imposent désormais à tous les widgets, dans les deux sens.
+
+### Deux barres qui existaient et ne s'affichaient pas
+Après le Soleil en 0.7.2, **la Lune** : `progress=int(raw["illumination"])` est
+rempli à chaque projection, sous un commentaire disant que la barre « montre la
+même chose que l'icône, sous une autre forme ». Jamais activée. L'illumination
+est la seule donnée du projet qui soit *déjà* un pourcentage — aucune échelle à
+inventer.
+
+### Deux barres ajoutées, avec leur échelle justifiée
+- **Indice UV** rapporté à **11**, le plafond au-delà duquel l'indice n'a plus
+  de bande et s'appelle « extrême ». Une barre pleine dit exactement ça.
+- **Qualité de l'air** rapportée à **100**. L'indice européen **dépasse 100** —
+  c'est le maximum de cinq polluants, une leçon déjà payée sur awtrixhub — donc
+  barre pleine signifie « hors échelle », ce qui est la lecture honnête.
+- **Pollens : pas de barre.** Les grains par mètre cube n'ont pas de plafond
+  officiel, et une barre contre un nombre inventé vaut moins que pas de barre.
+
+### Corrigé
+`school.week` avait une barre et la petite police : son texte se retrouvait
+tassé contre elle, rangées 1 à 7 avec la rangée 0 vide. Passé en grande police
+— « Sem. A » tient en 31 colonnes sur 32, sans défiler.
+
+### Audit des icônes
+Les douze icônes météo, les deux du soleil, celles de l'air, du carburant, de
+l'école, du capteur et de l'humidité : **toutes animées**. Les huit phases de
+lune sont fixes, et doivent l'être — la forme *est* l'information.
+
 ## [0.7.2]
 
 **Le widget Soleil calculait sa barre et la jetait.**
