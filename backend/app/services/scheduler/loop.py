@@ -10,12 +10,10 @@ async driver would be complexity without a problem to solve.
 """
 
 import asyncio
-import json
 import logging
 import time
 from datetime import datetime
 
-from sqlalchemy import or_
 from sqlmodel import Session, select
 
 from app.connectors import factory
@@ -32,7 +30,7 @@ from app.models import (
     WidgetTarget,
     utcnow,
 )
-from app.services.ng import night
+from app.services.ng import quiet
 from app.services.ng.client import NgClient
 from app.services.ng.transport import HttpTransport
 from app.services.scheduler import reminders as reminder_pass
@@ -61,10 +59,6 @@ TICK_SECONDS = 1.0
 #: it costs one /api/loop per device.
 RECONCILE_SECONDS = 120
 
-#: How often the bedroom-mode window is checked. The schedule has a minute's
-#: resolution, so half a minute is enough and costs one /api/settings per
-#: display that uses it — nothing at all for the ones that do not.
-NIGHT_SECONDS = 30
 
 #: A widget whose data was collected but could not be pushed is retried sooner
 #: than its own interval: the display is usually rebooting or briefly away.
@@ -77,7 +71,6 @@ class Scheduler:
         self._due_at: dict[int, float] = {}
         self._connectors: dict[tuple, Connector] = {}
         self._reconcile_at = 0.0
-        self._night_at = 0.0
         self._task: asyncio.Task | None = None
         self._stop = asyncio.Event()
 
@@ -121,9 +114,6 @@ class Scheduler:
             self._reconcile_at = time.monotonic() + RECONCILE_SECONDS
             await self.reconcile()
 
-        if time.monotonic() >= self._night_at:
-            self._night_at = time.monotonic() + NIGHT_SECONDS
-            await self.apply_bedroom_mode()
 
         # Checked every tick: a reminder set for 07:30 should ring at 07:30,
         # not at the next widget refresh.
@@ -162,77 +152,6 @@ class Scheduler:
 
         return outcomes
 
-    async def apply_bedroom_mode(self) -> list[int]:
-        """Open or close the dimmed window on the displays that use one.
-
-        Converges rather than fires on an edge: each pass compares where the
-        clock *should* be with where it is recorded as being. A boundary
-        missed because awtrixng-mgr was down at 22:00 is therefore caught at the
-        next pass instead of skipped until tomorrow.
-
-        A manual brightness change inside the window survives: nothing is
-        rewritten while the recorded state already matches the schedule.
-        """
-        now = reminder_pass.local_now().time()
-        touched: list[int] = []
-
-        with Session(engine) as session:
-            # `night_active` too, not just `night_mode`: a display dimmed
-            # at midnight whose mode is then switched off must be put back.
-            # Selecting on the mode alone left it at 2/255 for good, which is
-            # what the test for it found.
-            devices = session.exec(
-                select(Device).where(or_(Device.night_mode, Device.night_active))
-            ).all()
-
-            for device in devices:
-                wanted = bool(
-                    device.night_mode
-                    and device.enabled
-                    and device.night_from is not None
-                    and device.night_to is not None
-                    and night.is_night(device.night_from, device.night_to, now)
-                )
-                if wanted == device.night_active:
-                    continue
-
-                client = self._client_for(device)
-                try:
-                    if wanted:
-                        # Read first: the morning must restore what the evening
-                        # found, not a default.
-                        saved = night.Saved.from_settings(await client.get_settings())
-                        await client.update_settings(
-                            night.night_settings(device.night_brightness)
-                        )
-                        device.night_saved = json.dumps(saved.to_json())
-                    else:
-                        if device.night_saved:
-                            await client.update_settings(json.loads(device.night_saved))
-                        device.night_saved = None
-                except AwtrixNgError as exc:
-                    # The flag is left alone, so the next pass tries again. A
-                    # display asleep at 22:00 is dimmed when it comes back.
-                    log.warning(
-                        "bedroom mode on %s: %s", device.name, exc.message
-                    )
-                    continue
-                finally:
-                    await client.aclose()
-
-                device.night_active = wanted
-                session.add(device)
-                touched.append(device.id or 0)
-                log.info(
-                    "bedroom mode %s on %s",
-                    "opened" if wanted else "closed",
-                    device.name,
-                )
-
-            session.commit()
-
-        return touched
-
     async def fire_reminders(self) -> list[reminder_pass.Fired]:
         """Send any reminder whose moment has come. Never raises."""
         now = reminder_pass.local_now()
@@ -249,8 +168,8 @@ class Scheduler:
 
             wanted = {d for reminder, _ in pending for d in reminder.device_ids}
             clients = {}
-            # Which displays have their bedroom window open right now. Read
-            # from the schedule rather than from `night_active`, so a window
+            # Which displays have their quiet window open right now. Read
+            # from the schedule rather than from a stored flag, so a window
             # that opened seconds ago already applies — the pass that records
             # it runs only every half-minute.
             dimmed: set[int] = set()
@@ -261,10 +180,10 @@ class Scheduler:
                     continue
                 clients[device_id] = self._client_for(device)
                 if (
-                    device.night_mode
-                    and device.night_from is not None
-                    and device.night_to is not None
-                    and night.is_night(device.night_from, device.night_to, at)
+                    device.quiet_hours
+                    and device.quiet_from is not None
+                    and device.quiet_to is not None
+                    and quiet.is_quiet(device.quiet_from, device.quiet_to, at)
                 ):
                     dimmed.add(device_id)
             # Read everything needed before the awaits: the session is closed
@@ -484,14 +403,9 @@ class Scheduler:
         """
         self._due_at.clear()
 
-    def bedroom_soon(self) -> None:
-        """Check the dimmed window on the next tick, e.g. after it was set."""
-        self._night_at = 0.0
-
     def reconcile_soon(self) -> None:
         """Make the next tick reconcile, e.g. after a widget was disabled."""
         self._reconcile_at = 0.0
-        self._night_at = 0.0
 
     async def reorder(self, device_id: int) -> int:
         """Rebuild one display's rotation in position order.

@@ -102,9 +102,9 @@ class Reminder(SQLModel, table=True):
     repeat_count: int = Field(default=0, ge=0, le=10)
     repeat_every_minutes: int = Field(default=2, ge=1, le=60)
 
-    #: Whether this one still rings while the display is in bedroom mode.
+    #: Whether this one still rings while the display is in quiet hours.
     #:
-    #: Off by default, because that is what "bedroom mode" has to mean. On for
+    #: Off by default, because that is what "quiet hours" has to mean. On for
     #: the alarm that exists in order to wake someone: a 06:30 wake-up inside
     #: a 22:00–07:00 window would otherwise be silent, and that is the kind of
     #: silence noticed only on the morning it mattered.

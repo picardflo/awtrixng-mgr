@@ -73,6 +73,21 @@ class NgClient:
     async def get_settings(self) -> dict[str, Any]:
         return await self._t.get("/settings")
 
+    async def get_system(self) -> dict[str, Any]:
+        """The 66 hardware and network settings, `/settings`' deeper half.
+
+        This is where the light sensor is tuned — `minBrightness`,
+        `maxBrightness`, `ldrFactor`, `ldrGamma`, `brightnessSmoothing`. On
+        AWTRIX 3 none of it was reachable, which is why dimming a clock at
+        night needed a schedule in the application.
+        """
+        return await self._t.get("/system")
+
+    async def update_system(self, settings: dict[str, Any]) -> None:
+        """Partial update — but **PUT**, where `/settings` and `/display` want
+        PATCH. Measured: PATCH here answers 405 naming GET and PUT."""
+        await self._t.request("PUT", "/system", json=settings)
+
     async def update_settings(self, settings: dict[str, Any]) -> None:
         """Partial update: only the keys sent are changed."""
         await self._t.request("PATCH", "/settings", json=settings)

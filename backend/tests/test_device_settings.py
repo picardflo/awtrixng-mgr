@@ -40,9 +40,20 @@ def device(client):
     return client.post("/api/devices", json={"name": "D", "host": "awtrix.test"}).json()
 
 
-def mock_device(settings=None):
+#: The brightness floor lives in `/api/v1/system`, not in `/api/v1/settings`.
+#: Two routes, and two verbs: PATCH there, PUT here.
+SYSTEM = {"minBrightness": 10, "maxBrightness": 220, "wifiSsid": "Home.lan"}
+
+
+def mock_device(settings=None, system=None):
     respx.get(f"{BASE}/api/v1/settings").mock(
         return_value=httpx.Response(200, json=settings or LIVE)
+    )
+    respx.get(f"{BASE}/api/v1/system").mock(
+        return_value=httpx.Response(200, json=system or SYSTEM)
+    )
+    respx.put(f"{BASE}/api/v1/system").mock(
+        return_value=httpx.Response(200, json=system or SYSTEM)
     )
     # PATCH, measured: PUT and POST both answer 405 on this route.
     return respx.patch(f"{BASE}/api/v1/settings").mock(
@@ -212,6 +223,9 @@ class TestTheRoute:
                 httpx.Response(200, json={**LIVE, "brightness": 255}),
             ]
         )
+        respx.get(f"{BASE}/api/v1/system").mock(
+            return_value=httpx.Response(200, json=SYSTEM)
+        )
         respx.patch(f"{BASE}/api/v1/settings").mock(
             return_value=httpx.Response(200, json={"ok": True})
         )
@@ -224,6 +238,7 @@ class TestTheRoute:
     @respx.mock
     def test_an_unreachable_display_is_reported_not_raised(self, client, device):
         respx.get(f"{BASE}/api/v1/settings").mock(side_effect=httpx.ConnectError("no"))
+        respx.get(f"{BASE}/api/v1/system").mock(side_effect=httpx.ConnectError("no"))
         answer = client.post(
             f"/api/devices/{device['id']}/settings", json=DeviceSettings().model_dump()
         ).json()
@@ -238,3 +253,48 @@ class TestTheRoute:
         )
         assert answer.status_code == 422
         assert write.call_count == 0
+
+
+class TestTheBrightnessFloor:
+    """What replaced bedroom mode.
+
+    AWTRIX 3 clamped automatic brightness at 2 and offered no way to change
+    it, so dimming a clock at night needed a schedule in the application. NG
+    makes it a setting — measured on a TC001 in a dark room, the panel sits
+    exactly on `minBrightness`, and lowering it from 10 took the live
+    brightness down with it, 10 → 9 → 8.
+    """
+
+    def test_it_is_read_from_the_system_route(self):
+        settings = read(LIVE, {"minBrightness": 3, "maxBrightness": 180})
+        assert settings.min_brightness == 3
+        assert settings.max_brightness == 180
+
+    def test_without_the_system_answer_the_defaults_stand(self):
+        """A caller that only wants the display settings pays for one request,
+        not two."""
+        assert read(LIVE).min_brightness == DeviceSettings().min_brightness
+
+    def test_it_is_written_to_the_system_route_not_the_other(self):
+        """`minBrightness` posted to `/settings` answers `unknown field` —
+        politely, and it would not take effect."""
+        from app.schemas.device_settings import system_changes
+
+        current = read(LIVE, {"minBrightness": 10})
+        wanted = current.model_copy(update={"min_brightness": 1})
+        assert system_changes(current, wanted) == {"minBrightness": 1}
+        assert changes(current, wanted) == {}
+
+    @respx.mock
+    def test_the_route_sends_it_with_a_put(self, client, device):
+        """PUT, where `/settings` takes PATCH. Measured: PATCH on `/system`
+        answers 405 naming GET and PUT."""
+        mock_device()
+        write = respx.put(f"{BASE}/api/v1/system")
+        answer = client.post(
+            f"/api/devices/{device['id']}/settings",
+            json={**read(LIVE, SYSTEM).model_dump(), "min_brightness": 1},
+        ).json()
+        assert answer["ok"] is True
+        assert "minBrightness" in answer["applied"]
+        assert json.loads(write.calls.last.request.content) == {"minBrightness": 1}

@@ -10,8 +10,17 @@
  */
 
 import { useEffect, useState } from "react";
-import { api, ApiError, DATE_FORMATS, TIME_FORMATS, TRANSITION_EFFECTS } from "../../api/client";
-import type { DeviceSettings as Settings } from "../../api/client";
+import {
+  api,
+  ApiError,
+  DATE_ORDERS,
+  DATE_SEPARATORS,
+  TIME_SEPARATORS,
+  TRANSITION_EFFECTS,
+  YEAR_MODES,
+} from "../../api/client";
+import type { DeviceSettings, DeviceSettings as Settings } from "../../api/client";
+import type { MessageKey } from "../../i18n/messages.en";
 import { useToast } from "../../components/Toast";
 import { Button, Field, Input, Toggle } from "../../components/ui";
 import { useI18n } from "../../i18n";
@@ -115,23 +124,53 @@ export function DeviceSettingsPanel({ deviceId }: { deviceId: number }) {
             className="w-full accent-[var(--color-accent)] disabled:opacity-40"
           />
         </Field>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field
+            label={t("device.settings.minBrightness")}
+            hint={t("device.settings.minBrightnessHint")}
+          >
+            <Input
+              type="number"
+              min={0}
+              max={draft.max_brightness}
+              value={draft.min_brightness}
+              onChange={(event) => patch({ min_brightness: Number(event.target.value) })}
+            />
+          </Field>
+          <Field label={t("device.settings.maxBrightness")}>
+            <Input
+              type="number"
+              min={draft.min_brightness}
+              max={255}
+              value={draft.max_brightness}
+              onChange={(event) => patch({ max_brightness: Number(event.target.value) })}
+            />
+          </Field>
+        </div>
       </section>
 
       <section className="space-y-2">
         <h4 className="text-xs uppercase tracking-wide text-[var(--color-text-faint)]">
           {t("device.settings.sound")}
         </h4>
+        <Toggle
+          label={t("device.settings.soundEnabled")}
+          hint={t("device.settings.soundEnabledHint")}
+          checked={draft.sound_enabled}
+          onChange={(sound_enabled) => patch({ sound_enabled })}
+        />
         <Field
-          label={`${t("device.settings.volume")} — ${draft.volume} / 30`}
+          label={`${t("device.settings.volume")} — ${draft.buzzer_volume} %`}
           hint={t("device.settings.volumeHint")}
         >
           <input
             type="range"
             min={0}
-            max={30}
-            value={draft.volume}
-            onChange={(event) => patch({ volume: Number(event.target.value) })}
-            className="w-full accent-[var(--color-accent)]"
+            max={100}
+            value={draft.buzzer_volume}
+            disabled={!draft.sound_enabled}
+            onChange={(event) => patch({ buzzer_volume: Number(event.target.value) })}
+            className="w-full accent-[var(--color-accent)] disabled:opacity-40"
           />
         </Field>
       </section>
@@ -160,18 +199,17 @@ export function DeviceSettingsPanel({ deviceId }: { deviceId: number }) {
             />
           </Field>
           <Field label={t("device.settings.effect")}>
-            {/* A named list, not a number. The firmware does name them — the
-                official documentation lists all eleven — and this field asked
-                for a figure between 0 and 10 with nothing to go on. */}
+            {/* NG names its twenty-two transitions and refuses anything else
+                by listing them in the 422. AWTRIX 3 took an integer 0-10 it
+                documented nowhere, so this field asked for a figure with
+                nothing to go on. */}
             <select
               className={SELECT}
               value={draft.transition_effect}
-              onChange={(event) =>
-                patch({ transition_effect: Number(event.target.value) })
-              }
+              onChange={(event) => patch({ transition_effect: event.target.value })}
             >
-              {TRANSITION_EFFECTS.map((name, code) => (
-                <option key={name} value={code}>
+              {TRANSITION_EFFECTS.map((name) => (
+                <option key={name} value={name}>
                   {name}
                 </option>
               ))}
@@ -198,32 +236,65 @@ export function DeviceSettingsPanel({ deviceId }: { deviceId: number }) {
         <h4 className="text-xs uppercase tracking-wide text-[var(--color-text-faint)]">
           {t("device.settings.formats")}
         </h4>
-        <p className="text-xs text-[var(--color-text-faint)]">
-          {t("device.settings.formatsHint")}
-        </p>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label={t("device.settings.timeFormat")}>
+          <Field label={t("device.settings.timeSeparator")}>
             <select
               className={SELECT}
-              value={draft.time_format}
-              onChange={(event) => patch({ time_format: event.target.value })}
+              value={draft.time_separator}
+              onChange={(event) =>
+                patch({ time_separator: event.target.value as DeviceSettings["time_separator"] })
+              }
             >
-              {TIME_FORMATS.map((format) => (
-                <option key={format} value={format}>
-                  {format}
+              {TIME_SEPARATORS.map((value) => (
+                <option key={value} value={value}>
+                  {t(`device.settings.timeSeparator.${value}` as MessageKey)}
                 </option>
               ))}
             </select>
           </Field>
-          <Field label={t("device.settings.dateFormat")}>
+          <Field label={t("device.settings.dateOrder")}>
             <select
               className={SELECT}
-              value={draft.date_format}
-              onChange={(event) => patch({ date_format: event.target.value })}
+              value={draft.date_order}
+              onChange={(event) =>
+                patch({ date_order: event.target.value as DeviceSettings["date_order"] })
+              }
             >
-              {DATE_FORMATS.map((format) => (
-                <option key={format} value={format}>
-                  {format}
+              {DATE_ORDERS.map((value) => (
+                <option key={value} value={value}>
+                  {t(`device.settings.dateOrder.${value}` as MessageKey)}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label={t("device.settings.dateSeparator")}>
+            <select
+              className={SELECT}
+              value={draft.date_separator}
+              onChange={(event) =>
+                patch({
+                  date_separator: event.target.value as DeviceSettings["date_separator"],
+                })
+              }
+            >
+              {DATE_SEPARATORS.map((value) => (
+                <option key={value} value={value}>
+                  {t(`device.settings.dateSeparator.${value}` as MessageKey)}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label={t("device.settings.dateYear")}>
+            <select
+              className={SELECT}
+              value={draft.date_year}
+              onChange={(event) =>
+                patch({ date_year: event.target.value as DeviceSettings["date_year"] })
+              }
+            >
+              {YEAR_MODES.map((value) => (
+                <option key={value} value={value}>
+                  {t(`device.settings.dateYear.${value}` as MessageKey)}
                 </option>
               ))}
             </select>
@@ -242,13 +313,13 @@ export function DeviceSettingsPanel({ deviceId }: { deviceId: number }) {
           />
           <Toggle
             label={t("device.settings.mondayFirst")}
-            checked={draft.week_starts_monday}
-            onChange={(week_starts_monday) => patch({ week_starts_monday })}
+            checked={draft.date_show_weekday}
+            onChange={(date_show_weekday) => patch({ date_show_weekday })}
           />
           <Toggle
             label={t("device.settings.showWeekday")}
-            checked={draft.show_weekday}
-            onChange={(show_weekday) => patch({ show_weekday })}
+            checked={draft.date_month_names}
+            onChange={(date_month_names) => patch({ date_month_names })}
           />
         </div>
       </section>

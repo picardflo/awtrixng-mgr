@@ -138,3 +138,51 @@ def test_a_firmware_backed_response_speaks_snake_case(interface: str, model: typ
     sample = model.model_validate({"name": "Time", "origin": "builtin", "inLoop": True})
     camel = [key for key in sample.model_dump(by_alias=True) if any(c.isupper() for c in key)]
     assert not camel, f"{interface} receives camelCase keys: {sorted(camel)}"
+
+
+# -- The settings panel -------------------------------------------------------
+#
+# Found the same way as the device card, and after it: the TypeScript still
+# described AWTRIX 3's settings — `volume`, an integer `transition_effect`,
+# `time_format` and `date_format` as strftime strings — months of names after
+# the backend had moved to NG's. It compiled. The panel would have shown a
+# volume slider wired to a field that does not exist.
+
+
+def test_the_settings_panel_matches_the_schema():
+    """Field for field, both ways.
+
+    Both directions on purpose. A key the browser asks for and never receives
+    renders as nothing; a key the backend expects and never receives comes
+    back as a default, quietly reverting a setting someone just changed.
+    """
+    from app.schemas.device_settings import DeviceSettings
+
+    declared = declared_in_typescript("DeviceSettings")
+    modelled = set(DeviceSettings.model_fields)
+
+    assert declared - modelled == set(), (
+        f"the panel asks for settings that do not exist: {sorted(declared - modelled)}"
+    )
+    assert modelled - declared == set(), (
+        f"the backend offers settings the panel never shows: {sorted(modelled - declared)}"
+    )
+
+
+@pytest.mark.parametrize(
+    "dead",
+    # AWTRIX 3's names. Each one compiled and would have done nothing.
+    ["volume", "time_format", "date_format", "week_starts_monday", "show_weekday"],
+)
+def test_no_awtrix3_setting_survives_in_the_panel(dead: str):
+    assert dead not in declared_in_typescript("DeviceSettings")
+
+
+def test_the_quiet_hours_panel_matches_its_schema():
+    """Smaller, and worth the same check: it lost a field in the split, and a
+    panel still sending `brightness` would be sending it nowhere."""
+    from app.schemas.quiet import QuietHours
+
+    declared = declared_in_typescript("QuietHours")
+    assert declared == set(QuietHours.model_fields)
+    assert "brightness" not in declared

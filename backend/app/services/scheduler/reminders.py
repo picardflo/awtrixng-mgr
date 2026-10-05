@@ -210,7 +210,7 @@ async def send(
     One unreachable clock must not stop the others: a reminder that fires on
     two displays and finds one asleep should still reach the other.
 
-    `silent_on` names the displays whose bedroom window is open. The decision
+    `silent_on` names the displays whose quiet window is open. The decision
     is per display, not per reminder: the same alert can ring in the kitchen
     and stay quiet in the bedroom.
     """

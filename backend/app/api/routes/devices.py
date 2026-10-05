@@ -9,7 +9,6 @@ from app.api.deps import DeviceDep, SessionDep, client_for
 from app.core.crypto import encrypt
 from app.core.errors import AwtrixNgError
 from app.models import Device, HealthStatus, utcnow
-from app.schemas.bedroom import BedroomMode
 from app.schemas.device import (
     DeviceCreate,
     DeviceRead,
@@ -22,9 +21,10 @@ from app.schemas.device_settings import (
     DeviceSettingsResult,
     changes,
     read,
+    system_changes,
 )
+from app.schemas.quiet import QuietHours
 from app.services.ng.payload import NgNotification
-from app.services.scheduler.loop import scheduler
 
 log = logging.getLogger(__name__)
 router = APIRouter(prefix="/devices", tags=["devices"])
@@ -244,54 +244,56 @@ async def set_power(device: DeviceDep, on: bool = True) -> dict:
     return {"ok": True, "power": on}
 
 
-def _bedroom(device: Device) -> BedroomMode:
-    return BedroomMode(
-        enabled=device.night_mode,
-        start=device.night_from or BedroomMode().start,
-        end=device.night_to or BedroomMode().end,
-        brightness=device.night_brightness,
-        active=device.night_active,
+def _quiet(device: Device) -> QuietHours:
+    return QuietHours(
+        enabled=device.quiet_hours,
+        start=device.quiet_from or QuietHours().start,
+        end=device.quiet_to or QuietHours().end,
     )
 
 
-@router.get("/{device_id}/bedroom", response_model=BedroomMode)
-def get_bedroom(device: DeviceDep) -> BedroomMode:
-    """The dimmed window this display observes, if any."""
-    return _bedroom(device)
+@router.get("/{device_id}/quiet-hours", response_model=QuietHours)
+def get_quiet_hours(device: DeviceDep) -> QuietHours:
+    """The window during which this display's reminders ring without a melody."""
+    return _quiet(device)
 
 
-@router.put("/{device_id}/bedroom", response_model=BedroomMode)
-def set_bedroom(
-    payload: BedroomMode, device: DeviceDep, session: SessionDep
-) -> BedroomMode:
-    """Set the window. Nothing is written to the display here.
+@router.put("/{device_id}/quiet-hours", response_model=QuietHours)
+def set_quiet_hours(
+    payload: QuietHours, device: DeviceDep, session: SessionDep
+) -> QuietHours:
+    """Set the window. Nothing is written to the display, ever.
 
-    The firmware has no schedule, so awtrixng-mgr keeps it and the scheduler
-    applies it on its own pass — within a second of this call, rather than at
-    the next half-minute check.
+    There is nothing to write: NG has no schedule — probed, `/schedules`,
+    `/automations`, `/timers`, `/alarms`, `/cron` and `/dnd` all answer 404 —
+    and since the window no longer dims anything, it changes no setting
+    either. The reminder pass reads it when a reminder fires, and that is all.
+
+    This is what the split bought: no state on the clock, so nothing to
+    restore, and nothing that can be left behind when this application stops.
     """
-    device.night_mode = payload.enabled
-    device.night_from = payload.start
-    device.night_to = payload.end
-    device.night_brightness = payload.brightness
-
-    # Turning it off mid-window must put the display back, which the pass does
-    # by seeing `night_active` disagree with a schedule that no longer applies.
+    device.quiet_hours = payload.enabled
+    device.quiet_from = payload.start
+    device.quiet_to = payload.end
     device.updated_at = utcnow()
     session.add(device)
     session.commit()
     session.refresh(device)
-
-    scheduler.bedroom_soon()
-    return _bedroom(device)
+    return _quiet(device)
 
 
 @router.get("/{device_id}/settings", response_model=DeviceSettings)
 async def get_device_settings(device: DeviceDep) -> DeviceSettings:
-    """What the display itself is set to — brightness, volume, rotation."""
+    """What the display itself is set to — brightness, sound, rotation.
+
+    Two reads, because the brightness floor lives in `/api/v1/system` and the
+    rest in `/api/v1/settings`. Worth the second request: `minBrightness` is
+    what dims a bedroom clock now, and a form that offered everything *but*
+    that would send someone looking for the feature this version removed.
+    """
     client = client_for(device)
     try:
-        return read(await client.get_settings())
+        return read(await client.get_settings(), await client.get_system())
     except AwtrixNgError as exc:
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, exc.message) from exc
     finally:
@@ -311,9 +313,10 @@ async def set_device_settings(
     """
     client = client_for(device)
     try:
-        current = read(await client.get_settings())
+        current = read(await client.get_settings(), await client.get_system())
         wanted = changes(current, payload)
-        if not wanted:
+        wanted_system = system_changes(current, payload)
+        if not wanted and not wanted_system:
             return DeviceSettingsResult(
                 ok=True,
                 message="Nothing to change.",
@@ -321,11 +324,17 @@ async def set_device_settings(
                 settings=current,
             )
 
-        await client.update_settings(wanted)
+        if wanted:
+            await client.update_settings(wanted)
+        if wanted_system:
+            # A different route and a different verb — PUT, where the other
+            # takes PATCH. Sent separately rather than merged, because
+            # `minBrightness` posted to `/settings` answers `unknown field`.
+            await client.update_system(wanted_system)
         # Read back rather than trust the payload: the firmware clamps, and a
         # form showing what was asked instead of what took effect is a form
         # that lies.
-        applied = read(await client.get_settings())
+        applied = read(await client.get_settings(), await client.get_system())
     except AwtrixNgError as exc:
         return DeviceSettingsResult(
             ok=False, message=exc.message, code=exc.code, settings=payload
@@ -335,10 +344,10 @@ async def set_device_settings(
 
     return DeviceSettingsResult(
         ok=True,
-        message=f"{len(wanted)} setting(s) applied.",
+        message=f"{len(wanted) + len(wanted_system)} setting(s) applied.",
         code="device_settings.applied",
         settings=applied,
-        applied=sorted(wanted),
+        applied=sorted({**wanted, **wanted_system}),
     )
 
 

@@ -32,32 +32,30 @@ class Device(SQLModel, table=True):
     #: Translatable code matching ``last_error`` (see app/core/errors.py).
     last_error_code: str | None = None
 
-    # -- Bedroom mode ---------------------------------------------------------
+    # -- Quiet hours ----------------------------------------------------------
     #
-    # A window where the display is dimmed and the buzzer silenced. The
-    # firmware has no such notion: its only brightness controls are a manual
-    # level, one driven by the light sensor, and a deep sleep that turns the
-    # matrix off. The schedule therefore lives here.
+    # A window of the day where reminders ring without their melody.
+    #
+    # **It used to dim the display too, and no longer does.** On AWTRIX 3 that
+    # was the whole point: automatic brightness clamped at 2, which is too
+    # bright for a bedroom, and the floor could not be changed — so the window
+    # turned the sensor off, forced a lower level, remembered what it had
+    # overwritten, and put it back in the morning.
+    #
+    # NG makes `minBrightness` a setting. Measured on a TC001 in a dark room:
+    # the panel sits exactly on that floor, and lowering it from 10 to 8 took
+    # the display down with it. One setting replaces the schedule, the saved
+    # state and the restore — and it is the better answer, because the sensor
+    # knows you went to bed early and a 22:00 boundary does not.
+    #
+    # What survives is the half the sensor cannot do: silence is a matter of
+    # time, not of light.
 
-    night_mode: bool = False
+    quiet_hours: bool = False
     #: Local time. The window may cross midnight, which is the case anyone
     #: actually configures.
-    night_from: time | None = None
-    night_to: time | None = None
-    #: 0–255, like `BRI`. Low, not off: a clock you cannot read at night is a
-    #: clock that is off. One rather than two — the firmware's automatic
-    #: brightness floors at 2, so a window set there changes nothing in a dark
-    #: room.
-    night_brightness: int = 1
-
-    #: What the display was set to when the window opened, as the firmware's
-    #: own keys. Persisted rather than held in memory: an awtrixng-mgr restarted
-    #: at three in the morning must still know what to put back at seven.
-    night_saved: str | None = None
-    #: Whether the window is currently applied. Compared against the schedule
-    #: on each pass, so a boundary missed while awtrixng-mgr was down is caught
-    #: up rather than skipped.
-    night_active: bool = False
+    quiet_from: time | None = None
+    quiet_to: time | None = None
 
     created_at: datetime = Field(default_factory=utcnow)
     updated_at: datetime = Field(default_factory=utcnow)

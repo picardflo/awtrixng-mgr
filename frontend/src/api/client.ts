@@ -281,28 +281,32 @@ export interface RestoreResult {
   secrets: number;
 }
 
-/** A window where a display is dimmed and its buzzer silenced.
+/** A window of the day where reminders ring without their melody.
  *
- *  Kept by awtrixng-mgr, not by the clock: the firmware has no schedule of any
- *  kind. Its only brightness controls are a manual level, one driven by the
- *  light sensor, and a deep sleep that turns the matrix off.
- */
-export interface BedroomMode {
+ *  It used to dim the display as well, and no longer does: NG makes
+ *  `minBrightness` a setting, which reads the room rather than the clock. See
+ *  the device settings panel. */
+export interface QuietHours {
   enabled: boolean;
-  /** "22:00:00". The window may cross midnight. */
   start: string;
   end: string;
-  /** 0-255, like the firmware's own. */
-  brightness: number;
-  /** True while the window is applied. Read-only — the scheduler owns it. */
-  active: boolean;
 }
 
 /** The firmware names them; awtrixng-mgr showed a number until it noticed. */
+/** The twenty-two NG names in its 422, in the order it lists them. A display
+ *  declares the ones it actually has in its capabilities. */
 export const TRANSITION_EFFECTS = [
-  "Random", "Slide", "Dim", "Zoom", "Rotate", "Pixelate",
-  "Curtain", "Ripple", "Blink", "Reload", "Fade",
+  "Random", "Slide", "Dim", "Zoom", "Rotate", "Pixelate", "Curtain", "Ripple",
+  "Blink", "Reload", "Fade", "Cover", "Uncover", "Split", "Blinds", "Blocks",
+  "Flash", "Diamond", "Wave", "Rain", "Melt", "Interlace",
 ] as const;
+
+/** Structured choices, where AWTRIX 3 took `strftime` strings. Each list is a
+ *  transcription of what the firmware answers when it refuses a bad value. */
+export const TIME_SEPARATORS = ["steady", "blink", "pulse"] as const;
+export const DATE_ORDERS = ["dayMonthYear", "monthDayYear", "yearMonthDay"] as const;
+export const DATE_SEPARATORS = ["dot", "slash", "dash"] as const;
+export const YEAR_MODES = ["none", "twoDigit", "fourDigit"] as const;
 
 /** What the display itself is set to, as opposed to what awtrixng-mgr puts on it.
  *
@@ -318,29 +322,49 @@ export interface AppSettings {
   language: "en" | "fr";
 }
 
+/** The display's own settings.
+ *
+ *  AWTRIX NG's names and NG's shapes: the transition is a name rather than an
+ *  opaque integer, and the date and time formats are structured choices
+ *  rather than `strftime` incantations. Every enumeration here was read out
+ *  of the firmware's own 422, which lists what it accepts. */
 export interface DeviceSettings {
   /** On, the firmware recomputes the brightness from the light sensor and
    *  whatever `brightness` holds is overwritten within seconds. */
   auto_brightness: boolean;
   /** 0-255. */
   brightness: number;
-  /** 0-30, not 0-100. Reads as a percentage and is not one. */
-  volume: number;
+  /** The floor and ceiling automatic brightness moves between — and what
+   *  replaced the old bedroom mode. Measured on a TC001 in a dark room: the
+   *  panel sits exactly on the floor, and lowering it takes the display down
+   *  with it. These two live in /api/v1/system, not /api/v1/settings. */
+  min_brightness: number;
+  max_brightness: number;
+  /** New in NG: a switch of its own. AWTRIX 3 could only be silenced by
+   *  writing a volume of zero, which then had to be put back. */
+  sound_enabled: boolean;
+  /** 0-100, measured. AWTRIX 3's was 0-30 and read as a percentage. */
+  buzzer_volume: number;
   /** Seconds — but only for an app that asked for no duration of its own, and
    *  every widget awtrixng-mgr pushes asks. So: the built-in apps, not yours. */
   app_seconds: number;
   auto_transition: boolean;
-  /** 0-10. The firmware names them nowhere, so neither does awtrixng-mgr. */
-  transition_effect: number;
+  /** A name. The display lists its twenty-two in its capabilities. */
+  transition_effect: string;
+  transition_direction: "normal" | "reverse";
   transition_ms: number;
-  /** Percentage of the firmware's own speed. */
   scroll_speed: number;
   uppercase: boolean;
   celsius: boolean;
-  time_format: string;
-  date_format: string;
-  week_starts_monday: boolean;
-  show_weekday: boolean;
+  time_24h: boolean;
+  time_leading_zero: boolean;
+  time_show_seconds: boolean;
+  time_separator: "steady" | "blink" | "pulse";
+  date_order: "dayMonthYear" | "monthDayYear" | "yearMonthDay";
+  date_separator: "dot" | "slash" | "dash";
+  date_year: "none" | "twoDigit" | "fourDigit";
+  date_show_weekday: boolean;
+  date_month_names: boolean;
 }
 
 export interface DeviceSettingsResult {
@@ -353,14 +377,6 @@ export interface DeviceSettingsResult {
 }
 
 /** Exactly what the firmware accepts; anything else it ignores in silence. */
-export const TIME_FORMATS = [
-  "%H:%M:%S", "%l:%M:%S", "%H:%M", "%H %M",
-  "%l:%M", "%l %M", "%l:%M %p", "%l %M %p",
-] as const;
-export const DATE_FORMATS = [
-  "%d.%m.%y", "%d.%m", "%y-%m-%d", "%m-%d",
-  "%m/%d/%y", "%m/%d", "%d/%m/%y", "%d/%m", "%m-%d-%y",
-] as const;
 
 /** One app on the display. `origin` is NG's own word for where it came from:
  *  "builtin" is the firmware's, "pushed" is ours or another tool's. */
@@ -458,7 +474,7 @@ export interface Reminder {
   repeat_count: number;
   repeat_every_minutes: number;
   melody: string | null;
-  /** Keeps its melody while the display is in bedroom mode. */
+  /** Keeps its melody inside the display's quiet hours. */
   rings_at_night: boolean;
   enabled: boolean;
   device_ids: number[];
@@ -563,9 +579,9 @@ export const api = {
       body: JSON.stringify(file),
     }),
 
-  bedroom: (id: number) => request<BedroomMode>(`/devices/${id}/bedroom`),
-  setBedroom: (id: number, mode: BedroomMode) =>
-    request<BedroomMode>(`/devices/${id}/bedroom`, {
+  quietHours: (id: number) => request<QuietHours>(`/devices/${id}/quiet-hours`),
+  setQuietHours: (id: number, mode: QuietHours) =>
+    request<QuietHours>(`/devices/${id}/quiet-hours`, {
       method: "PUT",
       body: JSON.stringify(mode),
     }),

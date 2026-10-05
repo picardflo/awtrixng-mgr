@@ -54,6 +54,24 @@ class DeviceSettings(BaseModel):
     #: 0–255. Measured: 256 answers "out of range".
     brightness: int = Field(default=120, ge=0, le=255)
 
+    #: The floor and ceiling automatic brightness moves between. **New in NG,
+    #: and they replace a whole feature.**
+    #:
+    #: AWTRIX 3 clamped its automatic brightness at 2 with no way to change it
+    #: — too bright for a bedroom — so the previous project carried a schedule
+    #: that turned the sensor off at dusk, forced a lower level, remembered
+    #: what it had overwritten and put it back at dawn. Measured on a TC001 in
+    #: a dark room: the panel sits exactly on `minBrightness`, and lowering it
+    #: from 10 took the live brightness down with it, 10 → 9 → 8.
+    #:
+    #: One setting, no schedule, no saved state — and it reads the room rather
+    #: than the clock, so it dims when someone actually goes to bed.
+    #:
+    #: These two live in `/api/v1/system`, not `/api/v1/settings`, and that
+    #: route takes **PUT** where the other takes PATCH.
+    min_brightness: int = Field(default=10, ge=0, le=255)
+    max_brightness: int = Field(default=220, ge=0, le=255)
+
     # -- Sound ----------------------------------------------------------------
     #: New in NG. AWTRIX 3 could only be silenced by writing a volume of zero,
     #: which then had to be remembered and put back.
@@ -119,6 +137,13 @@ KEYS: dict[str, str] = {
     "date_month_names": "dateMonthNames",
 }
 
+#: Our name -> the firmware's, for the keys that live in `/api/v1/system`
+#: rather than in `/api/v1/settings`. Two routes, two verbs, one form.
+SYSTEM_KEYS: dict[str, str] = {
+    "min_brightness": "minBrightness",
+    "max_brightness": "maxBrightness",
+}
+
 #: Settings that do not map one-to-one. Kept apart from KEYS so the common
 #: case stays a plain table.
 #:
@@ -128,18 +153,25 @@ KEYS: dict[str, str] = {
 MS_PER_SECOND = 1000
 
 
-def read(raw: dict[str, Any]) -> DeviceSettings:
+def read(raw: dict[str, Any], system: dict[str, Any] | None = None) -> DeviceSettings:
     """What the display reports, as far as it can be trusted.
 
     A missing or malformed key falls back to the model's default rather than
     failing the whole read: a firmware that gains or loses one setting must
     not take the panel down.
+
+    `system` is the answer of `/api/v1/system`, where the brightness floor
+    lives. Optional, so a caller that only wants the display settings pays for
+    one request rather than two.
     """
     known = DeviceSettings()
     values: dict[str, Any] = {}
     for name, key in KEYS.items():
         if key in raw:
             values[name] = raw[key]
+    for name, key in SYSTEM_KEYS.items():
+        if system and key in system:
+            values[name] = system[key]
     if "appDurationMs" in raw:
         try:
             values["app_seconds"] = max(1, int(raw["appDurationMs"]) // MS_PER_SECOND)
@@ -181,6 +213,20 @@ def changes(current: DeviceSettings, wanted: DeviceSettings) -> dict[str, Any]:
         # Nested, and the firmware refuses an unknown sub-key by name.
         diff["scroll"] = {"speed": wanted.scroll_speed}
     return diff
+
+
+def system_changes(current: DeviceSettings, wanted: DeviceSettings) -> dict[str, Any]:
+    """The same, for the keys that live in `/api/v1/system`.
+
+    Kept apart because the route is a different one and takes a different
+    verb. Mixing them would send `minBrightness` to `/settings`, which answers
+    `unknown field` — politely, but it would not take effect.
+    """
+    return {
+        SYSTEM_KEYS[name]: getattr(wanted, name)
+        for name in SYSTEM_KEYS
+        if getattr(current, name) != getattr(wanted, name)
+    }
 
 
 class DeviceSettingsResult(BaseModel):

@@ -5,7 +5,7 @@ import { AwtrixMatrixPreview } from "../../components/AwtrixMatrixPreview";
 import { useToast } from "../../components/Toast";
 import { Button, Card, Stat, StatusBadge } from "../../components/ui";
 import { deviceUrl } from "./deviceUrl";
-import { BedroomPanel } from "./BedroomMode";
+import { QuietHoursPanel } from "./QuietHours";
 import { DeviceSettingsPanel } from "./DeviceSettings";
 import { useI18n } from "../../i18n";
 import type { MessageKey } from "../../i18n/messages.en";
@@ -23,7 +23,7 @@ export function DeviceCard({
   const [testing, setTesting] = useState(false);
   const [notifying, setNotifying] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [showBedroom, setShowBedroom] = useState(false);
+  const [showQuiet, setShowQuiet] = useState(false);
 
   function uptime(seconds?: number): string {
     if (seconds === undefined) return t("unit.none");
@@ -218,9 +218,9 @@ export function DeviceCard({
         </div>
       )}
 
-      {showBedroom && (
+      {showQuiet && (
         <div className="mx-4 mb-3 rounded-lg bg-[var(--color-surface-2)] p-3">
-          <BedroomPanel deviceId={device.id} />
+          <QuietHoursPanel deviceId={device.id} />
         </div>
       )}
 
@@ -234,8 +234,8 @@ export function DeviceCard({
         <Button onClick={() => setShowSettings(!showSettings)}>
           {t("device.settings.title")}
         </Button>
-        <Button onClick={() => setShowBedroom(!showBedroom)}>
-          {t("device.bedroom.title")}
+        <Button onClick={() => setShowQuiet(!showQuiet)}>
+          {t("device.quietHours.title")}
         </Button>
         <Button variant="danger" onClick={remove} className="ml-auto">
           {t("common.delete")}

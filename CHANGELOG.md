@@ -5,6 +5,65 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.6.0]
+
+**Le mode chambre est scindé.** NG a rendu la moitié « luminosité » inutile ;
+l'autre moitié reste et prend son vrai nom.
+
+### Pourquoi
+Sur AWTRIX 3, la luminosité automatique **planchait à 2** et ce plancher
+n'était pas réglable — trop clair pour une chambre. D'où tout le mécanisme :
+couper le capteur au crépuscule, forcer un niveau plus bas, mémoriser ce qu'on
+avait écrasé, le remettre à l'aube, et rattraper une bascule ratée pendant un
+arrêt. Quatre colonnes d'état et deux écritures de réglages par jour.
+
+NG fait de `minBrightness` un réglage. **Mesuré sur la TC001 dans une pièce
+sombre : le panneau se pose exactement sur ce plancher, et l'abaisser depuis 10
+a emmené la luminosité réelle avec lui, 10 → 9 → 8.** Un réglage remplace
+l'horaire, l'état sauvegardé et la restauration — et il lit la pièce plutôt que
+l'heure, donc il baisse quand quelqu'un se couche vraiment, ce qu'un créneau
+fixé à 22:00 ne peut pas savoir.
+
+### Retiré
+- La luminosité de nuit, les réglages sauvegardés, le drapeau « en cours », et
+  la passe du planificateur qui écrivait sur l'horloge deux fois par jour.
+- Six colonnes de `device`, et la route `/bedroom`.
+
+### Gardé, sous son vrai nom
+**Heures calmes** (`/quiet-hours`) : la fenêtre pendant laquelle un rappel sonne
+sans sa mélodie. C'est du **temps**, pas de la lumière — un capteur ne peut
+rien pour elle. Et elle n'écrit plus rien du tout sur l'horloge : rien à
+restaurer, rien à laisser derrière soi si l'application s'arrête.
+
+### Ajouté
+- **`minBrightness` et `maxBrightness`** dans les réglages de l'horloge, avec la
+  phrase qui dit que c'est là qu'on assombrit une horloge de chambre
+  maintenant. Ils vivent dans `/api/v1/system`, qui se met à jour en **PUT** là
+  où `/settings` veut PATCH — deux routes, deux verbes, un seul formulaire.
+- Le panneau des heures calmes dit où la luminosité est partie, plutôt que de
+  laisser quelqu'un chercher une fonction disparue.
+
+### Corrigé au passage — le panneau des réglages était cassé
+Le type `DeviceSettings` du frontend décrivait **encore AWTRIX 3** : `volume`,
+un `transition_effect` entier, `time_format` et `date_format` en chaînes
+`strftime`. Même défaut que la carte d'afficheur, trouvé par la même méthode.
+Le test de contrat couvre désormais `DeviceSettings` et `QuietHours, **dans les
+deux sens** : un champ que le navigateur réclame sans le recevoir s'affiche
+vide, un champ que le backend attend sans le recevoir revient à son défaut et
+annule silencieusement un réglage qu'on vient de changer.
+
+### La migration
+Elle touche une table qui a **déjà des lignes en production**, et elle supprime
+six colonnes. SQLite reconstruit la table pour ça, et la suppression de
+l'ancienne **cascade** sur `widget_target` et `reminder_target` — exactement la
+panne qui avait vidé les cibles de widget sur awtrixhub, en silence. Écrite à
+la main : clés étrangères désactivées autour de la reconstruction, fenêtre
+recopiée avant la suppression, valeurs par défaut sur les colonnes ajoutées.
+
+Six tests l'exercent sur une base peuplée, migrée par le **vrai** point
+d'entrée et non par la ligne de commande Alembic : la fenêtre est reportée, les
+deux tables de liaison survivent, et le pragma est bien remis après.
+
 ## [0.5.0]
 
 **Un rappel allume la matrice avant de sonner.** Parce que le firmware ne le

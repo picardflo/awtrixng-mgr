@@ -35,8 +35,8 @@ class ReminderBase(BaseModel):
     repeat_count: int = Field(default=0, ge=0, le=10)
     repeat_every_minutes: int = Field(default=2, ge=1, le=60)
     melody: str | None = None
-    #: Keeps its melody while the display is in bedroom mode. Off by default,
-    #: because that is what bedroom mode has to mean.
+    #: Keeps its melody inside the display's quiet hours. Off by default,
+    #: because that is what quiet hours have to mean.
     rings_at_night: bool = False
     enabled: bool = True
 
