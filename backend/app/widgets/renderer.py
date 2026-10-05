@@ -52,7 +52,11 @@ def render(
         "text_color": display.color or data.hint_color,
         "background_color": display.background,
         "effect": display.effect,
-        "overlay": display.overlay,
+        # Same rule as the icon: the user's choice, else the
+        # connector's suggestion, else nothing.
+        "overlay": (
+            (display.overlay or data.hint_overlay) if display.show_overlay else None
+        ),
         "repeat": display.repeat,
     }
 

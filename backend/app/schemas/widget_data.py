@@ -33,6 +33,10 @@ class WidgetData(BaseModel):
     #: Suggestions the user may override in the display options.
     hint_icon: str | None = None
     hint_color: str | None = None
+    #: Weather for the firmware to draw over the app — AWTRIX NG only, and
+    #: usually None. A connector proposes it the way it proposes an icon; the
+    #: display options can override it or turn it off.
+    hint_overlay: str | None = None
 
     progress: int | None = Field(default=None, ge=0, le=100)
     series: list[float] | None = None
@@ -85,7 +89,14 @@ class DisplayOptions(BaseModel):
     #: Weather drawn by the firmware *over* the text — rain, snow, drizzle,
     #: storm, thunder, frost. New in NG, and the device lists what it supports
     #: in GET /api/v1/capabilities.
+    #:
+    #: None means "let the connector choose", exactly as for `icon`: the
+    #: weather connector proposes one from the WMO code and most connectors
+    #: propose nothing. To have none at all, use `show_overlay`.
     overlay: str | None = None
+    #: An overlay costs no horizontal space, but it does move, and a widget
+    #: read at a glance may be better still. This is the way to say so.
+    show_overlay: bool = True
     repeat: int | None = None
 
     #: How the icon behaves beside scrolling text. Was an integer 0/1/2.

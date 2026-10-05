@@ -17,6 +17,7 @@ import {
   TEXT_CASES,
 } from "../../api/client";
 import type { IconMode, ScrollMode, TextCase } from "../../api/client";
+import type { MessageKey } from "../../i18n/messages.en";
 
 /** The six the firmware draws, as it lists them in its capabilities. Kept
  *  here as a fallback; the display's own list is authoritative. */
@@ -499,8 +500,15 @@ export function WidgetBuilder({
                   value={display.overlay ?? ""}
                   onChange={(value) => patch({ overlay: value || null })}
                   options={[
-                    { value: "", label: t("builder.overlayNone") },
-                    ...OVERLAYS.map((name) => ({ value: name, label: name })),
+                    // Empty means "whatever the service proposes", the same
+                    // rule the icon and the colour already follow. The weather
+                    // connector reads it off the WMO code; the others propose
+                    // nothing, and nothing is drawn.
+                    { value: "", label: t("builder.overlayAuto") },
+                    ...OVERLAYS.map((name) => ({
+                      value: name,
+                      label: t(`builder.overlay.${name}` as MessageKey),
+                    })),
                   ]}
                 />
               </Field>
@@ -533,6 +541,12 @@ export function WidgetBuilder({
             )}
 
             <div className="flex flex-wrap gap-4 text-sm text-[var(--color-text-muted)]">
+              <Toggle
+                label={t("builder.showOverlay")}
+                hint={t("builder.showOverlayHelp")}
+                checked={display.show_overlay}
+                onChange={(show_overlay) => patch({ show_overlay })}
+              />
               <Toggle
                 label={t("builder.showProgress")}
                 disabled={!canShowProgress}

@@ -240,3 +240,30 @@ class TestTheBarTakesTheConnectorsColour:
             data(progress=70, hint_color="#4aa8ff"), DisplayOptions(show_progress=False)
         )
         assert "progressColor" not in payload.to_json()
+
+
+class TestTheOverlay:
+    """New in NG: the firmware draws weather over the whole app."""
+
+    def test_the_connector_suggestion_is_followed(self):
+        payload = render(data(hint_overlay="rain"), DisplayOptions())
+        assert payload.to_json()["overlay"] == "rain"
+
+    def test_an_explicit_choice_wins(self):
+        payload = render(data(hint_overlay="rain"), DisplayOptions(overlay="snow"))
+        assert payload.to_json()["overlay"] == "snow"
+
+    def test_it_can_be_turned_off_entirely(self):
+        """An overlay costs no horizontal space, but it moves. A widget read
+        at a glance may be better still."""
+        payload = render(data(hint_overlay="rain"), DisplayOptions(show_overlay=False))
+        assert "overlay" not in payload.to_json()
+
+    def test_turning_it_off_also_ignores_an_explicit_choice(self):
+        payload = render(
+            data(hint_overlay="rain"), DisplayOptions(overlay="snow", show_overlay=False)
+        )
+        assert "overlay" not in payload.to_json()
+
+    def test_no_suggestion_means_no_overlay(self):
+        assert "overlay" not in render(data(), DisplayOptions()).to_json()

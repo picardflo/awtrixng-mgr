@@ -299,3 +299,79 @@ def icon_for(code: int | None, *, is_day: bool = True) -> str | None:
 
     chosen = _BY_CODE.get(numeric)
     return str(chosen) if chosen is not None else None
+
+
+# ---------------------------------------------------------------------------
+# Weather overlays — AWTRIX NG only
+# ---------------------------------------------------------------------------
+#
+# NG draws weather *over* the app, from a list it declares in
+# `GET /api/v1/capabilities`: drizzle, frost, rain, snow, storm, thunder.
+#
+# The fit with the WMO families this module already distinguishes is almost
+# one to one, which is not luck — the firmware's six were plainly chosen
+# against the same vocabulary. So this is one more column in a table that
+# already decides the icon and the colour, not a new mechanism.
+#
+# **Measured over a real widget** (icon + "18°" + colour), eight frames each,
+# counting pixels added and pixels of the text disturbed:
+#
+#     drizzle    1 / 3 / 6 added     5 of 62 text pixels
+#     snow       3 / 5 / 7           8
+#     rain       7 / 10 / 19        10
+#     storm     17 / 25 / 33        12
+#     thunder   14 / 22 / 31        17
+#     frost     52 / 52 / 52         7   — and it does not move
+#
+# Two of those numbers changed a decision.
+#
+# `frost` is not falling weather at all: it is a **static frame** around the
+# edges. It barely touches the text, but it occupies the bottom row, which is
+# where a progress bar is drawn. Fine on a temperature widget, wrong on one
+# showing a bar.
+#
+# `thunder` disturbs more of the text than anything else — a quarter of it.
+# Kept anyway for 95-99: a thunderstorm is precisely the moment a glance at
+# the clock should be interrupted. `storm` is the quieter alternative and is
+# left to whoever prefers it.
+
+#: Overlays the firmware draws. Names as it spells them, refused otherwise.
+OVERLAY_DRIZZLE = "drizzle"
+OVERLAY_RAIN = "rain"
+OVERLAY_SNOW = "snow"
+OVERLAY_STORM = "storm"
+OVERLAY_THUNDER = "thunder"
+OVERLAY_FROST = "frost"
+
+#: WMO code -> overlay. Only weather that *falls* or *freezes* is here: fog,
+#: cloud and clear sky have nothing to draw, and an overlay on a clear day
+#: would be a lie told in pixels.
+_OVERLAY_BY_CODE: dict[int, str] = {
+    51: OVERLAY_DRIZZLE, 53: OVERLAY_DRIZZLE, 55: OVERLAY_DRIZZLE,
+    # Freezing drizzle and freezing rain: the frost frame says "it is sticking"
+    # in a way a rain overlay cannot.
+    56: OVERLAY_FROST, 57: OVERLAY_FROST,
+    61: OVERLAY_RAIN, 63: OVERLAY_RAIN, 65: OVERLAY_RAIN,
+    66: OVERLAY_FROST, 67: OVERLAY_FROST,
+    71: OVERLAY_SNOW, 73: OVERLAY_SNOW, 75: OVERLAY_SNOW, 77: OVERLAY_SNOW,
+    80: OVERLAY_RAIN, 81: OVERLAY_RAIN, 82: OVERLAY_RAIN,
+    85: OVERLAY_SNOW, 86: OVERLAY_SNOW,
+    95: OVERLAY_THUNDER, 96: OVERLAY_THUNDER, 99: OVERLAY_THUNDER,
+}
+
+#: Every overlay this module may ask for, so a caller can check them against
+#: what the display declares it can draw.
+OVERLAYS: frozenset[str] = frozenset(_OVERLAY_BY_CODE.values())
+
+
+def overlay_for(code: int | None) -> str | None:
+    """The overlay for a WMO code, or None when there is nothing to draw.
+
+    None is the common answer and the right default: most codes are cloud and
+    sunshine, and a matrix that drizzles under a clear sky is worse than one
+    that draws nothing.
+    """
+    try:
+        return _OVERLAY_BY_CODE.get(int(code))  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None

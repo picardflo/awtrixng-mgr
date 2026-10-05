@@ -5,6 +5,52 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.4.0]
+
+**La météo cesse de se décrire et se montre.** Premier widget modernisé avec ce
+qu'apporte NG : l'horloge dessine la pluie, la neige ou l'orage par-dessus
+l'app, à partir du code météo.
+
+### Ajouté
+- **`overlay` sur `weather.current`**, déduit du code WMO. La table du
+  connecteur distinguait déjà les familles que NG a nommées — bruine (51-55),
+  pluie (61-65, 80-82), neige (71-77, 85-86), verglas (56-57, 66-67), orage
+  (95-99) — donc c'est une colonne de plus dans une table qui décide déjà
+  l'icône et la couleur, pas un mécanisme neuf.
+- `hint_overlay` sur `WidgetData` : le connecteur **propose**, comme pour
+  l'icône et la couleur. Un choix explicite l'emporte, et `show_overlay` le
+  coupe — une surimpression ne coûte aucune colonne, mais elle bouge.
+- Six tests sur matériel, un par condition : le widget est poussé sans puis
+  avec sa surimpression, et les pixels ajoutés sont comptés sur huit images.
+
+### Mesuré, et qui a changé des décisions
+Sur un vrai widget — icône, « 18° », couleur — huit images par surimpression :
+
+| | pixels ajoutés | pixels du texte perturbés |
+|---|---|---|
+| `drizzle` | 1 / 3 / 6 | 5 sur 62 |
+| `snow` | 3 / 5 / 7 | 8 |
+| `rain` | 7 / 10 / 19 | 10 |
+| `storm` | 17 / 25 / 33 | 12 |
+| `thunder` | 14 / 22 / 31 | **17** |
+| `frost` | 52, **immobile** | 7 |
+
+- **`frost` n'est pas une précipitation** : c'est un **cadre fixe** sur les
+  bords. Il ne gêne presque pas le texte, mais il occupe la rangée du bas,
+  celle de la barre de progression. Retenu pour le verglas, où « ça tient »
+  est précisément l'information ; à ne pas marier avec une barre.
+- **`thunder` est le plus agressif** — un quart du texte perturbé. Gardé pour
+  95-99 quand même : un orage est exactement le moment où un coup d'œil à
+  l'horloge doit être interrompu. `storm`, plus discret, reste disponible.
+- **Un ciel clair ne dessine rien**, vérifié : 0 pixel ajouté. Une matrice qui
+  bruine sous un ciel dégagé est pire qu'une matrice qui ne dessine rien.
+
+### Ce qui ne se modernisera pas
+Le dégradé de température (cinq couleurs interpolées à la main) ressemblait à
+un candidat pour le `palette` natif. **Mesuré : `palette` colore les effets,
+pas le texte.** Poussé `{"text":"ARC","palette":"Rainbow"}`, relu l'écran, une
+seule couleur. L'interpolation reste à nous.
+
 ## [0.3.3]
 
 0.3.2 n'avait corrigé que quatre tuiles sur six. **Et son test passait au

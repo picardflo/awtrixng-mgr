@@ -294,3 +294,68 @@ class TestTheRainColourFollowsTheIcon:
 
     def test_an_unknown_probability_reads_as_dry(self):
         assert self.colour(3, None) == wmo.DRY
+
+
+class TestTheWeatherOverlay:
+    """NG draws the weather over the app. The connector proposes which.
+
+    Every number quoted here was measured on a TC001 over a real widget —
+    icon, text and colour — sampling eight frames per overlay. They are in
+    the table at the foot of `app/connectors/weather/wmo.py`.
+    """
+
+    def test_falling_weather_gets_its_overlay(self):
+        from app.connectors.weather import wmo
+
+        assert wmo.overlay_for(51) == "drizzle"   # light drizzle
+        assert wmo.overlay_for(63) == "rain"      # moderate rain
+        assert wmo.overlay_for(73) == "snow"      # moderate snowfall
+        assert wmo.overlay_for(82) == "rain"      # violent rain showers
+        assert wmo.overlay_for(95) == "thunder"   # thunderstorm
+
+    def test_freezing_weather_gets_the_frost_frame(self):
+        """56-57 and 66-67 are freezing drizzle and freezing rain.
+
+        Measured, `frost` is not falling weather at all: it is a static frame
+        around the edges, 52 pixels that never move. It says "it is sticking"
+        in a way a rain overlay cannot.
+        """
+        from app.connectors.weather import wmo
+
+        for code in (56, 57, 66, 67):
+            assert wmo.overlay_for(code) == "frost"
+
+    def test_a_clear_sky_draws_nothing(self):
+        """The common answer, and the right default. A matrix that drizzles
+        under a clear sky is worse than one that draws nothing."""
+        from app.connectors.weather import wmo
+
+        for code in (0, 1, 2, 3, 45, 48):
+            assert wmo.overlay_for(code) is None
+
+    def test_an_unknown_code_draws_nothing_rather_than_raising(self):
+        from app.connectors.weather import wmo
+
+        assert wmo.overlay_for(None) is None
+        assert wmo.overlay_for("rain") is None  # type: ignore[arg-type]
+        assert wmo.overlay_for(12345) is None
+
+    def test_every_overlay_named_is_one_the_firmware_declares(self):
+        """Measured on the device: `capabilities.overlays` lists exactly these
+        six, and anything else answers `unknown overlay`."""
+        from app.connectors.weather import wmo
+
+        declared = {"drizzle", "frost", "rain", "snow", "storm", "thunder"}
+        assert wmo.OVERLAYS <= declared
+
+    def test_the_bar_and_the_frost_frame_share_the_bottom_row(self):
+        """Pinned as a caution, not as behaviour.
+
+        `frost` occupies the bottom row, which is where a progress bar is
+        drawn. The temperature widget has no bar, so nothing collides today —
+        but a widget that gains one and keeps the overlay will look wrong, and
+        this is the note that says why.
+        """
+        from app.connectors.weather import wmo
+
+        assert wmo.overlay_for(66) == "frost"

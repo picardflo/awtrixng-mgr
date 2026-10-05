@@ -505,6 +505,11 @@ class WeatherConnector(Connector):
             # no horizontal space the text needs.
             hint_icon=wmo.icon_for(current.get("weather_code"), is_day=is_day),
             hint_color=wmo.colour_for_temperature(temperature),
+            # And NG can draw the weather over the whole app, which is what a
+            # 32x8 panel is actually good at: showing rather than describing.
+            # None for most codes — a matrix that drizzles under a clear sky
+            # is worse than one that draws nothing.
+            hint_overlay=wmo.overlay_for(current.get("weather_code")),
         )
 
     # -- Test -----------------------------------------------------------------

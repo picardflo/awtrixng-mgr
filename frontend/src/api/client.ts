@@ -141,7 +141,9 @@ export interface DisplayOptions {
   effect: string | null;
   /** Weather drawn by the firmware over the text. New in NG; the display
    *  lists the ones it supports in its capabilities. */
+  /** null = whatever the service proposes. `show_overlay` turns it off. */
   overlay: string | null;
+  show_overlay: boolean;
   repeat: number | null;
   icon_mode: IconMode;
   text_case: TextCase;

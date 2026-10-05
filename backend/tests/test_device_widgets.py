@@ -109,3 +109,72 @@ async def test_a_widget_reaches_the_matrix(client, widget_type: str):
         f"{widget_type} was accepted by the firmware and drew nothing. "
         f"Payload: {body}"
     )
+
+
+#: One WMO code per overlay the weather connector can propose, with the words
+#: for whoever reads the output.
+WEATHER_CONDITIONS = [
+    (0, "ciel clair", None),
+    (53, "bruine", "drizzle"),
+    (63, "pluie", "rain"),
+    (66, "pluie verglaçante", "frost"),
+    (73, "neige", "snow"),
+    (95, "orage", "thunder"),
+]
+
+
+@pytest.mark.parametrize(("code", "label", "expected"), WEATHER_CONDITIONS)
+async def test_the_weather_overlay_reaches_the_matrix(client, code, label, expected):
+    """A weather widget for each condition, pushed, and the panel read back.
+
+    The unit tests prove the table maps the code to the name we intend. Only
+    the display proves the firmware draws it — and `overlay` is one of the
+    keys NG validates, so a name it does not know comes back as a 422 rather
+    than as silence.
+
+    The comparison is against the same widget without an overlay: anything the
+    overlay adds is pixels that were not there.
+    """
+    import asyncio
+
+    from app.connectors.weather import wmo
+    from app.schemas.widget_data import WidgetData
+
+    assert wmo.overlay_for(code) == expected, f"{label}: the table changed"
+
+    data = WidgetData(
+        values={"temp": 18},
+        hint_icon=wmo.icon_for(code, is_day=True),
+        hint_color="#4aa8ff",
+        hint_overlay=expected,
+    )
+    display = DisplayOptions(text="{{ temp }}°")
+
+    plain = render(data.model_copy(update={"hint_overlay": None}), display)
+    plain.duration_ms = HOLD_MS
+    if plain.icon:
+        await client.ensure_icon(plain.icon)
+    await client.push_app(TEST_APP, plain)
+    await client.switch_to(TEST_APP)
+    await asyncio.sleep(SETTLE_SECONDS)
+    without = {index for index, pixel in enumerate(await client.get_screen()) if pixel}
+
+    payload = render(data, display)
+    payload.duration_ms = HOLD_MS
+    assert payload.to_json().get("overlay") == expected
+    await client.push_app(TEST_APP, payload)
+    await asyncio.sleep(SETTLE_SECONDS)
+
+    # Sampled rather than caught once: every overlay but `frost` animates, so
+    # a single frame can land on a sparse moment — `drizzle` draws as few as
+    # one pixel.
+    added = 0
+    for _ in range(8):
+        lit = {index for index, pixel in enumerate(await client.get_screen()) if pixel}
+        added = max(added, len(lit - without))
+        await asyncio.sleep(0.25)
+
+    print(f"\n--- {label} (WMO {code}) overlay={expected}: {added} pixels ajoutés")
+    if expected is None:
+        return
+    assert added > 0, f"{label}: the firmware accepted overlay={expected} and drew nothing"
