@@ -588,6 +588,7 @@ export function WidgetBuilder({
             iconUrl={icon && /^\d+$/.test(icon) ? iconThumbnail(icon) : null}
             color={colour}
             background={display.background}
+            font={display.font}
             noScroll={display.scroll_mode === "static"}
             scrollSpeed={display.scroll_speed}
             progress={

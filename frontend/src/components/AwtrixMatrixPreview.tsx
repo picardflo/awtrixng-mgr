@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useI18n } from "../i18n";
-import { GLYPH_HEIGHT, rasterize } from "./pixelFont";
+import { heightFor, rasterize } from "./pixelFont";
+import type { FontName } from "./pixelFont";
 
 export const MATRIX_WIDTH = 32;
 export const MATRIX_HEIGHT = 8;
@@ -37,6 +38,8 @@ export interface MatrixPreviewProps {
   color?: string;
   background?: string | null;
   noScroll?: boolean;
+  /** Five rows, or seven. The firmware's own two. */
+  font?: FontName;
   scrollSpeed?: number;
   progress?: number | null;
   progressColor?: string;
@@ -75,6 +78,7 @@ export function AwtrixMatrixPreview({
   color = "#3ddc84",
   background = null,
   noScroll = false,
+  font = "small",
   scrollSpeed = 100,
   progress = null,
   // Firmware defaults, measured on a v0.98 device: the filled part is pure
@@ -104,7 +108,7 @@ export function AwtrixMatrixPreview({
     canvas.style.height = `${MATRIX_HEIGHT * scale}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const columns = rasterize(text);
+    const columns = rasterize(text, font);
     const textLeft = icon ? ICON_SIZE + 1 : 0;
     const available = MATRIX_WIDTH - textLeft;
     const overflows = columns.length > available;
@@ -112,7 +116,11 @@ export function AwtrixMatrixPreview({
 
     // Rows 1 to 5. Measured on the device: the progress bar does not move the
     // text, it only takes row 7.
-    const textTop = 1;
+    // Measured on the panel: the small font sits on rows 1..5 and the large
+    // on 0..6. The large one therefore starts at the top and ends exactly
+    // above the progress bar — which is why it is the font of a widget that
+    // has one, and why it looks a row high on a widget that does not.
+    const textTop = font === "large" ? 0 : 1;
 
     const dot = (x: number, y: number, fill: string) => {
       if (x < 0 || x >= MATRIX_WIDTH || y < 0 || y >= MATRIX_HEIGHT) return;
@@ -165,7 +173,8 @@ export function AwtrixMatrixPreview({
         if (x < textLeft || x >= MATRIX_WIDTH) continue;
         const mask = columns[i];
         const fill = color;
-        for (let y = 0; y < GLYPH_HEIGHT; y += 1) {
+        const glyphHeight = heightFor(font);
+        for (let y = 0; y < glyphHeight; y += 1) {
           if (mask & (1 << y)) dot(x, textTop + y, fill);
         }
       }

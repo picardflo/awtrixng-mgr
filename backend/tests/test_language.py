@@ -285,17 +285,20 @@ class TestTheClocksLanguageIsSettable:
         client.put("/api/settings", json={"language": "fr"})
         assert pass_.countdown_values(reminder, date(2027, 11, 15))["countdown"] == "JOUR J"
 
-    def test_accents_still_never_reach_the_matrix(self, client):
-        """French prose is translated, then stripped at the hardware boundary.
-        "Modéré" arrives as "Modere" — never as "Mod?r?", which is what the
-        firmware font draws for a character it has not got."""
+    def test_french_reaches_the_matrix_spelt_properly(self, client):
+        """It used to arrive stripped — "Modéré" as "Modere".
+
+        That was AWTRIX 3, whose font drew a question mark for a letter it
+        had not got, so dropping the accent was the lesser evil. NG draws
+        them, measured character by character, and translating a word only to
+        misspell it on the way out was the last thing standing between a
+        French interface and a French display.
+        """
         from app.widgets import template
 
         client.put("/api/settings", json={"language": "fr"})
         for word in ("Modéré", "Très élevé", "Graminées", "Dégradé"):
-            rendered = template.for_matrix(word)
-            assert "?" not in rendered
-            assert rendered.isascii()
+            assert template.for_matrix(word) == word
 
 
 class TestChangingItRepushes:

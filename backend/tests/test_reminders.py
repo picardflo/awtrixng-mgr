@@ -129,9 +129,11 @@ def test_the_payload_wakes_the_matrix_and_does_not_hold():
     assert sent["hold"] is False
 
 
-def test_accents_are_stripped_like_everywhere_else():
+def test_accents_reach_the_clock_like_everywhere_else():
+    """A reminder is prose more often than a widget is, so it had the most to
+    lose from the old stripping."""
     payload = pass_.payload_for(a_reminder(message="Médicament à prendre"))
-    assert payload.to_json()["text"] == "Medicament a prendre"
+    assert payload.to_json()["text"] == "Médicament à prendre"
 
 
 def test_a_melody_travels_inline():
@@ -570,10 +572,11 @@ class TestCountdown:
         assert not pass_.occurrences(weekdays_only, date(2027, 11, 13))
         assert pass_.occurrences(weekdays_only, date(2027, 11, 12))
 
-    def test_accents_still_go_before_the_matrix(self):
-        """The countdown runs through the same hardware boundary as any text."""
-        assert self.text(self.loan("ECHEANCE {{ countdown }}"), date(2027, 11, 15)) == (
-            "ECHEANCE JOUR J"
+    def test_the_countdown_crosses_the_boundary_intact(self):
+        """It runs through the same hardware boundary as any text, which no
+        longer takes anything away."""
+        assert self.text(self.loan("ÉCHÉANCE {{ countdown }}"), date(2027, 11, 15)) == (
+            "ÉCHÉANCE JOUR J"
         )
 
 

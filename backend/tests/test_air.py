@@ -1,4 +1,4 @@
-"""Air quality, UV and pollen.
+"""Air quality and UV.
 
 The thresholds are not invented. The European index comes from Open-Meteo's
 own documentation, which states the European Environment Agency's bands as
@@ -115,34 +115,27 @@ class TestTheWidgets:
         assert values["uv"] == 3.05
         assert values["level_code"] == "moderate"
 
-    def test_pollen_follows_the_chosen_species(self):
-        connector = self.connector()
-        grass = connector.project("weather.pollen", {"species": "grass"}, LIVE)
-        birch = connector.project("weather.pollen", {"species": "birch"}, LIVE)
-        assert grass.values["species_code"] == "grass"
-        assert birch.values["species_code"] == "birch"
-        assert grass.hint_icon != birch.hint_icon
-
-    def test_pollen_reports_the_figure_and_nothing_else(self):
-        values = self.connector().project("weather.pollen", {"species": "grass"}, LIVE).values
-        assert values["grains"] == 0.1
-        assert "level" not in values
-        assert "level_code" not in values
-
-    def test_pollen_without_a_species_still_works(self):
-        values = self.connector().project("weather.pollen", {}, LIVE).values
-        assert values["species_code"] == "grass"
-
-    def test_the_three_share_one_call(self):
+    def test_the_two_share_one_call(self):
         """A different host from the forecast, but one request between them:
-        three widgets must not mean three round trips."""
+        two widgets must not mean two round trips."""
         connector = self.connector()
-        keys = {
-            connector.request_key(t, {})[0]
-            for t in ("weather.air", "weather.uv", "weather.pollen")
-        }
+        keys = {connector.request_key(t, {})[0] for t in ("weather.air", "weather.uv")}
         assert len(keys) == 1
         assert keys.pop().startswith("air:")
+
+    def test_the_pollen_widget_is_gone(self):
+        """Removed on 5 October 2026, Florian's call: "il ne m'apporte pas
+        grand chose".
+
+        It was also the one reading in the project with no ceiling to draw a
+        bar against — a count of grains per cubic metre says little without a
+        scale beside it, and the scale does not exist. Pinned so it is not
+        quietly restored with the data still in the response.
+        """
+        from app.connectors import registry
+
+        registry.load_all()
+        assert registry.widget_descriptor("weather.pollen") is None
 
     def test_the_forecast_keeps_its_own(self):
         connector = self.connector()
@@ -172,3 +165,38 @@ class TestTheRequest:
             with pytest.raises(Exception) as raised:
                 await air.fetch(client, 48.7, 1.9)
         assert raised.value.code == "air.unreachable"
+
+
+def test_a_withdrawn_widget_type_is_refused_not_defaulted():
+    """Removing a widget must not turn its instances into something else.
+
+    The weather connector matches each type by name and ends on the current
+    weather. A `weather.pollen` widget surviving in a running installation
+    would therefore have fallen through to that last branch and become a
+    temperature widget — silently, with a plausible number on the matrix and
+    nothing anywhere to say it was the wrong one.
+
+    Found while removing pollen on 5 October 2026, with instances of it
+    possibly already configured.
+    """
+    from app.connectors import registry
+    from app.connectors.factory import build
+    from app.core.errors import ConnectorError
+    from app.models import ConnectorInstance
+
+    registry.load_all()
+    connector = build(
+        ConnectorInstance(
+            id=1,
+            type="weather",
+            name="M",
+            config={"place": {"name": "P", "latitude": 48.85, "longitude": 2.35}},
+            secrets={},
+        )
+    )
+    raw = {"current": {"temperature_2m": 20, "weather_code": 2, "is_day": 1}}
+
+    assert connector.project("weather.current", {}, raw).values["temp"] == 20
+    for withdrawn in ("weather.pollen", "weather.whatever"):
+        with pytest.raises(ConnectorError, match="no longer offers"):
+            connector.project(withdrawn, {}, raw)

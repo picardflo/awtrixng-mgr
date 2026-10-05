@@ -18,7 +18,6 @@ must not take a widget — let alone the scheduler — down.
 """
 
 import re
-import unicodedata
 from collections.abc import Callable, Mapping
 from typing import Any
 
@@ -116,25 +115,28 @@ FILTERS: dict[str, Callable[[Any, str | None], Any]] = {
 }
 
 
-#: Ligatures have no accent to strip, so they are spelled out by hand.
-_LIGATURES = str.maketrans({"œ": "oe", "Œ": "OE", "æ": "ae", "Æ": "AE", "ß": "ss"})
 
 
 def for_matrix(text: str) -> str:
-    """Strip what the firmware's font cannot draw.
+    """The boundary with the hardware. It no longer changes anything.
 
-    The AWTRIX font has no accented letters: it prints a question mark instead,
-    so "décroissante" reaches the matrix as "d?croissante". Decomposing and
-    dropping the combining marks turns it into "decroissante" — imperfect
-    French, but readable, which is the whole point of a 32-pixel line.
+    **On AWTRIX 3 this stripped accents**, because that font had none and
+    printed a question mark instead: "décroissante" reached the matrix as
+    "d?croissante". Decomposing and dropping the combining marks gave
+    "decroissante" — imperfect French, but readable.
 
-    Only the marks go. Characters the font does draw are kept, degree sign
-    included, which is why this is not a plain ASCII filter.
+    **AWTRIX NG draws them.** Measured on a TC001 by pushing each character on
+    its own and comparing the framebuffer against the one "?" produces:
+    àâäéèêëîïôöùûüÿç, ÀÂÉÈÊËÎÔÙÛÇ, the ligatures œŒæÆ, and °€µ — every one
+    drawn, not one substituted. So the workaround now does harm: it is the
+    only reason a French label reached the display misspelt.
+
+    The function stays as the seam. Something will want it again — a firmware
+    that drops a character, a panel with a different font — and a boundary
+    that exists is easier to use than one that has to be reinvented.
     """
-    decomposed = unicodedata.normalize("NFD", text.translate(_LIGATURES))
-    return unicodedata.normalize(
-        "NFC", "".join(c for c in decomposed if not unicodedata.combining(c))
-    )
+    return text
+
 
 
 def render(template: str, values: Mapping[str, Any]) -> str:

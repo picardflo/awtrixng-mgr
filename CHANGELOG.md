@@ -5,6 +5,56 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.9.0]
+
+Quatre remarques de Florian sur l'interface, et chacune cachait mieux qu'elle
+ne disait.
+
+### Les accents : le firmware les dessine
+Son intuition, vérifiée caractère par caractère sur le Bureau : NG dessine
+**tout** — `àâäéèêëîïôöùûüÿç`, `ÀÂÉÈÊËÎÔÙÛÇ`, les ligatures `œŒæÆ`, et
+`°€µ`. Pas une substitution.
+
+AWTRIX 3 n'en avait aucun et imprimait `?`, d'où le retrait d'accents que ce
+projet traînait. Ce contournement était devenu **la seule raison** qu'un
+libellé français arrive mal orthographié. Supprimé, et les tests retournés :
+ils garantissent désormais que « Dégradé » arrive *dégradé*.
+
+### La police dans l'aperçu : extraite de la dalle
+« On ne voit pas la différence » — exact, j'avais ajouté la clé sans toucher au
+rendu. Plutôt que de dessiner une seconde police à la main, **les deux ont été
+lues sur l'appareil** : 138 caractères chacune, poussés un par un en statique,
+relus dans `/api/v1/display/screen`. Quatre captures polluées par une rotation
+d'app ont été reprises avec un contrôle de stabilité.
+
+Au passage, ça a révélé que **l'ancienne police de l'aperçu n'était pas la
+bonne** : son `A` valait `010/101/111/101/101` là où le firmware dessine
+`110/101/111/101/101`. Elle avait été transcrite d'une capture d'écran.
+
+L'aperçu et la dalle donnent maintenant des **pixels identiques**, vérifié sur
+huit cas × deux polices. Un aperçu se consulte précisément quand quelque chose
+cloche : celui qui approxime vaut moins que pas d'aperçu.
+
+Le script est gardé : `scripts/extract-font.py`.
+
+### L'icône de nuit
+« J'arrive même pas à comprendre cette icône » — c'était 12195, qui se referme
+en tache à huit pixels. Cinq candidates poussées sur le Bureau, **70564 choisie
+par Florian** : un croissant qui survit à la taille, avec le nuage qui passe
+devant.
+
+### Pollen retiré
+Choix de Florian. C'était aussi la seule mesure du projet sans plafond pour
+tracer une barre — un compte de grains par mètre cube ne dit rien sans échelle,
+et l'échelle n'existe pas.
+
+### Et un défaut trouvé en le retirant
+Un widget Pollen déjà configuré **ne serait pas tombé en erreur** : la
+projection du connecteur météo compare les types un à un et finit sur la météo
+actuelle, donc il serait devenu un widget température — silencieusement, avec
+un nombre plausible sur la matrice. Un type retiré est désormais refusé par son
+nom.
+
 ## [0.8.0]
 
 Une règle, mesurée, appliquée aux onze widgets.

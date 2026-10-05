@@ -21,7 +21,7 @@ from app.connectors.registry import register
 from app.connectors.weather import air, sun, wmo
 from app.core import language
 from app.core.errors import ConnectorError
-from app.schemas.fields import FormField, Option, Variable
+from app.schemas.fields import FormField, Variable
 from app.schemas.widget_data import DisplayOptions, WidgetData
 
 ENDPOINT = "https://api.open-meteo.com/v1/forecast"
@@ -45,7 +45,13 @@ DAILY_VARIABLES = ("sunrise", "sunset", "daylight_duration")
 FORECAST_DAYS = 2
 
 #: The three that read the air-quality host rather than the forecast one.
-AIR_WIDGETS = frozenset({"weather.air", "weather.uv", "weather.pollen"})
+#: Those served by the air-quality host rather than the forecast one.
+#:
+#: `weather.pollen` was here and is gone — Florian's call, 5 October 2026:
+#: "il ne m'apporte pas grand chose". It was also the one reading in the
+#: project with no ceiling to draw a bar against, which is a fair sign that a
+#: number of grains per cubic metre means little without a scale beside it.
+AIR_WIDGETS = frozenset({"weather.air", "weather.uv"})
 
 
 def _scaled(value: float | None, ceiling: float) -> int | None:
@@ -97,23 +103,6 @@ def _project_air(
             },
             hint_icon=str(band.icon),
             hint_color=band.colour,
-        )
-
-    if widget_type == "weather.pollen":
-        species = str(config.get("species") or "grass")
-        field, icon, colour = air.POLLENS.get(species, air.POLLENS["grass"])
-        return WidgetData(
-            values={
-                "grains": current.get(field),
-                "species_code": species,
-                "species": language.localise(
-                    air.POLLEN_TRANSLATIONS,
-                    species,
-                    air.POLLEN_ENGLISH_NAMES.get(species, species),
-                ),
-            },
-            hint_icon=str(icon),
-            hint_color=colour,
         )
 
     aqi = current.get("european_aqi")
@@ -369,40 +358,6 @@ class WeatherConnector(Connector):
                     hint_color=air.UV_BANDS[1][1].colour,
                 ),
             ),
-            WidgetDescriptor(
-                type="weather.pollen",
-                name="Pollen",
-                description="One species' concentration, for whoever reacts to it.",
-                fields=[
-                    FormField(
-                        name="species",
-                        label="Pollen",
-                        type="select",
-                        required=True,
-                        default="grass",
-                        help="One widget per species: 'pollen' in general helps nobody.",
-                        options=[
-                            Option(value=slug, label=air.POLLEN_ENGLISH_NAMES[slug])
-                            for slug in air.POLLENS
-                        ],
-                    ),
-                ],
-                variables=[
-                    Variable(name="grains", label="Grains per m³", example="12.4"),
-                    Variable(name="species", label="Which pollen, as shown", example="Grass"),
-                ],
-                # The figure, plain. It is what the API gives and what
-                # someone allergic actually reads.
-                default_display=DisplayOptions(text="{{ grains | round }}", duration=8),
-                default_refresh=air.CACHE_SECONDS,
-                sample_data=WidgetData(
-                    values={
-                        "grains": 12.4, "species": "Grass", "species_code": "grass",
-                    },
-                    hint_icon=str(air.POLLEN_ICON_GRASS),
-                    hint_color=air.POLLENS["grass"][2],
-                ),
-            ),
         ],
     )
 
@@ -621,6 +576,23 @@ class WeatherConnector(Connector):
                 progress=int(humidity) if humidity is not None else None,
                 hint_icon=str(wmo.ICON_HUMIDITY),
                 hint_color=wmo.colour_for_humidity(humidity),
+            )
+
+        if widget_type != "weather.current":
+            # Everything above matched a type by name, and the last branch is
+            # the current weather. Falling through to it would turn a widget
+            # whose type no longer exists into a temperature widget — silently,
+            # with a plausible number on the matrix and nothing to say it is
+            # the wrong one.
+            #
+            # That is not hypothetical: `weather.pollen` was removed on
+            # 5 October 2026 while instances of it could exist in a running
+            # installation.
+            raise ConnectorError(
+                f"This installation no longer offers the widget {widget_type}. "
+                f"Delete it and build another.",
+                code="widget.type_withdrawn",
+                params={"widget_type": widget_type},
             )
 
         temperature = current.get("temperature_2m")

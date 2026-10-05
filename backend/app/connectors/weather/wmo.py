@@ -225,7 +225,12 @@ ICON_HUMIDITY = 26543
 ICON_CLEAR_DAY = 12182
 ICON_CLEAR_NIGHT = 12181
 ICON_PARTLY_CLOUDY_DAY = 12183
-ICON_PARTLY_CLOUDY_NIGHT = 12195
+#: Chosen by Florian on 5 October 2026, against four others shown on the
+#: panel. The one before it (12195, "Partly Cloudy Night") closed into a blob
+#: at eight pixels — his words: "j'arrive même pas à comprendre cette icône".
+#: This one keeps a crescent that survives the size, with the cloud moving
+#: across it.
+ICON_PARTLY_CLOUDY_NIGHT = 70564
 #: 12197 "Cloudy" was the obvious pick by name, but at eight pixels it is a
 #: diagonal smudge in the corner — someone looking at it asked what it was
 #: meant to be. 12246 draws a cloud centred in the frame.
