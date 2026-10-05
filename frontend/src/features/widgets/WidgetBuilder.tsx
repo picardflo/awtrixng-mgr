@@ -11,12 +11,13 @@ import { useEffect, useRef, useState } from "react";
 import {
   api,
   ApiError,
+  FONTS,
   ICON_MODES,
   iconThumbnail,
   SCROLL_MODES,
   TEXT_CASES,
 } from "../../api/client";
-import type { IconMode, ScrollMode, TextCase } from "../../api/client";
+import type { Font, IconMode, ScrollMode, TextCase } from "../../api/client";
 import type { MessageKey } from "../../i18n/messages.en";
 
 /** The six the firmware draws, as it lists them in its capabilities. Kept
@@ -482,6 +483,16 @@ export function WidgetBuilder({
                   options={ICON_MODES.map((mode) => ({
                     value: mode,
                     label: t(`builder.iconMode.${mode}`),
+                  }))}
+                />
+              </Field>
+              <Field label={t("builder.font")} hint={t("builder.fontHelp")}>
+                <NativeSelect
+                  value={display.font}
+                  onChange={(value) => patch({ font: value as Font })}
+                  options={FONTS.map((name) => ({
+                    value: name,
+                    label: t(`builder.font.${name}`),
                   }))}
                 />
               </Field>

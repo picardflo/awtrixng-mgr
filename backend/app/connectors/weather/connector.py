@@ -174,7 +174,15 @@ class WeatherConnector(Connector):
                     Variable(name="condition", label="Condition, as shown", example="Rain"),
                 ],
                 default_display=DisplayOptions(
-                    text="{{ probability }}%", duration=8, show_progress=True
+                    text="{{ probability }}%",
+                    duration=8,
+                    show_progress=True,
+                    # Seven rows instead of five, and the seven above the bar:
+                    # measured on a TC001, a two-digit figure with an icon and
+                    # a progress bar still fits the 32 columns. The number is
+                    # the whole point of this widget, so it may as well fill
+                    # the panel.
+                    font="large",
                 ),
                 default_refresh=600,
                 sample_data=WidgetData(
@@ -187,6 +195,48 @@ class WeatherConnector(Connector):
                     progress=70,
                     hint_icon=str(wmo.ICON_RAIN),
                     hint_color="#4aa8ff",
+                    hint_overlay=wmo.OVERLAY_RAIN,
+                ),
+            ),
+            WidgetDescriptor(
+                type="weather.humidity",
+                name="Outdoor humidity",
+                description="Water in the air, which is not the same question as rain.",
+                variables=[
+                    Variable(name="humidity", label="Relative humidity (%)", example="65"),
+                    Variable(name="temp", label="Temperature (°C)", example="18"),
+                    Variable(
+                        name="feels_like",
+                        label="Apparent temperature (°C)",
+                        example="19.5",
+                    ),
+                    Variable(
+                        name="probability",
+                        label="Chance of rain (%), for a template that wants both",
+                        example="30",
+                    ),
+                ],
+                default_display=DisplayOptions(
+                    text="{{ humidity | round }}%",
+                    duration=8,
+                    show_progress=True,
+                    font="large",
+                    # Florian's choice: a falling drop that splashes, 21 frames.
+                    # It reads as water in the air rather than as weather to
+                    # come, which is the distinction this widget exists for.
+                    icon=str(wmo.ICON_HUMIDITY),
+                ),
+                default_refresh=600,
+                sample_data=WidgetData(
+                    values={
+                        "humidity": 65,
+                        "temp": 18.0,
+                        "feels_like": 19.5,
+                        "probability": 30,
+                    },
+                    progress=65,
+                    hint_icon=str(wmo.ICON_HUMIDITY),
+                    hint_color=wmo.colour_for_humidity(65),
                 ),
             ),
             WidgetDescriptor(
@@ -485,6 +535,29 @@ class WeatherConnector(Connector):
                 hint_color=wmo.colour_for_precipitation(
                     current.get("weather_code"), probability
                 ),
+                # From the condition, never from the probability. This is the
+                # threshold question answered by refusing it: at a 70 % chance
+                # under a clear sky, a matrix that rains is lying. It rains on
+                # screen when it is raining outside, and not before.
+                hint_overlay=wmo.overlay_for(current.get("weather_code")),
+            )
+
+        if widget_type == "weather.humidity":
+            humidity = current.get("relative_humidity_2m")
+            return WidgetData(
+                values={
+                    "humidity": humidity,
+                    "temp": current.get("temperature_2m"),
+                    "feels_like": current.get("apparent_temperature"),
+                    "probability": current.get("precipitation_probability"),
+                },
+                # The bar shows the same number the text does. Deliberately:
+                # two quantities under one colour scale would make the scale
+                # mean two things, and a bar that repeats the figure is read
+                # from across a room where eight-pixel digits are not.
+                progress=int(humidity) if humidity is not None else None,
+                hint_icon=str(wmo.ICON_HUMIDITY),
+                hint_color=wmo.colour_for_humidity(humidity),
             )
 
         temperature = current.get("temperature_2m")

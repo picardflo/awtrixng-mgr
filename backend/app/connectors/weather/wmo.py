@@ -136,6 +136,61 @@ def colour_for_temperature(celsius: float | None) -> str | None:
     return _TEMPERATURE_STOPS[-1][1]
 
 
+#: Humidity, anchored the way a person experiences it rather than evenly.
+#:
+#: The interesting range is narrow — between 40 % and 60 % nothing is worth
+#: saying, and the colour barely moves. What matters is the two ends: air dry
+#: enough to crack your lips, and air that makes 25 °C feel like 30.
+_HUMIDITY_STOPS: tuple[tuple[float, str], ...] = (
+    (20.0, "#f5a524"),   # dry — amber
+    (40.0, "#3ddc84"),   # comfortable — green
+    (60.0, "#3ddc84"),   # still comfortable: the plateau is deliberate
+    (80.0, "#4aa8ff"),   # humid — blue
+    (95.0, "#7e6bff"),   # saturated — violet, which nothing else here uses
+)
+
+
+def colour_for_humidity(percent: float | None) -> str | None:
+    """A colour on the same kind of scale as the temperature one.
+
+    The plateau between 40 and 60 is the point: a widget whose colour drifts
+    through every shade of green across the comfortable range is noise. It
+    should sit still while nothing is happening and move when something is.
+    """
+    return _on_scale(_HUMIDITY_STOPS, percent)
+
+
+def _on_scale(
+    stops: tuple[tuple[float, str], ...], value: float | None
+) -> str | None:
+    """Interpolate `value` between anchored stops, holding at both ends."""
+    if value is None:
+        return None
+    if value <= stops[0][0]:
+        return stops[0][1]
+    if value >= stops[-1][0]:
+        return stops[-1][1]
+    for (low, cold), (high, warm) in zip(stops, stops[1:], strict=False):
+        if low <= value <= high:
+            if high == low:
+                return cold
+            return _mix(cold, warm, (value - low) / (high - low))
+    return stops[-1][1]
+
+
+def dim(colour: str | None, fraction: float = 0.18) -> str | None:
+    """The same colour, far darker. What a progress track should be.
+
+    Pure black under a coloured bar is readable and says nothing; the
+    firmware's own white default is worse, because at 2 % the whole bottom row
+    lights up and reads as full. A dark wash of the bar's own colour keeps the
+    two obviously related — which is the point of choosing a palette at all.
+    """
+    if not colour:
+        return None
+    return _mix("#000000", colour, fraction)
+
+
 def _mix(cold: str, warm: str, fraction: float) -> str:
     """Blend two `#rrggbb` strings, channel by channel.
 
@@ -161,6 +216,11 @@ def _mix(cold: str, warm: str, fraction: float) -> str:
 # Nothing is redistributed here: these are numbers, and the files stay on
 # LaMetric until a device asks for one (prior-art §5).
 # ---------------------------------------------------------------------------
+
+#: A falling drop that splashes, 21 frames. Chosen by Florian for the humidity
+#: widget: it reads as water *in the air* rather than as weather to come,
+#: which is the distinction that widget exists for.
+ICON_HUMIDITY = 26543
 
 ICON_CLEAR_DAY = 12182
 ICON_CLEAR_NIGHT = 12181

@@ -11,7 +11,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.base import utcnow
-from app.services.ng.payload import IconMode, TextCase
+from app.services.ng.payload import Font, IconMode, TextCase
 
 #: Measured on the device: anything else answers "unknown value" on
 #: scroll.mode / scroll.whenFits.
@@ -104,6 +104,12 @@ class DisplayOptions(BaseModel):
     #: Was an integer 0/1/2. "inherit" follows the display's own setting.
     text_case: TextCase = "inherit"
 
+    #: `large` draws seven rows instead of five — and the seven above the
+    #: progress bar, so a number can fill the panel and keep its bar. Measured
+    #: on a TC001: a two-digit figure with an icon and a bar still fits in the
+    #: 32 columns. AWTRIX 3 had one font and no say in it.
+    font: Font = "small"
+
     #: What the text does when it does not fit the panel.
     scroll_mode: ScrollMode = "wrap"
     scroll_speed: int = Field(default=100, ge=0, le=500)
@@ -114,10 +120,15 @@ class DisplayOptions(BaseModel):
     show_progress: bool = False
     #: Filled part. None leaves the firmware's own colour.
     progress_color: str | None = None
-    #: Unfilled part. **Not** the firmware default, which is white: at 2 % the
-    #: whole bottom row lights up and reads as 100 %. Black means only the
-    #: filled part is lit, which cannot mislead.
-    progress_background: str = "#000000"
+    #: Unfilled part. None means **a dark wash of the bar's own colour**,
+    #: which is what makes a chosen palette carry all the way through.
+    #:
+    #: Never the firmware's own default, which is white: at 2 % the whole
+    #: bottom row lights up and reads as 100 %. Pure black was the previous
+    #: answer and is still available by writing it — it cannot mislead, but it
+    #: also says nothing, and two colours that belong together should look
+    #: like it.
+    progress_background: str | None = None
     show_series: Literal["none", "bar", "line"] = "none"
 
     #: When the connector reports "empty", remove the app instead of leaving a

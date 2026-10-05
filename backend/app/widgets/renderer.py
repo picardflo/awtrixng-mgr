@@ -14,6 +14,7 @@ into a `scroll` object. The three options with no NG equivalent — `center`,
 than translated into something that does not exist.
 """
 
+from app.connectors.weather import wmo
 from app.schemas.widget_data import DisplayOptions, WidgetData
 from app.services.ng.payload import NgPayload, Scroll
 from app.widgets import template
@@ -21,6 +22,7 @@ from app.widgets import template
 #: Firmware defaults. A key equal to one of these is omitted so the payload
 #: stays minimal and the display's own settings keep applying.
 _FIRMWARE_DEFAULTS = {
+    "font": "small",
     "scroll_speed": 100,
     "icon_mode": "fixed",
     "text_case": "inherit",
@@ -65,6 +67,8 @@ def render(
         fields["icon_mode"] = display.icon_mode
     if display.text_case != _FIRMWARE_DEFAULTS["text_case"]:
         fields["text_case"] = display.text_case
+    if display.font != _FIRMWARE_DEFAULTS["font"]:
+        fields["font"] = display.font
 
     scroll = _scroll(display)
     if scroll is not None:
@@ -72,7 +76,6 @@ def render(
 
     if display.show_progress and data.progress is not None:
         fields["progress"] = data.progress
-        fields["progress_track_color"] = display.progress_background
         # Left empty, the bar takes the colour the connector proposes — the
         # same rule the text already follows. Without it the bar kept the
         # firmware's own default and clashed with a text the service had
@@ -80,6 +83,17 @@ def render(
         colour = display.progress_color or data.hint_color
         if colour:
             fields["progress_color"] = colour
+        # And the track follows the bar: a dark wash of the same hue rather
+        # than a flat black that belongs to nothing. One palette, chosen once,
+        # carrying through the text, the bar and its track.
+        #
+        # Black when there is no colour to wash, and **never** nothing: the
+        # firmware paints the unfilled part WHITE, so a 2 % bar lights the
+        # whole bottom row and reads as full. Measured on v0.98, and the
+        # reason this key is always sent.
+        fields["progress_track_color"] = (
+            display.progress_background or wmo.dim(colour) or "#000000"
+        )
 
     if display.show_series != "none" and data.series:
         values = [int(round(value)) for value in data.series]

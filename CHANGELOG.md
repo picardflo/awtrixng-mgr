@@ -5,6 +5,67 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.7.0]
+
+**Une clé que j'avais manquée au premier sondage : `font`.** Elle accepte
+`small` ou `large`, et sur un panneau de huit rangées ça change tout.
+
+### La mesure qui commande le reste
+`large` dessine **sept rangées au lieu de cinq — et les sept du haut**. La
+rangée du bas, celle de la barre de progression, reste intacte. Un nombre peut
+donc remplir l'afficheur **et** garder sa barre :
+
+```
+|...............###.###.#.#......|   65 % en grande police
+|...............#...#...#.#......|
+|...............#...#.....#......|
+|....#..........###.###..#.......|
+|....#..........#.#...#.#........|
+|...###.........#.#...#.#.#......|
+|..###..........###.###.#.#......|
+|...##...########################|   la barre, intacte
+```
+
+AWTRIX 3 avait une police et aucun mot à dire.
+
+### Ajouté
+- **`weather.humidity`** — l'humidité extérieure, qui n'est pas la même
+  question que la pluie à venir. Icône **26543**, choisie par Florian : une
+  goutte qui tombe et éclabousse, 21 images. Elle parle d'eau *dans l'air*,
+  pas de météo prévue, et c'est exactement la distinction.
+- La clé `font` dans les options d'affichage, avec son sélecteur.
+- `weather.rain` passe en grande police et gagne sa surimpression.
+
+### La cohérence que Florian demandait
+Une palette choisie une fois doit tout gouverner. Elle le fait :
+
+- **le texte** prend la couleur de l'échelle d'humidité ;
+- **la barre** prend la même, si on ne lui en impose pas ;
+- **le fond de la barre** est désormais un **lavis sombre de la couleur de la
+  barre**, et non plus un noir plat qui n'appartient à rien.
+
+L'échelle d'humidité a un **plateau voulu entre 40 et 60 %** : un widget dont
+la couleur dérive à travers tous les verts de la zone confortable est du bruit.
+Il doit rester immobile tant qu'il ne se passe rien.
+
+### La question du seuil, répondue en la refusant
+Je t'avais demandé à partir de quelle probabilité la matrice devait pleuvoir.
+Elle ne pleut pas sur une probabilité : **elle pleut sur la condition**. 70 %
+de risque sous un ciel dégagé ne dessine rien ; une averse à 20 % de risque
+dessine la pluie. Il pleut à l'écran quand il pleut dehors.
+
+### Une régression attrapée en écrivant le test
+Le lavis seul laissait la clé vide quand aucune couleur n'était proposée — ce
+qui rend la barre au firmware, **qui la peint en blanc**. À 2 %, toute la
+rangée du bas s'allume et se lit comme pleine : exactement le défaut que le
+noir évitait. Le noir reste donc le repli, et un test le dit.
+
+### Deux implémentations, une règle
+L'aperçu dessine la piste, le backend l'envoie. Un aperçu en désaccord avec
+l'horloge serait pire que pas d'aperçu — on le consulte précisément quand
+quelque chose cloche. La même table de valeurs est figée des deux côtés, en
+Python et en TypeScript.
+
 ## [0.6.1]
 
 Trois textes du panneau des réglages **mentaient**, vus sur la capture de

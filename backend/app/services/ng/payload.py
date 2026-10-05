@@ -33,6 +33,14 @@ IconMode = Literal["fixed", "pushOnce", "push"]
 #: Measured: `{"textCase": "zz"}` -> must be one of "inherit", "upper", "asTyped".
 TextCase = Literal["inherit", "upper", "asTyped"]
 
+#: Measured: `{"font": "zz"}` -> must be one of "small", "large".
+#:
+#: Worth more than it sounds on a panel eight rows tall. `small` is the
+#: default and draws five rows; `large` draws seven — and the seven it uses
+#: are exactly the ones above the progress bar, so a number can fill the
+#: display and still carry a bar underneath. Checked on hardware.
+Font = Literal["small", "large"]
+
 #: Draw commands the firmware knows. Measured one by one: "fill", "fillRect"
 #: and "fillCircle" are *not* among them, they answer `unknown draw command`.
 #: A command is an array with its name first — `["pixel", x, y, colour]` —
@@ -74,6 +82,7 @@ class NgPayload(BaseModel):
     # -- Text -----------------------------------------------------------------
     text: str | None = None
     text_case: TextCase | None = Field(default=None, serialization_alias="textCase")
+    font: Font | None = None
     scroll: Scroll | None = None
 
     # -- Colours ---------------------------------------------------------------

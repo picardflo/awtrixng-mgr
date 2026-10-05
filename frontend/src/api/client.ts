@@ -115,11 +115,16 @@ export interface Variable {
  *  own vocabulary in the 422 it answers with. AWTRIX 3 used integers here. */
 export type IconMode = "fixed" | "pushOnce" | "push";
 export type TextCase = "inherit" | "upper" | "asTyped";
+/** `large` draws seven rows instead of five — and the seven above the
+ *  progress bar, so a number can fill the panel and keep its bar. Measured on
+ *  a TC001. AWTRIX 3 had one font and no say in it. */
+export type Font = "small" | "large";
 export type ScrollMode = "wrap" | "bounce" | "static" | "loop";
 export type ScrollWhenFits = "static" | "scroll";
 
 export const ICON_MODES: IconMode[] = ["fixed", "pushOnce", "push"];
 export const TEXT_CASES: TextCase[] = ["inherit", "upper", "asTyped"];
+export const FONTS: Font[] = ["small", "large"];
 export const SCROLL_MODES: ScrollMode[] = ["wrap", "bounce", "static", "loop"];
 export const SCROLL_WHEN_FITS: ScrollWhenFits[] = ["static", "scroll"];
 
@@ -147,12 +152,14 @@ export interface DisplayOptions {
   repeat: number | null;
   icon_mode: IconMode;
   text_case: TextCase;
+  font: Font;
   scroll_mode: ScrollMode;
   scroll_speed: number;
   scroll_when_fits: ScrollWhenFits;
   show_progress: boolean;
   progress_color: string | null;
-  progress_background: string;
+  /** null = a dark wash of the bar's own colour. */
+  progress_background: string | null;
   show_series: "none" | "bar" | "line";
   hide_when_empty: boolean;
 }

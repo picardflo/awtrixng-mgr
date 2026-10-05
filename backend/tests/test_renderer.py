@@ -147,11 +147,52 @@ def test_renderer_does_no_io():
 
 
 class TestProgressColours:
-    """Measured on a v0.98 device: the firmware paints the unfilled part of the
-    bar WHITE, so a 2 % bar lights the whole bottom row and reads as full."""
+    """One palette, chosen once, carrying through the text, the bar and its
+    track.
 
-    def test_background_is_forced_dark(self):
+    The track is never left to the firmware: measured on a v0.98 device, it
+    paints the unfilled part WHITE, so a 2 % bar lights the whole bottom row
+    and reads as full. What changed is what replaces it — a dark wash of the
+    bar's own colour rather than a flat black that belongs to nothing.
+    """
+
+    def test_the_track_is_never_the_firmware_default(self):
+        """Whatever else, something is always sent."""
         result = render(data(progress=2), DisplayOptions(show_progress=True)).to_json()
+        assert "progressTrackColor" in result
+
+    def test_the_track_is_a_dark_wash_of_the_bar(self):
+        result = render(
+            data(progress=40, hint_color="#4aa8ff"), DisplayOptions(show_progress=True)
+        ).to_json()
+        assert result["progressColor"] == "#4aa8ff"
+        assert result["progressTrackColor"] == "#0d1e2e"
+
+    def test_the_track_stays_dark_enough_not_to_read_as_full(self):
+        """The whole reason the firmware's white was refused. Every channel of
+        the wash must stay far below the bar's own."""
+        result = render(
+            data(progress=2, hint_color="#ffffff"), DisplayOptions(show_progress=True)
+        ).to_json()
+        track = result["progressTrackColor"]
+        assert all(int(track[i : i + 2], 16) <= 60 for i in (1, 3, 5)), track
+
+    def test_black_is_still_available_by_asking_for_it(self):
+        result = render(
+            data(progress=2, hint_color="#4aa8ff"),
+            DisplayOptions(show_progress=True, progress_background="#000000"),
+        ).to_json()
+        assert result["progressTrackColor"] == "#000000"
+
+    def test_without_a_colour_to_wash_the_track_is_black(self):
+        """Nothing to derive from, and still never nothing.
+
+        Writing this test is what found the regression: the wash alone left
+        the key unset when no colour had been proposed, which hands the bar
+        back to the firmware's white — the exact fault black was chosen to
+        avoid in the first place.
+        """
+        result = render(data(progress=40), DisplayOptions(show_progress=True)).to_json()
         assert result["progressTrackColor"] == "#000000"
 
     def test_filled_colour_is_left_to_the_firmware_unless_chosen(self):
@@ -267,3 +308,23 @@ class TestTheOverlay:
 
     def test_no_suggestion_means_no_overlay(self):
         assert "overlay" not in render(data(), DisplayOptions()).to_json()
+
+
+def test_the_track_wash_matches_the_preview():
+    """Two implementations of one rule: `wmo.dim` here, `dim()` in
+    AwtrixMatrixPreview.tsx.
+
+    A preview that disagreed with the clock would be worse than no preview —
+    it is consulted precisely when something looks wrong. The same table is
+    pinned in `frontend/src/components/dim.test.ts`, so a drift fails on one
+    side or the other rather than on the matrix.
+    """
+    from app.connectors.weather import wmo
+
+    assert [wmo.dim(c) for c in ("#4aa8ff", "#3ddc84", "#f5a524", "#7e6bff", "#ffffff")] == [
+        "#0d1e2e",
+        "#0b2818",
+        "#2c1e06",
+        "#17132e",
+        "#2e2e2e",
+    ]

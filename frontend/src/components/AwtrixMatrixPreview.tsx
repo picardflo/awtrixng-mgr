@@ -40,7 +40,8 @@ export interface MatrixPreviewProps {
   scrollSpeed?: number;
   progress?: number | null;
   progressColor?: string;
-  progressBackground?: string;
+  /** null = a dark wash of the bar's own colour, as the renderer derives it. */
+  progressBackground?: string | null;
   indicators?: [boolean, boolean, boolean];
   /** Size of one LED in screen pixels. */
   scale?: number;
@@ -52,6 +53,20 @@ const MATRIX_BG = "#05060a";
 
 /** Reference scroll speed, in columns per second. */
 const BASE_SCROLL_COLUMNS_PER_SECOND = 9;
+
+/** A colour at a fraction of its brightness, mixed from black.
+ *
+ *  The same arithmetic the backend applies before pushing, so the preview
+ *  shows the track the clock will actually draw rather than a flat black that
+ *  only this component believes in. */
+export function dim(colour: string, fraction = 0.18): string {
+  const hex = colour.replace("#", "");
+  if (hex.length !== 6) return "#000000";
+  const channels = [0, 2, 4].map((i) =>
+    Math.round(parseInt(hex.slice(i, i + 2), 16) * fraction),
+  );
+  return "#" + channels.map((c) => c.toString(16).padStart(2, "0")).join("");
+}
 
 export function AwtrixMatrixPreview({
   text = "",
@@ -67,7 +82,7 @@ export function AwtrixMatrixPreview({
   // (see DisplayOptions.progress_background). The preview must show what the
   // device will show, not a prettier version of it.
   progressColor = "#00ff00",
-  progressBackground = "#000000",
+  progressBackground = null,
   indicators = [false, false, false],
   scale = 6,
   className = "",
@@ -158,7 +173,8 @@ export function AwtrixMatrixPreview({
       if (progress !== null) {
         const { left, filled } = barGeometry(progress, Boolean(icon));
         for (let x = left; x < MATRIX_WIDTH; x += 1) {
-          dot(x, MATRIX_HEIGHT - 1, x - left < filled ? progressColor : progressBackground);
+          const track = progressBackground ?? dim(progressColor);
+          dot(x, MATRIX_HEIGHT - 1, x - left < filled ? progressColor : track);
         }
       }
 
