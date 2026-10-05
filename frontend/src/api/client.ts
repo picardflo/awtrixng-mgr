@@ -161,6 +161,10 @@ export interface DisplayOptions {
   /** null = a dark wash of the bar's own colour. */
   progress_background: string | null;
   show_series: "none" | "bar" | "line";
+  /** Seven day segments on the bottom row instead of a progress bar — the
+   *  shape the firmware draws under its own Time and Date apps. They share
+   *  that row, so only one of the two is ever drawn. */
+  show_days: boolean;
   hide_when_empty: boolean;
 }
 
@@ -171,6 +175,9 @@ export interface WidgetData {
   hint_color: string | null;
   progress: number | null;
   series: number[] | null;
+  /** Seven states, Monday first: "past" | "today" | "school" | "off". Only
+   *  connectors that have a week to describe send them. */
+  days: string[] | null;
   fetched_at: string;
 }
 

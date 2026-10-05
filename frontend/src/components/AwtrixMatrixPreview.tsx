@@ -45,6 +45,9 @@ export interface MatrixPreviewProps {
   progressColor?: string;
   /** null = a dark wash of the bar's own colour, as the renderer derives it. */
   progressBackground?: string | null;
+  /** Seven day states, Monday first. Drawn instead of the progress bar: they
+   *  share the bottom row. */
+  days?: string[] | null;
   indicators?: [boolean, boolean, boolean];
   /** Size of one LED in screen pixels. */
   scale?: number;
@@ -87,6 +90,7 @@ export function AwtrixMatrixPreview({
   // device will show, not a prettier version of it.
   progressColor = "#00ff00",
   progressBackground = null,
+  days = null,
   indicators = [false, false, false],
   scale = 6,
   className = "",
@@ -179,7 +183,28 @@ export function AwtrixMatrixPreview({
         }
       }
 
-      if (progress !== null) {
+      // The firmware's own weekday bar, measured on the panel: seven runs of
+      // three pixels one apart from column 2, narrowing to two from column 10
+      // when an icon takes the first nine. Reproduced so the preview and the
+      // clock agree, and so a widget lines up with the Date app behind it.
+      if (days && days.length) {
+        const width = icon ? 2 : 3;
+        const first = icon ? 10 : 2;
+        const base = color;
+        for (let index = 0; index < Math.min(7, days.length); index += 1) {
+          const shade =
+            days[index] === "today"
+              ? "#ffffff"
+              : days[index] === "school"
+                ? base
+                : days[index] === "past"
+                  ? dim(base, 0.25)
+                  : "#2a2a2a";
+          for (let offset = 0; offset < width; offset += 1) {
+            dot(first + index * (width + 1) + offset, MATRIX_HEIGHT - 1, shade);
+          }
+        }
+      } else if (progress !== null) {
         const { left, filled } = barGeometry(progress, Boolean(icon));
         for (let x = left; x < MATRIX_WIDTH; x += 1) {
           const track = progressBackground ?? dim(progressColor);

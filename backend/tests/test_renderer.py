@@ -96,24 +96,19 @@ class TestProgressAndSeries:
         payload = render(data(progress=40), DisplayOptions(show_progress=True))
         assert payload.to_json()["progress"] == 40
 
-    def test_series_as_bar(self):
-        payload = render(data(series=[1.4, 2.6, 3.0]), DisplayOptions(show_series="bar"))
-        assert payload.to_json()["barChart"] == [1, 3, 3]
+    def test_the_series_switch_is_gone(self):
+        """It chose between a bar chart and a line chart, and **no connector
+        produces a series**: the switch was offered, honoured by the renderer,
+        and drew nothing whatever it was set to.
 
-    def test_series_as_line(self):
-        payload = render(data(series=[1.0, 2.0]), DisplayOptions(show_series="line"))
-        assert payload.to_json()["lineChart"] == [1, 2]
-
-    def test_a_long_series_is_left_to_the_firmware(self):
-        """awtrixhub cut the series to 11 or 16 values because AWTRIX 3 drew
-        whatever it was given. Measured on NG: sending 40 values draws the
-        last 15 and ignores the rest — the same tail the manual cut kept. So
-        the cut is gone, and what reaches the matrix is the firmware's call.
+        Found by the test that checks every display option has a control in
+        the builder — it had none, because there was nothing worth showing.
+        The payload keeps `barChart` and `lineChart`, so the option comes back
+        the day something feeds them, with its data rather than before it.
         """
-        payload = render(
-            data(series=[float(n) for n in range(40)]), DisplayOptions(show_series="bar")
-        )
-        assert payload.to_json()["barChart"] == list(range(40))
+        assert "show_series" not in DisplayOptions.model_fields
+        payload = render(data(series=[1.0, 2.0, 3.0]), DisplayOptions(text="x")).to_json()
+        assert "barChart" not in payload and "lineChart" not in payload
 
 
 class TestLifetime:
@@ -232,16 +227,15 @@ class TestIconChoice:
         assert "icon" not in payload.to_json()
 
     def test_turning_the_icon_off_frees_the_whole_width(self):
-        """An 8x8 icon costs 9 of the 32 columns; without it the series gets
-        them back. Nothing to assert in the payload beyond the icon being
-        absent — how many bars fit is the firmware's arithmetic now."""
+        """An 8x8 icon costs 9 of the 32 columns. Measured: it also occupies
+        the bottom row, which is why the weekday bar narrows beside one."""
         payload = render(
-            data(hint_icon="11201", series=[1.0, 2.0, 3.0]),
-            DisplayOptions(show_icon=False, show_series="bar"),
+            data(hint_icon="11201"),
+            DisplayOptions(text="18°C", show_icon=False),
         )
         result = payload.to_json()
         assert "icon" not in result
-        assert result["barChart"] == [1, 2, 3]
+        assert result["text"] == "18°C"
 
 
 

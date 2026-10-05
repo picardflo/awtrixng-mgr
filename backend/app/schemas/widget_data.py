@@ -137,7 +137,11 @@ class DisplayOptions(BaseModel):
     #: also says nothing, and two colours that belong together should look
     #: like it.
     progress_background: str | None = None
-    show_series: Literal["none", "bar", "line"] = "none"
+    #: `show_series` was here, choosing between a bar chart and a line chart.
+    #: It is gone because **no connector produces a series**: the switch was
+    #: offered, honoured by the renderer, and drew nothing whatever it was set
+    #: to. The payload keeps `barChart` and `lineChart`, so the day something
+    #: feeds them the option comes back with its data rather than before it.
 
     #: Draw the seven day segments instead of a progress bar, when the
     #: connector offers them. Same geometry as the firmware's: three pixels

@@ -5,6 +5,40 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.10.2]
+
+**La barre des jours n'avait pas de case pour l'activer.** Florian a vu une
+barre de progression pleine et demandé si ça marchait : il n'avait rien raté,
+c'est l'interface qui manquait.
+
+L'option existait au backend, le rendu l'honorait, et elle était posée dans
+les valeurs par défaut — mais **les valeurs par défaut ne s'appliquent qu'aux
+widgets neufs**. Un widget déjà créé garde ses options enregistrées, et sans
+contrôle il n'y avait aucun moyen de la lui donner.
+
+### Ajouté
+- La case **« Barre des jours »** dans le constructeur, désactivée quand le
+  service n'a pas de semaine à décrire.
+- L'aperçu la dessine, avec la même géométrie que le rendu : trois pixels par
+  jour sans icône, deux avec. Les deux vérifiés identiques.
+- Le choix **« Quand le texte tient »** (`scroll_when_fits`), qui n'avait pas
+  de contrôle non plus.
+
+### Le test qui aurait évité ça
+**Toute option d'affichage doit avoir un contrôle dans le constructeur**, et
+le constructeur ne doit écrire aucune option qui n'existe pas. Les deux
+fichiers sont lus comme du texte, précisément parce qu'aucun type ne les relie.
+
+Écrit après coup, il a immédiatement trouvé **deux autres** options sans
+contrôle.
+
+### Retiré
+`show_series`, qui choisissait entre un graphique en barres et un en courbe.
+**Aucun connecteur ne produit de série** : l'option était offerte, honorée par
+le rendu, et ne dessinait rien quelle que soit sa valeur. Le payload garde
+`barChart` et `lineChart`, donc elle reviendra le jour où quelque chose les
+alimente — avec ses données plutôt qu'avant elles.
+
 ## [0.10.1]
 
 Florian a montré une capture de son app Time et demandé si la semaine scolaire

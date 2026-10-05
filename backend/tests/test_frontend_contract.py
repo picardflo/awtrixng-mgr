@@ -286,3 +286,60 @@ def test_every_error_code_can_be_translated(catalogue: Path):
         f"{catalogue.name} has no entry for: {missing}. "
         "They reach the user as the backend's English fallback."
     )
+
+
+# -- Display options with no control --------------------------------------
+#
+# `show_days` was added to the backend, given a default on the school widget,
+# tested on hardware — and had **no switch in the builder**. So a widget
+# created before it could never be given one, and Florian's was: he saw a
+# solid progress bar and asked whether it worked.
+#
+# Nothing could have failed. The option existed, the renderer honoured it, the
+# default applied to new widgets only. The gap was between a schema and a form,
+# which is a seam no compiler watches either.
+
+BUILDER = (
+    Path(__file__).resolve().parents[2]
+    / "frontend" / "src" / "features" / "widgets" / "WidgetBuilder.tsx"
+)
+
+#: Options the form sets without naming, or deliberately does not offer.
+NOT_A_CONTROL = {
+    # Set by the icon picker and the colour swatches, not by a named field.
+    "icon",
+    # Written by the preview's own colour input.
+    "progress_color",
+}
+
+
+def test_every_display_option_has_a_control():
+    """Both files are read as text: the point is precisely that no type
+    system connects them."""
+    from app.schemas.widget_data import DisplayOptions
+
+    form = BUILDER.read_text(encoding="utf-8")
+    missing = sorted(
+        name
+        for name in DisplayOptions.model_fields
+        if name not in NOT_A_CONTROL and name not in form
+    )
+    assert not missing, (
+        f"these display options cannot be set from the builder: {missing}. "
+        "A widget created before one of them can never be given it."
+    )
+
+
+def test_the_builder_sets_no_option_that_does_not_exist():
+    """The other direction: a control writing a field the backend drops.
+
+    `DisplayOptions` forbids unknown keys, so this would be a 422 on save
+    rather than a silence — but finding it here beats finding it on a form
+    that refuses to submit.
+    """
+    from app.schemas.widget_data import DisplayOptions
+
+    form = BUILDER.read_text(encoding="utf-8")
+    written = set(re.findall(r"patch\(\{\s*(\w+)", form))
+    unknown = sorted(written - set(DisplayOptions.model_fields))
+    assert not unknown, f"the builder writes options that do not exist: {unknown}"

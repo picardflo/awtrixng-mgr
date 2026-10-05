@@ -15,9 +15,16 @@ import {
   ICON_MODES,
   iconThumbnail,
   SCROLL_MODES,
+  SCROLL_WHEN_FITS,
   TEXT_CASES,
 } from "../../api/client";
-import type { Font, IconMode, ScrollMode, TextCase } from "../../api/client";
+import type {
+  Font,
+  IconMode,
+  ScrollMode,
+  ScrollWhenFits,
+  TextCase,
+} from "../../api/client";
 import type { MessageKey } from "../../i18n/messages.en";
 
 /** The six the firmware draws, as it lists them in its capabilities. Kept
@@ -287,6 +294,12 @@ export function WidgetBuilder({
   const colour = resolveColour(display.color, preview?.data.hint_color, "#3ddc84");
   const barColour = resolveColour(display.progress_color, preview?.data.hint_color, "#00ff00");
 
+  // The seven day segments need a connector that describes a week. Offering
+  // the switch to one that does not would be a control that draws nothing.
+  const canShowDays =
+    (descriptor?.sample_data.days?.length ?? 0) > 0 ||
+    (preview?.data.days?.length ?? 0) > 0;
+
   const canShowProgress = supportsProgress(
     descriptor?.sample_data.progress,
     preview?.data.progress,
@@ -465,6 +478,21 @@ export function WidgetBuilder({
                   }))}
                 />
               </Field>
+              <Field
+                label={t("builder.scrollWhenFits")}
+                hint={t("builder.scrollWhenFitsHelp")}
+              >
+                <NativeSelect
+                  value={display.scroll_when_fits}
+                  onChange={(value) =>
+                    patch({ scroll_when_fits: value as ScrollWhenFits })
+                  }
+                  options={SCROLL_WHEN_FITS.map((mode) => ({
+                    value: mode,
+                    label: t(`builder.scrollWhenFits.${mode}`),
+                  }))}
+                />
+              </Field>
               <Field label={t("builder.scrollSpeed")} hint="%">
                 <Input
                   type="number"
@@ -559,6 +587,13 @@ export function WidgetBuilder({
                 onChange={(show_overlay) => patch({ show_overlay })}
               />
               <Toggle
+                label={t("builder.showDays")}
+                hint={t("builder.showDaysHelp")}
+                disabled={!canShowDays}
+                checked={display.show_days}
+                onChange={(show_days) => patch({ show_days })}
+              />
+              <Toggle
                 label={t("builder.showProgress")}
                 disabled={!canShowProgress}
                 hint={canShowProgress ? undefined : t("builder.noProgressHere")}
@@ -596,6 +631,7 @@ export function WidgetBuilder({
                 ? (preview?.data.progress ?? null)
                 : null
             }
+            days={display.show_days ? (preview?.data.days ?? null) : null}
             progressColor={barColour}
             progressBackground={display.progress_background}
             scale={7}

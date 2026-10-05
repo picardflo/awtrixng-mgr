@@ -103,9 +103,6 @@ def render(
             display.progress_background or wmo.dim(colour) or "#000000"
         )
 
-    if display.show_series != "none" and data.series:
-        values = [int(round(value)) for value in data.series]
-        fields["bar_chart" if display.show_series == "bar" else "line_chart"] = values
 
     if lifetime_seconds is not None:
         # NG has no `lifetimeMode`: the key answers `unknown key`. AWTRIX 3's
