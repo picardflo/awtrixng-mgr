@@ -399,6 +399,7 @@ export const fr: Record<MessageKey, string> = {
   "variable.fuel.cheapest.distance": "Distance, km",
   "variable.fuel.cheapest.updated": "Prix publié le",
   "variable.fuel.cheapest.count": "Stations qui le vendent dans le rayon",
+  "variable.fuel.cheapest.age_days": "Âge du prix, en jours",
   "variable.school.week.summary": "Prêt à afficher",
   "variable.school.week.week": "La lettre, A ou B",
   "variable.school.week.days_left": "Jours d'école restants, aujourd'hui compris",

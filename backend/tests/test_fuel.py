@@ -389,3 +389,101 @@ class TestTheFormOffersTheExclusion:
         schema = {field.name for field in self.descriptor().config_schema}
         for key in ("place", "radius", "fuels", "excluded_stations"):
             assert key in schema, f"{key} is read by the connector but absent from its form"
+
+
+class TestFreshness:
+    """A price the station stopped republishing is not a price.
+
+    Measured around Lille on 5 October 2026: eight stations tied at 1.99 €,
+    and the one returned had last published on 16 April — 172 days earlier —
+    while seven others had published that morning. The widget sent you to a
+    station whose price was six months old.
+
+    The module's own docstring already said the feed can be "a day old or
+    plainly wrong"; it exposed `updated` as a variable and then ignored it.
+    """
+
+    def station(self, price: float, days_old: int | None, town: str, distance: float = 1.0):
+        from datetime import UTC, datetime, timedelta
+
+        from app.connectors.fuel.prices import Station
+
+        return Station(
+            id=town,
+            name=town,
+            town=town,
+            address="",
+            postcode="59000",
+            price=price,
+            distance=distance,
+            updated=None if days_old is None else datetime.now(UTC) - timedelta(days=days_old),
+        )
+
+    def test_a_tie_goes_to_the_freshest_price(self):
+        from app.connectors.fuel import prices
+
+        found = [self.station(1.99, 172, "vieille"), self.station(1.99, 0, "fraiche")]
+        assert prices.cheapest(found).town == "fraiche"
+
+    def test_distance_still_breaks_a_tie_between_equally_fresh_prices(self):
+        """`stations()` sorts by distance and Python's sort is stable, so it
+        survives as the last word."""
+        from app.connectors.fuel import prices
+
+        found = [self.station(1.99, 0, "proche", 1.0), self.station(1.99, 0, "loin", 9.0)]
+        assert prices.cheapest(found).town == "proche"
+
+    def test_a_genuinely_cheaper_stale_price_is_still_the_cheapest(self):
+        """Only a tie is affected.
+
+        Dropping it would be deciding for someone that a price they can go and
+        check is wrong. The widget publishes the date instead.
+        """
+        from app.connectors.fuel import prices
+
+        found = [self.station(1.80, 172, "pas chere"), self.station(1.99, 0, "fraiche")]
+        assert prices.cheapest(found).town == "pas chere"
+
+    def test_a_station_with_no_date_is_treated_as_stale(self):
+        from app.connectors.fuel import prices
+
+        found = [self.station(1.99, None, "sans date"), self.station(1.99, 0, "datee")]
+        assert prices.cheapest(found).town == "datee"
+
+
+class TestTheColourSaysSomething:
+    """It was green whatever the data — a channel saying nothing.
+
+    It now qualifies the price by the one thing a price needs qualifying by:
+    its age. Not a warning colour at the far end: a month-old figure may be
+    genuine and merely unconfirmed, and crying wolf would make the colour
+    meaningless again.
+    """
+
+    def colour(self, days_old: int | None):
+        from datetime import UTC, datetime, timedelta
+
+        from app.connectors.fuel import prices
+
+        when = None if days_old is None else datetime.now(UTC) - timedelta(days=days_old)
+        return prices.colour_for_age(when)
+
+    def test_today_is_a_find(self):
+        from app.connectors.fuel import prices
+
+        assert self.colour(0) == prices.COLOUR_FRESH
+
+    def test_a_few_days_cools_off(self):
+        from app.connectors.fuel import prices
+
+        assert self.colour(10) == prices.COLOUR_RECENT
+
+    def test_past_a_month_it_stops_looking_fresh(self):
+        from app.connectors.fuel import prices
+
+        assert self.colour(172) == prices.COLOUR_STALE
+
+    def test_no_date_at_all_is_the_same_as_stale(self):
+        from app.connectors.fuel import prices
+
+        assert self.colour(None) == prices.COLOUR_STALE

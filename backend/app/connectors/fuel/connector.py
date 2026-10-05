@@ -124,6 +124,11 @@ class FuelConnector(Connector):
                     Variable(name="distance", label="Distance (km)", example="1.3"),
                     Variable(name="updated", label="Price published on", example="03/10/2026"),
                     Variable(
+                        name="age_days",
+                        label="How old the price is, in days",
+                        example="2",
+                    ),
+                    Variable(
                         name="count",
                         label="Stations selling it within the radius",
                         example="11",
@@ -142,9 +147,10 @@ class FuelConnector(Connector):
                         "distance": 1.3,
                         "updated": "03/10/2026",
                         "count": 11,
+                        "age_days": 2,
                     },
                     hint_icon=ICON,
-                    hint_color="#3ddc84",
+                    hint_color=prices.COLOUR_FRESH,
                 ),
             ),
         ],
@@ -318,7 +324,20 @@ class FuelConnector(Connector):
                 # price from today".
                 "updated": best.updated.strftime("%d/%m/%Y") if best.updated else None,
                 "count": len(found),
+                # How old the price is, so a template can say so. The feed
+                # publishes stamps, not guarantees: a station that stopped
+                # reporting keeps its last figure and goes on looking cheap.
+                "age_days": (
+                    (prices.now() - best.updated).days if best.updated else None
+                ),
             },
             hint_icon=ICON,
-            hint_color="#3ddc84",
+            # The colour said nothing before — green whatever the data. It
+            # now says the one thing a price needs qualifying by: its age.
+            #
+            # A price older than a month is not a price, it is a station that
+            # stopped reporting. It is still shown, because it may well be the
+            # cheapest and the date is there to be read, but it stops looking
+            # like a fresh find.
+            hint_color=prices.colour_for_age(best.updated),
         )

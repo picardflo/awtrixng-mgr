@@ -5,6 +5,37 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.11.0]
+
+Florian a créé deux widgets Carburant — SP95-E10 et SP98 — et ça a permis de
+mesurer le vrai défaut de ce connecteur.
+
+### Le prix affiché pouvait dater de six mois
+Mesuré autour de Lille le 5 octobre 2026 : **huit stations à égalité à 1.99 €**,
+et celle retournée avait publié son prix le **16 avril — 172 jours plus tôt** —
+alors que sept autres avaient publié le matin même. Le widget envoyait à une
+station dont le prix avait six mois.
+
+Le départage se faisait sur le prix puis la distance. La fraîcheur n'en faisait
+pas partie, alors que le module disait déjà lui-même que le flux peut être
+« a day old or plainly wrong » : il exposait `updated` comme variable et
+l'ignorait ensuite.
+
+**Corrigé** : à prix égal, le plus frais ; puis le plus proche. **Seule une
+égalité est concernée** — une station réellement moins chère avec un vieux
+prix reste la moins chère et reste affichée. L'écarter serait décider à la
+place de quelqu'un qu'un prix qu'il peut aller vérifier est faux.
+
+### La couleur dit enfin quelque chose
+Elle était verte quelle que soit la donnée. Elle qualifie désormais le prix par
+la seule chose qui le qualifie : son âge. Vert le jour même, ambre dans le
+mois, gris au-delà. Pas une couleur d'alerte au bout : un prix d'un mois peut
+être exact et seulement non reconfirmé, et crier au loup rendrait la couleur
+muette à nouveau.
+
+### Ajouté
+`age_days` comme variable, pour un gabarit qui veut le dire en toutes lettres.
+
 ## [0.10.3]
 
 **Correctif urgent : la liste des widgets était vide.** Aucune donnée perdue —

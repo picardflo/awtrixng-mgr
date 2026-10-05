@@ -9,7 +9,7 @@ can show rather than something hidden.
 
 import math
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 import httpx
@@ -148,13 +148,68 @@ def stations(raw: dict[str, Any], fuel: str, latitude: float, longitude: float) 
     return sorted(found, key=lambda station: station.distance)
 
 
-def cheapest(found: list[Station]) -> Station | None:
-    """The lowest price, and the nearest one when two match.
+#: A price older than this is treated as unreliable when breaking a tie.
+#: Prices move weekly; one that has not been republished in a month is a
+#: station that stopped reporting rather than one holding its price.
+STALE_DAYS = 30
 
-    `stations()` already sorts by distance, and Python's sort is stable, so
-    sorting by price alone keeps that tie-break.
+
+def cheapest(found: list[Station]) -> Station | None:
+    """The lowest price; among equals, the freshest, then the nearest.
+
+    **Freshness was not part of this and should have been.** Measured around
+    Lille on 5 October 2026: eight stations tied at 1.99 €, and the one
+    returned had last published its price on 16 April — 172 days earlier —
+    while seven others had published that morning. The widget sent you to a
+    station whose price was six months old when an identical one updated the
+    same day sat down the road.
+
+    `stations()` sorts by distance and Python's sort is stable, so distance
+    survives as the last tie-break once price and freshness have spoken.
+
+    Only a tie is affected. A genuinely cheaper station with an old price is
+    still the cheapest and still shown — the widget publishes `updated` so the
+    date can be read, and dropping it would be deciding for someone that a
+    price they can check is wrong.
     """
-    return min(found, key=lambda station: station.price, default=None)
+    if not found:
+        return None
+
+    def rank(station: Station) -> tuple[float, int]:
+        stale = station.updated is None or (
+            now() - station.updated
+        ).days > STALE_DAYS
+        return station.price, 1 if stale else 0
+
+    return min(found, key=rank)
+
+
+#: A price younger than this is a find; past it, the colour cools off.
+FRESH_DAYS = 2
+
+#: Fresh, a few days old, stale. The last is not a warning colour: the price
+#: may be genuine and merely unconfirmed, and crying wolf on a 31-day-old
+#: figure would make the colour meaningless again.
+COLOUR_FRESH = "#3ddc84"
+COLOUR_RECENT = "#f5a524"
+COLOUR_STALE = "#9aa0a6"
+
+
+def colour_for_age(updated: datetime | None) -> str:
+    """Green today, amber this week, grey once it has stopped moving."""
+    if updated is None:
+        return COLOUR_STALE
+    age = (now() - updated).days
+    if age <= FRESH_DAYS:
+        return COLOUR_FRESH
+    if age <= STALE_DAYS:
+        return COLOUR_RECENT
+    return COLOUR_STALE
+
+
+def now() -> datetime:
+    """Injectable in tests, and timezone-aware like the feed's own stamps."""
+    return datetime.now(UTC)
 
 
 async def fetch(

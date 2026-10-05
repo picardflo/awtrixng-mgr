@@ -417,6 +417,7 @@ export const en = {
   "variable.fuel.cheapest.distance": "Distance, km",
   "variable.fuel.cheapest.updated": "Price published on",
   "variable.fuel.cheapest.count": "Stations selling it within the radius",
+  "variable.fuel.cheapest.age_days": "How old the price is, in days",
   "variable.school.week.summary": "Ready to display",
   "variable.school.week.week": "The letter, A or B",
   "variable.school.week.days_left": "School days left, today included",
