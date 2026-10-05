@@ -64,6 +64,13 @@ horloge réelle** plutôt que traduite sur le papier.
   dessine les 15 dernières et ignore le reste — la même queue que le découpage
   gardait.
 
+### Déploiement
+- `backend/docker-entrypoint.py` manquait au premier jet du portage : le
+  `Dockerfile` le copie, donc le build aurait échoué sur la VM. Trouvé en
+  relisant chaque chemin copié par les deux `Dockerfile` — ni Docker ni
+  `docker compose` ne sont installés sur la machine de développement, donc
+  **le build n'a pas pu être vérifié ici.**
+
 ### Mesuré, et qui reste à surveiller
 - **`PUT /api/v1/apps/order` est cassée** en 1.1.2 : seule méthode autorisée,
   et *tout* corps JSON — `{}` compris — répond `invalidJson`. Donc pas de
