@@ -4,9 +4,10 @@
 servant de middleware entre des services externes et un ou plusieurs afficheurs
 [AWTRIX NG](https://github.com/Blueforcer/awtrix-ng).
 
-> **État : socle.** Version 0.1.0 — le client AWTRIX NG est écrit et
-> vérifié sur une horloge réelle. Il n'y a encore ni API REST, ni interface,
-> ni planificateur. Voir le [CHANGELOG](CHANGELOG.md).
+> **État : socle.** Version 0.2.0 — le client AWTRIX NG est écrit, vérifié
+> sur une horloge réelle, et pilotable en ligne de commande. Il n'y a encore ni
+> API REST, ni interface web, ni planificateur. Voir le
+> [CHANGELOG](CHANGELOG.md).
 
 ---
 
@@ -68,6 +69,36 @@ refusent par leur nom les afficheurs en service :
 ```bash
 AWTRIXNG_TEST_HOST=mon-horloge.local .venv/bin/python -m pytest -m device
 ```
+
+## Parler à une horloge, sans interface
+
+En attendant l'interface web, une ligne de commande permet d'essayer tout ce
+que le client sait faire :
+
+```bash
+cd backend
+export AWTRIXNG_HOST=mon-horloge.local
+
+.venv/bin/python -m app.cli info          # version, capteurs, batterie, capacités
+.venv/bin/python -m app.cli apps          # les apps présentes, avec leur origine
+.venv/bin/python -m app.cli screen        # la matrice, dessinée dans le terminal
+.venv/bin/python -m app.cli screen --watch
+
+.venv/bin/python -m app.cli push "SALUT" --color '#f5a524' --switch
+.venv/bin/python -m app.cli push "12 °C" --icon 11949 --overlay rain
+.venv/bin/python -m app.cli notify "Minuteur fini" --wakeup --rtttl 'd=4,o=5,b=120:c,e,g'
+.venv/bin/python -m app.cli delete cli
+
+.venv/bin/python -m app.cli logs --follow
+```
+
+`screen` lit le framebuffer réel : ce que la matrice montre, pas ce qu'on croit
+lui avoir envoyé. Une capture prise pendant une transition rend une image en
+cours de dessin — c'est normal, attendre une seconde.
+
+**Les commandes qui écrivent refusent les afficheurs en service.** La liste est
+dans `app/core/protected.py`, le Salon y est par défaut, et
+`AWTRIXNG_PROTECTED_HOSTS` la remplace. Lire reste toujours permis.
 
 <a id="versions"></a>
 ## Versions

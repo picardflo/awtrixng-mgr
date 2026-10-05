@@ -17,18 +17,13 @@ import os
 
 import pytest
 
+from app.core.protected import is_protected
 from app.services.ng.client import NgClient
 from app.services.ng.models import DeviceState
 from app.services.ng.payload import NgPayload
 from app.services.ng.transport import HttpTransport
 
 pytestmark = pytest.mark.device
-
-#: Displays these tests must never touch, whatever the environment says.
-#: Belongs in code rather than in a note: a written warning did not stop the
-#: previous project from wiping a display in service, twice. The second time
-#: was *after* the risk had been written down.
-FORBIDDEN_HOSTS = {"awtrix-cl1", "awtrix-cl1.home.lan"}
 
 #: Name of the app these tests push. Deliberately not in the project's own
 #: namespace, so a stray leftover cannot be mistaken for a widget.
@@ -40,7 +35,9 @@ def host() -> str:
     target = os.environ.get("AWTRIXNG_TEST_HOST", "")
     if not target:
         pytest.skip("set AWTRIXNG_TEST_HOST to run the device tests")
-    if target.lower() in FORBIDDEN_HOSTS:
+    # The same guard the CLI uses, so there is one list to maintain and one
+    # place where the rule can be got wrong.
+    if is_protected(target):
         pytest.fail(f"{target} is a display in service: these tests write, refusing to run")
     return target
 

@@ -5,6 +5,42 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.2.0]
+
+Une **ligne de commande**, parce que 0.1.0 n'était testable que par `pytest` ou
+par le REPL. Elle n'est pas le produit : elle existe pour que les versions 0.x
+soient essayables avant l'API REST et l'interface, et elle restera utile
+ensuite pour la même raison qu'un shell de base de données reste utile.
+
+### Ajouté
+- **`python -m app.cli`** — `info`, `apps`, `screen`, `push`, `delete`,
+  `notify`, `icon`, `logs`, `settings`, `capabilities`.
+- **`screen` dessine la matrice dans le terminal**, en couleurs vraies, lue
+  depuis `GET /display/screen`. Deux rangées de pixels par ligne de texte via
+  le demi-bloc haut, sinon l'horloge sortirait deux fois trop haute.
+  `--watch` rafraîchit sur place.
+- **`app/core/protected.py`** — la liste des afficheurs auxquels cette
+  installation ne doit jamais écrire. Le Salon (`awtrix-cl1`) y est par défaut ;
+  `AWTRIXNG_PROTECTED_HOSTS` la remplace, et la vider désactive le garde-fou.
+- 23 tests de plus : **82 sans matériel**, 9 contre une horloge réelle.
+
+### Changé
+- `tests/test_device.py` utilise désormais le garde-fou partagé au lieu de sa
+  propre liste. Une seule liste à tenir, un seul endroit où se tromper.
+
+### Pourquoi le garde-fou est du code et pas une note
+Sur le projet précédent, une seconde instance pointée sur un afficheur en
+service a supprimé ses apps **deux fois** — la seconde *après* que le risque
+eut été consigné dans un ADR. Une mise en garde qu'il faut se rappeler n'est
+pas un garde-fou. Lire un afficheur protégé reste permis : c'est écrire qui est
+refusé, avant qu'une seule requête ne quitte la machine.
+
+### Mesuré au passage
+- **L'écran se lit tel quel, transition comprise.** Une capture prise pendant
+  la transition « Rain » rend une image brouillée qui n'est pas un défaut : le
+  firmware dessine, on lit. Attendre une seconde après un `push --switch` avant
+  de lire.
+
 ## [0.1.0]
 
 Premier code du dépôt : le socle backend et le **client AWTRIX NG**, c'est-à-dire
