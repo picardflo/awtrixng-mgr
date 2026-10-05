@@ -5,6 +5,42 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.11.3]
+
+Audit demandé par Florian : « il doit rester 0 trace de awtrixhub ».
+
+### Retiré
+- **`secrets.example.md`** — un vrai reste. Il documentait **Zabbix et
+  Tautulli**, deux connecteurs qui n'existent dans aucun des deux projets, et
+  disait que « la configuration réelle d'awtrixhub se fait via l'interface ».
+  Supprimé, et l'exception correspondante du `.gitignore` avec.
+- Un nom de test qui parlait de l'autre projet.
+
+### La règle, rendue testable
+Le mot peut apparaître dans un commentaire ; il ne peut pas apparaître dans ce
+qui s'exécute.
+
+`test_the_name_never_appears_in_running_code` **analyse l'arbre syntaxique** de
+tout `backend/app/`, écarte les docstrings et vérifie ce qui reste —
+identifiants, chaînes littérales, attributs. Éprouvé en remettant
+`awtrixhub_session` comme nom de cookie : il le nomme.
+
+Et `test_the_built_interface_carries_no_trace` lit le `dist/` réellement servi.
+
+### Ce qui reste, et pourquoi
+| Fichier | Nature |
+|---|---|
+| `CHANGELOG.md`, `README.md` | la filiation du projet |
+| `docs/architecture.md` | les ADR héritées et celles qu'il a fallu rejuger |
+| `docs/ng-vs-awtrix3.md`, `docs/ng-api/` | les comparaisons mesurées |
+| deux docstrings de migration | **pourquoi** elles désactivent les clés étrangères : awtrixhub y a perdu toutes ses cibles de widget |
+| `test_no_leftovers.py` | le test qui interdit le reste |
+
+**Zéro dans `frontend/src`, zéro dans les chaînes d'interface, zéro dans
+l'image construite.** La distinction n'est pas « le mot apparaît-il » mais
+« peut-il s'exécuter, ou quelqu'un peut-il le lire » : un commentaire disant
+pourquoi une migration est écrite ainsi est la ligne la plus utile du fichier.
+
 ## [0.11.2]
 
 La documentation et le wiki, calqués sur la logique d'awtrixhub.

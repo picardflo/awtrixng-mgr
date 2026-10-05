@@ -176,7 +176,7 @@ class TestInspect:
 
 
 class TestRefusals:
-    def test_a_file_from_a_newer_awtrixhub_is_refused(self, client):
+    def test_a_file_from_a_newer_version_is_refused(self, client):
         build(client)
         summary = client.post(
             "/api/backup/inspect", json={"format": 99, "devices": [], "widgets": []}
