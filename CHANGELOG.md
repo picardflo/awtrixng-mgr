@@ -5,6 +5,30 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.7.2]
+
+**Le widget Soleil calculait sa barre et la jetait.**
+
+`sun.daylight_elapsed()` est écrit, testé, et son propre commentaire dit
+« drives the progress bar ». Il renvoie `None` hors du jour, délibérément —
+une barre à 0 % ou 100 % toute la nuit se lirait comme une mesure plutôt que
+comme « sans objet ». La projection remplissait `progress` à chaque passage.
+
+Et les options par défaut du widget n'activaient pas `show_progress`, donc le
+rendu la jetait. Pendant toute la vie du projet précédent. **Rien n'a jamais
+échoué** : le widget affichait une heure, ce qu'il promettait, et le chiffre
+derrière la barre était recalculé tous les quarts d'heure puis oublié.
+
+### Changé
+- La barre est allumée. L'heure dit *quand*, la barre dit *combien il reste*.
+- Grande police : cinq caractères et une icône tiennent en **24 colonnes sur
+  32**, mesuré sur le Bureau, la barre intacte en dessous.
+- La description du widget mentionne la barre, dans les deux langues.
+
+### Vérifié sur matériel
+Les deux cas : `19:27` avec la barre à 62 %, et la nuit `07:54` **sans barre
+du tout**. Quatre tests les figent, dont celui du cas nocturne.
+
 ## [0.7.1]
 
 Le widget Pluie dit **deux choses à la fois**, et c'est maintenant écrit.

@@ -225,3 +225,55 @@ class TestTheColourSaysWhichEvent:
         """No event is not a reason to send no colour: the widget still draws
         a text, and an uncoloured one would be the firmware's white."""
         assert self.values(monkeypatch, utc(23, 0, day=5)).hint_color
+
+
+class TestTheDaylightBar:
+    """The bar was computed from the first version and never switched on.
+
+    `daylight_elapsed` is written, tested, and its own docstring says it
+    "drives the progress bar". The projection filled `progress` on every pass.
+    And the default display did not set `show_progress`, so the renderer threw
+    it away — for the whole life of the previous project.
+
+    Nothing failed. The widget showed a time, which is what it promised, and
+    the figure behind the bar was recomputed every fifteen minutes and
+    discarded.
+    """
+
+    def widget(self):
+        from app.connectors import registry
+
+        registry.load_all()
+        return registry.widget_descriptor("weather.sun")
+
+    def test_the_bar_is_switched_on(self):
+        assert self.widget().default_display.show_progress is True
+
+    def test_a_time_fills_the_panel(self):
+        """Five characters in the large font measured at 24 columns of 32 with
+        the icon — the bar underneath, untouched."""
+        assert self.widget().default_display.font == "large"
+
+    def test_during_the_day_the_bar_shows_how_much_is_left(self):
+        from app.widgets.renderer import render
+
+        descriptor = self.widget()
+        payload = render(descriptor.sample_data, descriptor.default_display).to_json()
+        assert payload["progress"] == 62
+        # One palette: the bar takes the colour of the next sun event, and its
+        # track a dark wash of the same.
+        assert payload["progressColor"] == payload["textColor"]
+        assert payload["progressTrackColor"] == "#2e200d"
+
+    def test_at_night_there_is_no_bar_at_all(self):
+        """`daylight_elapsed` returns None outside daylight, deliberately: a
+        bar sitting at 0 % or 100 % all night reads as a measurement rather
+        than as "not applicable"."""
+        from app.widgets.renderer import render
+
+        descriptor = self.widget()
+        night = descriptor.sample_data.model_copy(update={"progress": None})
+        payload = render(night, descriptor.default_display).to_json()
+        assert "progress" not in payload
+        assert "progressColor" not in payload
+        assert "progressTrackColor" not in payload

@@ -245,7 +245,10 @@ class WeatherConnector(Connector):
             WidgetDescriptor(
                 type="weather.sun",
                 name="Sunrise and sunset",
-                description="When the sun comes up, when it goes down.",
+                description=(
+                    "When the sun comes up, when it goes down — and a bar "
+                    "showing how much daylight is left."
+                ),
                 variables=[
                     Variable(name="sunrise", label="Sunrise", example="07:54"),
                     Variable(name="sunset", label="Sunset", example="19:27"),
@@ -261,7 +264,23 @@ class WeatherConnector(Connector):
                 # The icon says which of the two it is, so the text only has
                 # to carry the time. "07:54 19:27" would not fit beside an
                 # icon anyway — 32 pixels hold about five characters there.
-                default_display=DisplayOptions(text="{{ next }}", duration=8),
+                default_display=DisplayOptions(
+                    text="{{ next }}",
+                    duration=8,
+                    # The bar was computed from the first version and never
+                    # switched on. `daylight_elapsed` is written, documented
+                    # "drives the progress bar", returns None outside daylight
+                    # so it cannot be read as a measurement at night — and the
+                    # renderer threw it away for want of this flag.
+                    #
+                    # It turns a timestamp into something read at a glance:
+                    # 19:27 says when, the bar says how much of the day is
+                    # left.
+                    show_progress=True,
+                    # A time is four digits and a colon — nineteen columns in
+                    # the large font, which is what the panel is for.
+                    font="large",
+                ),
                 default_refresh=900,
                 sample_data=WidgetData(
                     values={

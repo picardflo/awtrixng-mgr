@@ -370,7 +370,7 @@ export const fr: Record<MessageKey, string> = {
   "variable.weather.humidity.feels_like": "Température ressentie (°C)",
   "variable.weather.humidity.probability": "Risque de pluie (%), pour un gabarit qui veut les deux",
   "widgetType.weather.sun.name": "Lever et coucher du soleil",
-  "widgetType.weather.sun.description": "À quelle heure le soleil se lève, à quelle heure il se couche.",
+  "widgetType.weather.sun.description": "À quelle heure le soleil se lève, à quelle heure il se couche — et une barre montrant ce qu'il reste de jour.",
   "widgetType.weather.air.name": "Qualité de l'air",
   "widgetType.weather.air.description": "L'indice européen, et les polluants qui le font.",
   "widgetType.weather.uv.name": "Indice UV",

@@ -388,7 +388,7 @@ export const en = {
   "variable.weather.humidity.feels_like": "Apparent temperature (°C)",
   "variable.weather.humidity.probability": "Chance of rain (%), for a template that wants both",
   "widgetType.weather.sun.name": "Sunrise and sunset",
-  "widgetType.weather.sun.description": "When the sun comes up, when it goes down.",
+  "widgetType.weather.sun.description": "When the sun comes up, when it goes down — and a bar showing how much daylight is left.",
   "widgetType.weather.air.name": "Air quality",
   "widgetType.weather.air.description": "The European index, and the pollutants behind it.",
   "widgetType.weather.uv.name": "UV index",
