@@ -41,6 +41,14 @@ class WidgetData(BaseModel):
     progress: int | None = Field(default=None, ge=0, le=100)
     series: list[float] | None = None
 
+    #: Seven states, one per day of the week, Monday first — the shape the
+    #: firmware's own weekday bar draws under its Date app.
+    #:
+    #: Words, never colours: a connector that named a colour would be deciding
+    #: what the matrix looks like, which is the one thing this layer must not
+    #: know. The renderer turns them into pixels.
+    days: list[str] | None = None
+
     fetched_at: datetime = Field(default_factory=utcnow)
 
 
@@ -130,6 +138,12 @@ class DisplayOptions(BaseModel):
     #: like it.
     progress_background: str | None = None
     show_series: Literal["none", "bar", "line"] = "none"
+
+    #: Draw the seven day segments instead of a progress bar, when the
+    #: connector offers them. Same geometry as the firmware's: three pixels
+    #: per day, one apart, from column 2 — measured on the panel so the two
+    #: line up exactly when they follow each other in the rotation.
+    show_days: bool = False
 
     #: When the connector reports "empty", remove the app instead of leaving a
     #: stale value on the matrix.

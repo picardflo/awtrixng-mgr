@@ -246,3 +246,43 @@ def test_every_toggle_sets_a_field_that_exists():
 
     unknown = {field for _, field in toggles()} - set(DeviceSettings.model_fields)
     assert not unknown, f"the panel toggles settings that do not exist: {sorted(unknown)}"
+
+
+# -- Error codes the interface has to translate -------------------------------
+#
+# Every domain error carries a stable `code`, and the frontend translates it;
+# the English message is only the fallback. So a code with no translation is
+# an English sentence in a French interface — nothing breaks, nothing warns,
+# and nobody notices until they read it.
+#
+# Nineteen were missing when this test was written, three of them added in
+# this session.
+
+MESSAGES_FR = (
+    Path(__file__).resolve().parents[2] / "frontend" / "src" / "i18n" / "messages.fr.ts"
+)
+MESSAGES_EN = (
+    Path(__file__).resolve().parents[2] / "frontend" / "src" / "i18n" / "messages.en.ts"
+)
+
+
+def backend_codes() -> set[str]:
+    """Every `code="..."` raised anywhere in the application."""
+    source = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in (Path(__file__).resolve().parents[1] / "app").rglob("*.py")
+    )
+    return set(re.findall(r'code="([a-z_]+\.[a-z_0-9.]+)"', source))
+
+
+def translated(path: Path) -> set[str]:
+    return set(re.findall(r'^  "([^"]+)":', path.read_text(encoding="utf-8"), re.M))
+
+
+@pytest.mark.parametrize("catalogue", [MESSAGES_FR, MESSAGES_EN])
+def test_every_error_code_can_be_translated(catalogue: Path):
+    missing = sorted(backend_codes() - translated(catalogue))
+    assert not missing, (
+        f"{catalogue.name} has no entry for: {missing}. "
+        "They reach the user as the backend's English fallback."
+    )

@@ -62,7 +62,7 @@ class TestCatalogue:
 
     def test_connector_types_expose_their_schema(self, client):
         types = {t["id"]: t for t in client.get("/api/connector-types").json()}
-        assert "weather" in types and "device" in types
+        assert "weather" in types and "moon" in types
         assert [f["name"] for f in types["weather"]["config_schema"]] == ["place"]
 
     def test_widget_types_expose_sample_data_and_variables(self, client):
@@ -129,7 +129,7 @@ class TestPreview:
         """A null payload means the app is removed, not that it renders empty."""
         result = client.post(
             "/api/widgets/preview",
-            json={"widget_type": "device.metric", "display": {"text": "{{ value }}"}},
+            json={"widget_type": "moon.phase", "display": {"text": "{{ illumination }}"}},
         ).json()
         assert result["payload"] is not None  # sample data is not empty
 

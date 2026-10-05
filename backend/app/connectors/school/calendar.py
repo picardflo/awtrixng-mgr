@@ -218,6 +218,39 @@ def school_days_of_week(day: date, periods: list[Period]) -> tuple[int, int]:
     return remaining, total
 
 
+#: What one day of the week is, for a widget that draws seven of them.
+#: Words rather than colours: a connector that named a colour would be
+#: deciding what the matrix looks like, which is not its job.
+DAY_PAST = "past"
+DAY_TODAY = "today"
+DAY_SCHOOL = "school"
+DAY_OFF = "off"
+
+
+def week_days(day: date, periods: list[Period]) -> list[str]:
+    """The seven days of `day`'s week, Monday first, each as a state.
+
+    This is what the firmware's own weekday bar draws under the Date app —
+    seven segments of three pixels — read back off the panel and reused. It
+    answers "how much of the school week is left" at a glance, which a single
+    progress figure never did: 60 % tells you nothing about whether the two
+    remaining days are Thursday and Friday or a Wednesday and a holiday.
+    """
+    monday = monday_of(day)
+    states = []
+    for offset in range(7):
+        current = monday + timedelta(days=offset)
+        if current == day:
+            states.append(DAY_TODAY)
+        elif not is_school_day(current, periods):
+            states.append(DAY_OFF)
+        elif current < day:
+            states.append(DAY_PAST)
+        else:
+            states.append(DAY_SCHOOL)
+    return states
+
+
 def next_holiday(periods: list[Period], day: date) -> Period | None:
     upcoming = sorted((p for p in periods if p.start > day), key=lambda p: p.start)
     return upcoming[0] if upcoming else None

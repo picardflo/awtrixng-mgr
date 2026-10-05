@@ -42,4 +42,4 @@ def load_all() -> None:
 
     Called once at startup. This is the only place that lists them.
     """
-    from app.connectors import device, fuel, moon, school, weather  # noqa: F401
+    from app.connectors import fuel, moon, school, weather  # noqa: F401

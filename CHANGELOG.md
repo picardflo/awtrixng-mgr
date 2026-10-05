@@ -5,6 +5,51 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.10.0]
+
+### La barre des jours, idée de Florian
+Le firmware dessine sous son app Date une barre de sept segments — un par jour,
+le jour courant en blanc. Mesurée au pixel sur le Bureau :
+
+```
+rangée 7 : ..###.###.###.###.###.###.###...
+segments : (2,4) (6,8) (10,12) (14,16) (18,20) (22,24) (26,28)
+couleurs : #ffffff le jour courant, #666666 les autres
+```
+
+**La semaine scolaire l'utilise maintenant** à la place de sa barre de
+progression. Une barre à 60 % ne dit pas *quels* jours restent — jeudi et
+vendredi, ou un mercredi et un jour férié. Sept marques le disent d'un coup
+d'œil. Sans icône, c'est la barre du firmware **pixel pour pixel**, donc les
+deux s'alignent quand elles se suivent dans la rotation.
+
+**Et Florian avait raison sur les 2 pixels.** Je l'avais corrigé à 3, qui est
+la mesure du firmware — mais le firmware n'a pas d'icône sous sa Date. Avec
+une icône, qui occupe les colonnes 0 à 8 de **toutes** les rangées y compris
+celle du bas, trois pixels par jour se font écraser. Sept segments de deux font
+20 colonnes et tiennent dans les 23 restantes. La largeur s'adapte donc à la
+présence de l'icône.
+
+Le connecteur nomme des **états** — `past`, `today`, `school`, `off` — jamais
+des couleurs : nommer une couleur serait décider de quoi la matrice a l'air,
+ce que cette couche ne doit pas savoir. Le rendu les traduit en quatre nuances.
+
+### Retiré : le service « Afficheur »
+Demandé par Florian. Il était de toute façon **cassé** : il lisait `temp`,
+`hum`, `bat`, `lux`, `bri`, `wifi_signal`, `uptime` — les sept noms d'AWTRIX 3
+— là où NG renvoie `temperature`, `humidity`, `battery_percent`,
+`light_level`, `wifi_rssi`. Les sept métriques sortaient vides et le widget se
+cachait. Aucun test ne l'a vu : ils travaillent tous sur ses données d'exemple
+codées en dur.
+
+### Les traductions
+- **19 codes d'erreur n'en avaient aucune** et sortaient en anglais dans une
+  interface française — trois introduits cette session, seize antérieurs.
+  Traduits, et **un test refuse désormais un code sans entrée** dans chaque
+  catalogue.
+- Onze clés mortes retirées, restes du panneau des apps natives supprimé en
+  0.3.0 et du renommage de `device.not_awtrix`.
+
 ## [0.9.0]
 
 Quatre remarques de Florian sur l'interface, et chacune cachait mieux qu'elle

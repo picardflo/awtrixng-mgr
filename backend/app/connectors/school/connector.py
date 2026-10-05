@@ -127,7 +127,12 @@ class SchoolConnector(Connector):
                     # Measured — with the small font the text sat squeezed
                     # against the bar, rows 1 to 7 with row 0 empty.
                     font="large",
-                    show_progress=True,
+                    # The firmware's own weekday bar, reused: seven segments
+                    # of three pixels instead of one filled proportion. A bar
+                    # at 60 % says nothing about *which* days are left; seven
+                    # marks say it at a glance, and they line up pixel for
+                    # pixel with the Date app that follows in the rotation.
+                    show_days=True,
                     progress_color="#3ddc84",
                     progress_background="#000000",
                 ),
@@ -142,6 +147,8 @@ class SchoolConnector(Connector):
                         "days_to_holiday": 12,
                     },
                     progress=60,
+                    days=["past", "past", "today", "school", "school",
+                          "off", "off"],
                     hint_icon=ICON,
                     hint_color="#3ddc84",
                 ),
@@ -181,6 +188,7 @@ class SchoolConnector(Connector):
         rentree = cal.rentree_before(periods, day)
         letter = cal.week_letter(day, rentree, invert=invert) if rentree else ""
         remaining, total = cal.school_days_of_week(day, periods)
+        semaine = cal.week_days(day, periods)
         upcoming = cal.next_holiday(periods, day)
 
         if holiday is not None:
@@ -205,7 +213,10 @@ class SchoolConnector(Connector):
             },
             # Full on Monday morning, empty once Friday is over. During the
             # holidays there is nothing left to count down.
+            # Kept as well: someone may prefer a plain bar, and the
+            # preview needs a figure to show beside the segments.
             progress=round(remaining / total * 100) if total else 0,
+            days=semaine,
             hint_icon=ICON,
             hint_color=colour_for(letter, holiday=holiday is not None),
         )

@@ -74,7 +74,15 @@ def render(
     if scroll is not None:
         fields["scroll"] = scroll
 
-    if display.show_progress and data.progress is not None:
+    if display.show_days and data.days:
+        # Drawn, not a progress bar: the two share the bottom row and a widget
+        # showing both would overwrite one with the other.
+        fields["draw"] = _day_segments(
+            data.days,
+            display.color or data.hint_color,
+            with_icon=bool(fields.get("icon")),
+        )
+    elif display.show_progress and data.progress is not None:
         fields["progress"] = data.progress
         # Left empty, the bar takes the colour the connector proposes — the
         # same rule the text already follows. Without it the bar kept the
@@ -106,6 +114,68 @@ def render(
         fields["lifetime_ms"] = lifetime_seconds * 1000
 
     return NgPayload(**fields)
+
+
+#: The firmware's own weekday bar, read off the panel under the Date app:
+#: seven runs of three pixels, one apart, from column 2, on the bottom row.
+#: Reproduced rather than invented, so a widget and the Date app align pixel
+#: for pixel when they follow each other in the rotation.
+DAY_ROW = 7
+DAY_GAP = 1
+DAY_WIDE = 3
+DAY_FIRST_COLUMN = 2
+
+#: **With an icon, three pixels per day does not fit**, and the icon wins:
+#: it occupies columns 0 to 8 of every row including the bottom one, so the
+#: first two segments were painted over. Measured, not predicted — the first
+#: version of this drew a bar the icon then ate.
+#:
+#: Seven runs of two with a gap is 20 columns, which lands at 10..29 of the
+#: 23 an icon leaves. Florian said two pixels per day before any of this was
+#: written; the firmware's three is what fits when nothing else is there.
+DAY_NARROW = 2
+DAY_FIRST_COLUMN_WITH_ICON = 10
+
+#: An 8x8 icon and the column of space after it.
+ICON_COLUMNS = 9
+
+#: The firmware's own two, measured: #ffffff for the day you are in, #666666
+#: for the rest. A day still to come takes the widget's colour instead, which
+#: is what makes "two school days left" readable at a glance.
+COLOUR_TODAY = "#ffffff"
+COLOUR_OFF = "#2a2a2a"
+
+
+def _day_segments(
+    days: list[str], colour: str | None, *, with_icon: bool
+) -> list[list[object]]:
+    """Seven draw commands, one per day.
+
+    `past` is a dark wash of the widget's colour, `school` the colour itself,
+    `today` white, and a day off dimmer still. Four shades rather than two:
+    the firmware only has to say which day it is, this has to say how much of
+    the week is left.
+    """
+    width = DAY_NARROW if with_icon else DAY_WIDE
+    first = DAY_FIRST_COLUMN_WITH_ICON if with_icon else DAY_FIRST_COLUMN
+    base = colour or "#ffffff"
+    shade = {
+        "today": COLOUR_TODAY,
+        "school": base,
+        "past": wmo.dim(base, 0.25) or COLOUR_OFF,
+        "off": COLOUR_OFF,
+    }
+    return [
+        [
+            "rect",
+            first + index * (width + DAY_GAP),
+            DAY_ROW,
+            width,
+            1,
+            shade.get(state, COLOUR_OFF),
+        ]
+        for index, state in enumerate(days[:7])
+    ]
 
 
 def _scroll(display: DisplayOptions) -> Scroll | None:

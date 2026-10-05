@@ -330,6 +330,11 @@ def test_the_track_wash_matches_the_preview():
     ]
 
 
+def _fills_the_bottom_row(widget) -> bool:
+    """A progress bar or the seven day segments. They are the same row."""
+    return widget.default_display.show_progress or widget.default_display.show_days
+
+
 class TestTheFontRule:
     """The large font is the font of a widget that has a bar.
 
@@ -340,8 +345,11 @@ class TestTheFontRule:
         large, with bar    0..7    fills the panel exactly
 
     So it is not a matter of taste. `large` draws the seven rows above the
-    progress bar, which is a perfect fit when there is one and a lopsided one
-    when there is not. Width is unaffected either way — the same measurement
+    bottom row, which is a perfect fit when something occupies it and a
+    lopsided one when nothing does. "Something" is a progress bar or the seven
+    day segments — they share that row and only one of them is ever drawn.
+
+    Width is unaffected either way — the same measurement
     gave identical column counts for both fonts, which is why the choice costs
     nothing horizontally.
     """
@@ -356,7 +364,7 @@ class TestTheFontRule:
         wrong = [
             w.type
             for w in self.widgets()
-            if w.default_display.show_progress and w.default_display.font != "large"
+            if _fills_the_bottom_row(w) and w.default_display.font != "large"
         ]
         assert not wrong, f"these have a bar and sit squeezed above it: {wrong}"
 
@@ -365,7 +373,7 @@ class TestTheFontRule:
         wrong = [
             w.type
             for w in self.widgets()
-            if w.default_display.font == "large" and not w.default_display.show_progress
+            if w.default_display.font == "large" and not _fills_the_bottom_row(w)
         ]
         assert not wrong, f"these would sit one row high: {wrong}"
 
@@ -376,6 +384,82 @@ class TestTheFontRule:
         missing = [
             w.type
             for w in self.widgets()
-            if w.default_display.show_progress and w.sample_data.progress is None
+            if w.default_display.show_progress
+            and not w.default_display.show_days
+            and w.sample_data.progress is None
         ]
         assert not missing, f"these ask for a bar with no value behind it: {missing}"
+
+
+class TestTheWeekdayBar:
+    """Seven day segments instead of one filled proportion.
+
+    Florian's idea, from the firmware's own bar under the Date app. A progress
+    bar at 60 % says nothing about *which* days are left — Thursday and Friday,
+    or a Wednesday and a holiday. Seven marks say it at a glance.
+
+    The geometry is the firmware's, read off the panel rather than guessed:
+    seven runs of three pixels, one apart, from column 2, on the bottom row.
+    """
+
+    DAYS = ["past", "past", "today", "school", "school", "off", "off"]
+
+    def render(self, **options):
+        return render(
+            WidgetData(values={}, days=self.DAYS, hint_color="#3ddc84"),
+            DisplayOptions(text="Sem. B", show_days=True, **options),
+        ).to_json()
+
+    def test_without_an_icon_it_is_the_firmware_s_own_bar(self):
+        """Pixel for pixel, so a widget and the Date app line up when they
+        follow each other in the rotation."""
+        commands = self.render(show_icon=False)["draw"]
+        assert [(c[1], c[3]) for c in commands] == [
+            (2, 3), (6, 3), (10, 3), (14, 3), (18, 3), (22, 3), (26, 3)
+        ]
+        assert all(c[0] == "rect" and c[2] == 7 and c[4] == 1 for c in commands)
+
+    def test_with_an_icon_it_narrows_to_fit(self):
+        """Measured, not predicted: the icon occupies columns 0 to 8 of every
+        row *including the bottom one*, so three-pixel segments were painted
+        over. Two pixels and a gap is 20 columns, which lands inside the 23
+        an icon leaves."""
+        commands = self.render(icon="2536")["draw"]
+        assert [(c[1], c[3]) for c in commands] == [
+            (10, 2), (13, 2), (16, 2), (19, 2), (22, 2), (25, 2), (28, 2)
+        ]
+        assert max(c[1] + c[3] for c in commands) <= 32
+
+    def test_the_four_states_are_four_shades(self):
+        """The firmware only has to say which day it is. This has to say how
+        much of the week is left, which needs more than two."""
+        colours = [c[5] for c in self.render(show_icon=False)["draw"]]
+        assert colours[2] == "#ffffff", "today is the brightest"
+        assert colours[3] == "#3ddc84", "a school day still to come takes the widget colour"
+        assert colours[0] != colours[3], "a day already past is dimmer"
+        assert len(set(colours)) == 4
+
+    def test_it_replaces_the_progress_bar_rather_than_joining_it(self):
+        """They share the bottom row; a widget drawing both would overwrite
+        one with the other."""
+        payload = render(
+            WidgetData(values={}, days=self.DAYS, progress=60, hint_color="#3ddc84"),
+            DisplayOptions(text="x", show_days=True, show_progress=True),
+        ).to_json()
+        assert "draw" in payload
+        assert "progress" not in payload
+
+    def test_a_connector_with_no_days_falls_back_to_the_bar(self):
+        payload = render(
+            WidgetData(values={}, progress=60, hint_color="#3ddc84"),
+            DisplayOptions(text="x", show_days=True, show_progress=True),
+        ).to_json()
+        assert "draw" not in payload
+        assert payload["progress"] == 60
+
+    def test_the_connector_names_states_not_colours(self):
+        """The one thing this layer must not know is what the matrix looks
+        like. A connector that returned "#ffffff" would be deciding it."""
+        from app.connectors.school import calendar as cal
+
+        assert set(cal.week_days(cal.today(), [])) <= {"past", "today", "school", "off"}
