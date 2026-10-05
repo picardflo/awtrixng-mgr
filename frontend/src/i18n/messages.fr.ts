@@ -173,7 +173,7 @@ export const fr: Record<MessageKey, string> = {
   "matrix.previewOf": "Aperçu AWTRIX : {text}",
   "matrix.previewEmpty": "Aperçu AWTRIX, matrice vide",
 
-  "device.detected": "AWTRIX 3 détecté, firmware {firmware}.",
+  "device.detected": "AWTRIX NG détecté, firmware {firmware}.",
   "device.notification_sent": "Notification envoyée.",
   "device.unreachable": "{target} est injoignable ({reason}).",
   "device.auth_failed":

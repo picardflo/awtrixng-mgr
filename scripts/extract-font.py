@@ -6,7 +6,10 @@ match: its 'A' is 010/101/111/101/101 where the firmware draws
 110/101/111/101/101. Rather than correct a drawing by eye, each glyph is
 pushed to the panel on its own and read back out of the framebuffer.
 """
-import json, sys, time, urllib.request
+import json
+import sys
+import time
+import urllib.request
 
 H = "http://awtrix-cl2.home.lan/api/v1"
 

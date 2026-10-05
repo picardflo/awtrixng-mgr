@@ -5,6 +5,36 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.11.2]
+
+La documentation et le wiki, calqués sur la logique d'awtrixhub.
+
+### Ajouté
+- **L'environnement de démonstration** : deux afficheurs AWTRIX NG inventés et
+  une fausse Open-Meteo, en données fixes. Le faux afficheur a été réécrit pour
+  parler `/api/v1/` — routes, verbes et formes de réponse — et il sert les
+  **réponses réellement mesurées**, chargées depuis `docs/ng-api/` plutôt que
+  réinventées.
+- **`./scripts/update-screenshots.sh`** et les **19 captures** du wiki. Elles ne
+  touchent aucun matériel : un réconciliateur pointé sur une horloge en service
+  effacerait ses apps.
+- **`scripts/check-wiki.py`**, qui refuse un lien mal formé, une ancre, une
+  image manquante ou un tableau irrégulier.
+- **Le wiki, onze pages**, dont une neuve — « Ce que NG change » — pour qui
+  vient d'AWTRIX 3.
+
+### Corrigé, vu sur une capture
+Tester une connexion répondait **« AWTRIX 3 détecté, firmware 1.1.2 »** — une
+phrase qui se contredit elle-même. Le genre de chose que seul un œil sur une
+image attrape : le code parle d'AWTRIX 3 partout et le doit, puisqu'il explique
+ce qui a changé ; l'interface ne le doit pas. Un test refuse désormais toute
+chaîne d'interface qui le dit.
+
+### Au passage
+Dans le wiki d'awtrixhub, `Maintenance.md` porte le titre « Dépannage » : son
+contenu a été écrasé un jour par celui de l'autre page. La page équivalente est
+ici écrite à neuf — l'erreur n'est pas héritée.
+
 ## [0.11.1]
 
 Florian a mis `{{ fuel }} : {{ price }}` sur ses deux widgets Carburant, parce

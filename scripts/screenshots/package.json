@@ -1,0 +1,9 @@
+{
+  "name": "awtrixng-mgr-screenshots",
+  "private": true,
+  "type": "module",
+  "description": "Regenerates the wiki screenshots from the demo environment.",
+  "devDependencies": {
+    "playwright": "^1.56.0"
+  }
+}

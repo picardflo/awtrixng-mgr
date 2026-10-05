@@ -65,3 +65,23 @@ def test_the_session_cookie_belongs_to_this_project():
     from app.core.auth import COOKIE_NAME
 
     assert COOKIE_NAME == "awtrixng_session"
+
+
+def test_no_user_facing_string_still_says_awtrix_3():
+    """The firmware this project does *not* speak.
+
+    Found on a screenshot: testing a connection answered "AWTRIX 3 détecté,
+    firmware 1.1.2" — a sentence contradicting itself, and the sort of thing
+    only an eye on an image catches. The code comments mention AWTRIX 3 all
+    the time and should: they explain what changed. The interface must not.
+    """
+    import re
+
+    for catalogue in ("fr", "en"):
+        path = ROOT / "frontend" / "src" / "i18n" / f"messages.{catalogue}.ts"
+        guilty = [
+            line.strip()
+            for line in path.read_text(encoding="utf-8").splitlines()
+            if re.search(r'"[^"]*AWTRIX ?3[^"]*"', line)
+        ]
+        assert not guilty, f"messages.{catalogue}.ts still says AWTRIX 3: {guilty}"

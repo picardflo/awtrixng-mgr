@@ -52,6 +52,24 @@ Ce qui disparaît : la couche qui parlait à AWTRIX 3, remplacée par un client
   qu'il refuse en le nommant, et **ce qu'il accepte sans le valider**.
 - [`docs/architecture.md`](docs/architecture.md) — les décisions prises, et
   celles héritées d'awtrixhub qui restent à rejuger.
+- **[Le wiki](https://gogs.home.lan/fpicard/awtrixng-mgr/wiki)** — le manuel
+  d'utilisation : démarrage, widgets, rappels, dépannage. Les captures qu'il
+  affiche vivent dans [`docs/screenshots/`](docs/screenshots/).
+
+## La démonstration
+
+```bash
+backend/.venv/bin/python scripts/demo/serve.py --port 9000
+```
+
+L'application complète contre un faux amont : deux afficheurs AWTRIX NG
+inventés, une fausse Open-Meteo, des données fixes. **Elle ne touche aucun
+matériel** — c'est ce qui permet de prendre les captures sans risquer qu'un
+réconciliateur efface les apps d'une horloge en service.
+
+`./scripts/update-screenshots.sh` la lance, capture les dix-neuf écrans du wiki
+et les écrit dans `docs/screenshots/`. Le numéro de version apparaît dans les
+images : capturez **avant** de bumper.
 - [`docs/ng-vs-awtrix3.md`](docs/ng-vs-awtrix3.md) — ce que le portage a
   retiré, changé et gagné, option par option, avec la mesure qui le justifie.
 

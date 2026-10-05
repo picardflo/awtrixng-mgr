@@ -186,7 +186,7 @@ export const en = {
   "matrix.previewEmpty": "AWTRIX preview, empty matrix",
 
   // -- Backend codes --------------------------------------------------------
-  "device.detected": "AWTRIX 3 detected, firmware {firmware}.",
+  "device.detected": "AWTRIX NG detected, firmware {firmware}.",
   "device.notification_sent": "Notification sent.",
   "device.unreachable": "{target} is unreachable ({reason}).",
   "device.auth_failed": "Authentication rejected: check the username and password.",
