@@ -5,6 +5,40 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.4.1]
+
+Les rappels et le buzzer, éprouvés contre une horloge réelle pour la première
+fois. Cinq comportements confirmés, **un démenti**.
+
+### Vérifié sur matériel
+- L'appareil **déclare un buzzer** (`capabilities.audio.buzzer`), là où AWTRIX
+  3 ne disait jamais si une horloge en avait une — le projet précédent offrait
+  un champ mélodie et espérait.
+- `soundEnabled` et `buzzerVolume` existent comme réglages.
+- Une mélodie RTTTL traverse le modèle, la projection, le fil et la matrice.
+- **Le firmware analyse vraiment la mélodie** : un RTTTL malformé revient en
+  422 nommant l'offset où il a buté. Seul un analyseur répond comme ça — c'est
+  la meilleure preuve disponible sans oreilles.
+- Un rappel réduit au silence par le mode chambre perd sa mélodie et garde son
+  texte.
+
+### Démenti : `wakeup` ne réveille rien
+La clé est **acceptée et sans effet** sur NG 1.1.2, mesuré dans les deux
+situations :
+
+- **Panneau éteint** : la notification est acceptée, le framebuffer la dessine
+  — 36 pixels allumés — et `power` reste `false`. Elle est entendue, jamais
+  vue.
+- **Luminosité à zéro** : `wakeup` ne la relève pas davantage. Testé avec et
+  sans la clé, même résultat.
+
+Rien dans le firmware n'allume donc un afficheur éteint pour une alerte, alors
+que les rappels portent `wakeup` au nom du principe inverse : une alerte que
+personne ne peut voir n'en est pas une.
+
+Le test épingle ce constat **à l'envers** — il échouera le jour où une version
+du firmware corrigera la chose, ce qui est précisément son rôle.
+
 ## [0.4.0]
 
 **La météo cesse de se décrire et se montre.** Premier widget modernisé avec ce
