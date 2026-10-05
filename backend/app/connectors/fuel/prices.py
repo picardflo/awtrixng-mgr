@@ -37,6 +37,24 @@ FUELS: dict[str, str] = {
     "gplc": "GPLc",
 }
 
+#: The same six, short enough to sit beside a price on thirty-two pixels.
+#:
+#: Measured: an icon costs nine of the thirty-two columns, and "SP95-E10 1.99"
+#: scrolls whatever is done to it. "E10 1.99" without the icon is static and
+#: read at a glance — which is the whole point of a widget someone checks on
+#: the way out of the door.
+#:
+#: Two widgets for two fuels are otherwise indistinguishable: same pump icon,
+#: same colour, and two prices that are often the same number.
+SHORT: dict[str, str] = {
+    "gazole": "GO",
+    "e10": "E10",
+    "sp95": "95",
+    "sp98": "98",
+    "e85": "E85",
+    "gplc": "GPL",
+}
+
 #: What a new service tracks until someone says otherwise. The two most sold
 #: in France; everything else is one click away.
 DEFAULT_FUELS = ("gazole", "e10")

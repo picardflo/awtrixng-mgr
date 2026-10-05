@@ -413,6 +413,7 @@ export const en = {
   "variable.fuel.cheapest.price": "Price, €/L",
   "variable.fuel.cheapest.fuel": "Name on the pump — the same in every language",
   "variable.fuel.cheapest.station": "Town of the station",
+  "variable.fuel.cheapest.short": "Fuel, short — fits beside the price",
   "variable.fuel.cheapest.address": "Street",
   "variable.fuel.cheapest.distance": "Distance, km",
   "variable.fuel.cheapest.updated": "Price published on",

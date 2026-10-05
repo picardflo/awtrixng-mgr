@@ -395,6 +395,7 @@ export const fr: Record<MessageKey, string> = {
   "variable.fuel.cheapest.price": "Prix, €/L",
   "variable.fuel.cheapest.fuel": "Le nom sur la pompe — identique dans toutes les langues",
   "variable.fuel.cheapest.station": "Commune de la station",
+  "variable.fuel.cheapest.short": "Carburant, en court — tient à côté du prix",
   "variable.fuel.cheapest.address": "Rue",
   "variable.fuel.cheapest.distance": "Distance, km",
   "variable.fuel.cheapest.updated": "Prix publié le",

@@ -5,6 +5,35 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.11.1]
+
+Florian a mis `{{ fuel }} : {{ price }}` sur ses deux widgets Carburant, parce
+qu'ils étaient indistinguables : même icône, même couleur, et souvent le même
+nombre — 1.99 et 1.99.
+
+**Ça défile.** Mesuré sur le Bureau, avec et sans icône, et rien de plus long
+que le prix seul ne tient à côté d'une icône : elle coûte neuf des trente-deux
+colonnes.
+
+### Ajouté : `{{ short }}`
+`GO`, `E10`, `95`, `98`, `E85`, `GPL`. Mesuré :
+
+| texte | avec icône | sans icône |
+|---|---|---|
+| `98 1.99` | défile | **fixe** |
+| `E10 1.99` | défile | **fixe** |
+| `GO 2.217` | défile | **fixe** |
+
+Le gabarit par défaut devient donc `{{ short }} {{ price }}`, **icône
+décochée**. Deux carburants donnent deux widgets lisibles au lieu de deux
+identiques.
+
+### Cherché et non retenu
+Une icône par carburant aurait distingué sans coûter une colonne. La galerie
+LaMetric a bien un jeu E10 qui épelle son nom en seconde image — mais **aucun
+équivalent SP98** : les icônes titrées « 98 » sont une barre colorée. Un jeu
+asymétrique serait pire qu'uniforme.
+
 ## [0.11.0]
 
 Florian a créé deux widgets Carburant — SP95-E10 et SP98 — et ça a permis de

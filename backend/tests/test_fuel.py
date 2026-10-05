@@ -487,3 +487,43 @@ class TestTheColourSaysSomething:
         from app.connectors.fuel import prices
 
         assert self.colour(None) == prices.COLOUR_STALE
+
+
+class TestTheShortName:
+    """Two fuels, two widgets, and they looked identical.
+
+    Florian created SP95-E10 and SP98 side by side. Both drew the same pump
+    icon, the same colour, and — often — the same number: 1.99 and 1.99.
+    Nothing on the matrix said which was which.
+
+    `{{ fuel }} : {{ price }}` says it and scrolls, measured on the panel with
+    and without the icon. An icon costs nine of the thirty-two columns, and
+    nothing longer than the price alone fits beside one.
+    """
+
+    def test_every_fuel_has_a_short_form(self):
+        from app.connectors.fuel import prices
+
+        assert set(prices.SHORT) == set(prices.FUELS)
+
+    def test_the_short_forms_are_short(self):
+        """Three characters at most: measured, "E10 1.99" is static without an
+        icon and "SP95-E10 1.99" scrolls however it is arranged."""
+        from app.connectors.fuel import prices
+
+        assert max(len(name) for name in prices.SHORT.values()) <= 3
+
+    def test_they_are_distinguishable_from_each_other(self):
+        """The whole point. Two abbreviations that collide would leave the two
+        widgets as indistinguishable as before."""
+        from app.connectors.fuel import prices
+
+        assert len(set(prices.SHORT.values())) == len(prices.SHORT)
+
+    def test_the_default_template_fits_without_an_icon(self):
+        from app.connectors import registry
+
+        registry.load_all()
+        display = registry.widget_descriptor("fuel.cheapest").default_display
+        assert "{{ short }}" in display.text
+        assert display.show_icon is False, "the icon is what makes it scroll"

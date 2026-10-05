@@ -120,6 +120,11 @@ class FuelConnector(Connector):
                     Variable(
                         name="station", label="Town of the station", example="Les Essarts-le-Roi"
                     ),
+                    Variable(
+                        name="short",
+                        label="Fuel, short — fits beside the price",
+                        example="E10",
+                    ),
                     Variable(name="address", label="Street", example="12 RUE DE PARIS"),
                     Variable(name="distance", label="Distance (km)", example="1.3"),
                     Variable(name="updated", label="Price published on", example="03/10/2026"),
@@ -136,12 +141,21 @@ class FuelConnector(Connector):
                 ],
                 # The price alone: it is what the glance is for, and "1.99"
                 # is already five of the characters left beside an icon.
-                default_display=DisplayOptions(text="{{ price }}", duration=8),
+                default_display=DisplayOptions(
+                    # The short name and the price, with no icon: measured
+                    # static on the panel, where "{{ fuel }} {{ price }}"
+                    # scrolls. Two fuels become two readable widgets instead
+                    # of two identical ones.
+                    text="{{ short }} {{ price }}",
+                    show_icon=False,
+                    duration=8,
+                ),
                 default_refresh=prices.CACHE_SECONDS,
                 sample_data=WidgetData(
                     values={
                         "price": 1.99,
                         "fuel": "SP95-E10",
+                        "short": "E10",
                         "station": "Les Essarts-le-Roi",
                         "address": "12 RUE DE PARIS",
                         "distance": 1.3,
@@ -302,6 +316,7 @@ class FuelConnector(Connector):
                 values={
                     "price": None,
                     "fuel": prices.FUELS.get(fuel, fuel),
+                    "short": prices.SHORT.get(fuel, fuel),
                     "station": None,
                     "address": None,
                     "distance": None,
@@ -316,6 +331,10 @@ class FuelConnector(Connector):
             values={
                 "price": best.price,
                 "fuel": prices.FUELS.get(fuel, fuel),
+                # The short form, because the long one does not fit beside a
+                # price: "{{ short }} {{ price }}" is static without an icon,
+                # "{{ fuel }} : {{ price }}" scrolls with or without.
+                "short": prices.SHORT.get(fuel, fuel),
                 "station": best.town,
                 "address": best.address,
                 "distance": round(best.distance, 1),
