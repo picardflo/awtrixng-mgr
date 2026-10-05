@@ -5,6 +5,29 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.3.1]
+
+Deux restes de l'ancien nom, vus sur le déploiement de Florian avant de l'être
+ici. Le portage les avait laissés parce qu'ils sont du **texte**, pas des
+identifiants : rien ne casse quand ils sont faux.
+
+### Corrigé
+- **Le bandeau du tableau de bord** affichait `AWTRIXHUB READY`. Il fait 58
+  colonnes sur un panneau de 32, donc il défilait, et une capture d'écran le
+  prenait en plein milieu : `AWTRIXHI`, un bandeau qui a l'air cassé.
+  Remplacé par `AWTRIXNG`, **31 colonnes sur 32** — il tient, donc il se lit à
+  tout instant.
+- **Le cookie de session** s'appelait encore `awtrixhub_session`. Ce n'est pas
+  cosmétique : les deux applications peuvent tourner derrière le même Caddy, et
+  un nom partagé ferait que se connecter à l'une déconnecte de l'autre — avec
+  un symptôme qui ne désigne rien.
+
+### Ajouté
+- `tests/test_no_leftovers.py`, qui balaie le code du backend et du frontend à
+  la recherche de l'ancien nom. Les trois casses sont vérifiées, et le
+  répertoire des migrations est exclu : sa documentation parle d'awtrixhub
+  volontairement.
+
 ## [0.3.0]
 
 **L'application entière, portée sur AWTRIX NG.** Backend, planificateur,

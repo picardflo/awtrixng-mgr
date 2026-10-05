@@ -78,7 +78,11 @@ export function Dashboard() {
           </p>
         </div>
         <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-matrix-bg)] p-2">
-          <AwtrixMatrixPreview text="AWTRIXHUB READY" color="#3ddc84" scale={6} />
+          {/* 31 colonnes sur les 32 du panneau : il tient, donc il se lit à
+              tout instant. Le texte précédent en faisait 58 et défilait, si
+              bien qu'une capture d'écran le prenait en plein milieu et
+              montrait "AWTRIXHI" — un bandeau qui a l'air cassé. */}
+          <AwtrixMatrixPreview text="AWTRIXNG" color="#3ddc84" scale={6} />
         </div>
       </Card>
 

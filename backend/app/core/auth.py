@@ -29,7 +29,10 @@ from app.core.crypto import derived_fernet
 
 log = logging.getLogger(__name__)
 
-COOKIE_NAME = "awtrixhub_session"
+#: Nommé d'après ce projet, pas le précédent. Les deux peuvent tourner
+#: derrière le même Caddy : un cookie partagé ferait que se connecter à l'un
+#: déconnecterait de l'autre, et le symptôme ne désignerait rien.
+COOKIE_NAME = "awtrixng_session"
 
 #: How long a session lasts. Long enough not to log in every day, short enough
 #: that a forgotten browser does not stay open forever.
