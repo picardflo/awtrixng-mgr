@@ -359,3 +359,65 @@ class TestTheWeatherOverlay:
         from app.connectors.weather import wmo
 
         assert wmo.overlay_for(66) == "frost"
+
+
+class TestForecastAndReport:
+    """The rain widget says two things at once, and that is deliberate.
+
+    The icon and the colour follow the **probability** — they announce. The
+    overlay follows the **condition** — it reports. Florian's call on
+    5 October 2026, after the case that revealed it: Bergen, measured live at
+    a 98 % chance of rain under an overcast sky, showed a rain cloud on a
+    matrix that stayed dry.
+
+    The alternative was to drive the overlay from the probability too, which
+    brings back exactly the arbitrary threshold refused earlier — and a matrix
+    that rains under a dry sky. So the two rules stand, and the widget's own
+    description says so rather than leaving someone to work it out from a
+    clock.
+    """
+
+    def project(self, code: int, probability: int):
+        from app.connectors.weather import wmo
+        from app.schemas.widget_data import WidgetData
+
+        return WidgetData(
+            values={"probability": probability},
+            progress=probability,
+            hint_icon=wmo.precipitation_icon(code, probability, is_day=True),
+            hint_color=wmo.colour_for_precipitation(code, probability),
+            hint_overlay=wmo.overlay_for(code),
+        )
+
+    def test_a_high_chance_under_a_dry_sky_warns_without_raining(self):
+        """The Bergen case, which is the whole reason this is written down."""
+        from app.connectors.weather import wmo
+
+        data = self.project(code=3, probability=98)   # overcast, 98 %
+        assert data.hint_icon == str(wmo.ICON_RAIN), "the icon announces"
+        assert data.hint_overlay is None, "the overlay reports, and there is nothing to report"
+
+    def test_a_low_chance_while_it_drizzles_draws_the_drizzle(self):
+        """The Quito case: 31 %, and raining."""
+        data = self.project(code=51, probability=31)
+        assert data.hint_overlay == "drizzle"
+
+    def test_a_clear_sky_announces_nothing_and_reports_nothing(self):
+        from app.connectors.weather import wmo
+
+        data = self.project(code=0, probability=0)
+        assert data.hint_overlay is None
+        assert data.hint_icon != str(wmo.ICON_RAIN)
+
+    def test_the_description_warns_about_the_two_rules(self):
+        """A widget that says two things must say that it does.
+
+        Pinned because the behaviour is defensible and the surprise is not:
+        nobody deduces it from looking at a clock.
+        """
+        from app.connectors import registry
+
+        registry.load_all()
+        description = registry.widget_descriptor("weather.rain").description.lower()
+        assert "forecast" in description
+        assert "report" in description

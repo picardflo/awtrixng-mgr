@@ -167,7 +167,10 @@ class WeatherConnector(Connector):
             WidgetDescriptor(
                 type="weather.rain",
                 name="Rain",
-                description="Probability and amount of precipitation.",
+                description=(
+                    "Chance of rain. The icon and the colour forecast; "
+                    "the overlay reports."
+                ),
                 variables=[
                     Variable(name="probability", label="Probability (%)", example="70"),
                     Variable(name="precipitation", label="Precipitation (mm)", example="0.4"),
@@ -539,6 +542,17 @@ class WeatherConnector(Connector):
                 # threshold question answered by refusing it: at a 70 % chance
                 # under a clear sky, a matrix that rains is lying. It rains on
                 # screen when it is raining outside, and not before.
+                #
+                # **The icon and the colour do not follow this rule**, and that
+                # is deliberate — Florian's call, 5 October 2026. They follow
+                # the probability, so the widget says two things at once: the
+                # cloud and the blue announce what is coming, the overlay
+                # reports what is happening. Bergen measured at 98 % under an
+                # overcast sky shows a rain cloud and a dry matrix, which is
+                # the case worth understanding.
+                #
+                # It reads as one thing only if someone says so, which is why
+                # the widget's own description does.
                 hint_overlay=wmo.overlay_for(current.get("weather_code")),
             )
 

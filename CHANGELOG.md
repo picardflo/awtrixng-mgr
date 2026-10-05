@@ -5,6 +5,38 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.7.1]
+
+Le widget Pluie dit **deux choses à la fois**, et c'est maintenant écrit.
+
+### Le cas qui l'a révélé
+Florian a demandé si la pluie marchait encore après le changement de 0.7.0.
+Vérifié sur des données réelles, et la réponse a soulevé mieux que la question :
+
+| lieu | WMO | risque | texte | icône | surimpression |
+|---|---|---|---|---|---|
+| **Bergen** | 3 — couvert | **98 %** | `98%` | nuage de pluie | **aucune** |
+| **Quito** | 51 — bruine | 31 % | `31%` | nuage de pluie | **drizzle** |
+
+Bergen annonce 98 % de pluie et la matrice reste sèche. C'est voulu — mais
+l'icône et la couleur, elles, suivent la **probabilité** et non la condition.
+Le widget annonce donc d'un côté et constate de l'autre.
+
+### Décidé
+**L'icône et la couleur annoncent ; la surimpression constate.** Choix de
+Florian. L'autre option — aligner aussi la surimpression sur la probabilité —
+ramenait exactement le seuil arbitraire refusé en 0.7.0, et une matrice qui
+pleut sous un ciel sec.
+
+Ce n'est défendable qu'énoncé : personne ne le déduit en regardant une horloge.
+La description du widget le dit donc, en français et en anglais, et quatre
+tests le figent — dont les deux cas réels ci-dessus.
+
+### Corrigé
+`weather.humidity` n'avait **aucune traduction** : il serait apparu en anglais
+dans une interface française. Son nom, sa description et ses quatre variables
+sont traduits.
+
 ## [0.7.0]
 
 **Une clé que j'avais manquée au premier sondage : `font`.** Elle accepte
