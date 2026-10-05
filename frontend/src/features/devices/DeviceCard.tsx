@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { api, ApiError } from "../../api/client";
-import type { AwtrixStats, Device, TestResult } from "../../api/client";
+import type { Device, DeviceState, TestResult } from "../../api/client";
 import { AwtrixMatrixPreview } from "../../components/AwtrixMatrixPreview";
 import { useToast } from "../../components/Toast";
 import { Button, Card, Stat, StatusBadge } from "../../components/ui";
@@ -19,7 +19,7 @@ export function DeviceCard({
 }) {
   const { t, tApi } = useI18n();
   const toast = useToast();
-  const [stats, setStats] = useState<AwtrixStats | null>(null);
+  const [stats, setStats] = useState<DeviceState | null>(null);
   const [testing, setTesting] = useState(false);
   const [notifying, setNotifying] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -38,16 +38,23 @@ export function DeviceCard({
     return `${minutes} ${min}`;
   }
 
-  /** Wi-Fi quality: the raw RSSI means nothing to most people. */
-  function wifi(rssi?: number): string {
-    if (rssi === undefined) return t("unit.none");
+  /** A reading, or the dash. Written once: six tiles spelling out the same
+   *  `x !== undefined ? ... : t("unit.none")` is six chances to get it wrong,
+   *  and the version that shipped got all six wrong at once. */
+  function num(value?: number, unit = ""): string {
+    return value === undefined || value === null ? t("unit.none") : `${value}${unit}`;
+  }
+
+  /** Wi-Fi quality in words: the raw RSSI means nothing to most people. */
+  function wifiQuality(rssi?: number): string | undefined {
+    if (rssi === undefined) return undefined;
     const key: MessageKey =
       rssi >= -55
         ? "device.wifi.excellent"
         : rssi >= -70
           ? "device.wifi.good"
           : "device.wifi.weak";
-    return `${rssi} dBm · ${t(key)}`;
+    return t(key);
   }
 
   async function run(
@@ -129,7 +136,7 @@ export function DeviceCard({
               {device.host}
               {device.port !== 80 && `:${device.port}`}
             </a>
-            {device.firmware && ` · AWTRIX 3 v${device.firmware}`}
+            {device.firmware && ` · AWTRIX NG v${device.firmware}`}
           </p>
         </div>
 
@@ -149,24 +156,60 @@ export function DeviceCard({
         </p>
       )}
 
+      {/* The same six readings the display's own interface shows, in the same
+          order, with the same second line under each. Someone comparing the
+          two should not have to translate anything.
+
+          AWTRIX 3 reported `bat`, `temp`, `hum`; NG reports `battery_percent`,
+          `temperature`, `humidity`. Reading the old names compiled fine and
+          put a dash in every tile — which is how this shipped. */}
       {stats && (
-        <div className="mx-4 mb-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-          <Stat
-            label={t("device.stat.battery")}
-            value={stats.bat !== undefined ? `${stats.bat} %` : t("unit.none")}
-          />
-          <Stat label={t("device.stat.wifi")} value={wifi(stats.wifi_signal)} />
-          <Stat
-            label={t("device.stat.temperature")}
-            value={stats.temp !== undefined ? `${stats.temp} °C` : t("unit.none")}
-          />
-          <Stat
-            label={t("device.stat.humidity")}
-            value={stats.hum !== undefined ? `${stats.hum} %` : t("unit.none")}
-          />
-          <Stat label={t("device.stat.brightness")} value={stats.bri ?? t("unit.none")} />
-          <Stat label={t("device.stat.uptime")} value={uptime(stats.uptime)} />
-        </div>
+        <>
+          <div className="mx-4 mb-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+            <Stat
+              label={t("device.stat.battery")}
+              value={num(stats.battery_percent, " %")}
+              detail={num(stats.battery_voltage, " V")}
+            />
+            <Stat
+              label={t("device.stat.wifi")}
+              value={num(stats.wifi_rssi, " dBm")}
+              detail={wifiQuality(stats.wifi_rssi)}
+            />
+            <Stat
+              label={t("device.stat.light")}
+              value={num(stats.light_level, " %")}
+              detail={num(stats.ldr_raw, ` ${t("device.stat.raw")}`)}
+            />
+            <Stat
+              label={t("device.stat.temperature")}
+              value={num(stats.temperature, " °C")}
+            />
+            <Stat label={t("device.stat.humidity")} value={num(stats.humidity, " %")} />
+            <Stat
+              label={t("device.stat.fps")}
+              value={num(stats.fps)}
+              detail={num(stats.brightness, ` ${t("device.stat.brightnessShort")}`)}
+            />
+          </div>
+
+          {/* The footer line of the clock's own dashboard. */}
+          <p className="mx-4 mb-3 flex flex-wrap gap-x-4 gap-y-1 text-xs
+            text-[var(--color-text-faint)]">
+            <span>{t("device.stat.uptime")} {uptime(stats.uptime_seconds)}</span>
+            {stats.free_heap_bytes !== undefined && (
+              <span>
+                {t("device.stat.freeRam")} {Math.round(stats.free_heap_bytes / 1024)} Ko
+              </span>
+            )}
+            {stats.current_app && (
+              <span>{t("device.stat.currentApp")} {stats.current_app}</span>
+            )}
+            {stats.matrix_power === false && (
+              <span className="text-[var(--color-danger)]">{t("device.stat.panelOff")}</span>
+            )}
+          </p>
+        </>
       )}
 
       {showSettings && (

@@ -140,13 +140,30 @@ export function EmptyState({
   );
 }
 
-export function Stat({ label, value }: { label: string; value: ReactNode }) {
+/** A reading, with an optional second line under it.
+ *
+ *  The display's own interface puts the raw value beneath the interpreted one
+ *  — 93 % over 4.14 V, -63 dBm over "good", 5 % over "184 raw". It is worth
+ *  copying: the interpreted number is what you read at a glance, and the raw
+ *  one is what you need the day it looks wrong. */
+export function Stat({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: ReactNode;
+  detail?: ReactNode;
+}) {
   return (
     <div className="rounded-lg bg-[var(--color-surface-2)] px-3 py-2">
       <div className="text-[10px] uppercase tracking-wide text-[var(--color-text-faint)]">
         {label}
       </div>
       <div className="mt-0.5 font-mono text-sm">{value}</div>
+      {detail && (
+        <div className="font-mono text-[10px] text-[var(--color-text-faint)]">{detail}</div>
+      )}
     </div>
   );
 }

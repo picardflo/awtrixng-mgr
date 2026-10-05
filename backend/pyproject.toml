@@ -1,6 +1,6 @@
 [project]
 name = "awtrixng-mgr"
-version = "0.3.1"
+version = "0.3.2"
 description = "Middleware between your services and AWTRIX NG displays"
 requires-python = ">=3.11"
 dependencies = [

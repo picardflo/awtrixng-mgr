@@ -27,6 +27,7 @@ class DeviceState(BaseModel):
     wifi_rssi: int | None = Field(default=None, alias="wifiRssi")
     uptime_seconds: int | None = Field(default=None, alias="uptimeSeconds")
     free_heap_bytes: int | None = Field(default=None, alias="freeHeapBytes")
+    battery_pin_millivolts: int | None = Field(default=None, alias="batteryPinMillivolts")
     #: Why the device last restarted — "software", "poweron", a panic. Nothing
     #: equivalent existed on AWTRIX 3, and it is the first thing worth looking
     #: at when a display has lost its apps.
@@ -34,6 +35,10 @@ class DeviceState(BaseModel):
     fps: int | None = None
     brightness: int | None = None
     light_level: float | None = Field(default=None, alias="lightLevel")
+    #: The raw LDR reading behind `light_level`. The display's own interface
+    #: shows both, and the raw value is what tells a sensor reading zero from
+    #: a sensor that is simply in the dark.
+    ldr_raw: int | None = Field(default=None, alias="ldrRaw")
     battery_percent: int | None = Field(default=None, alias="batteryPercent")
     battery_voltage: float | None = Field(default=None, alias="batteryVoltage")
     low_battery: bool | None = Field(default=None, alias="lowBattery")

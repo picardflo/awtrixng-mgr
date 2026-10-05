@@ -20,21 +20,38 @@ export interface Device {
   last_error_code: string | null;
 }
 
-export interface AwtrixStats {
+/** What `GET /api/v1/device` reports, as the backend passes it on.
+ *
+ *  These are AWTRIX NG's names, not AWTRIX 3's renamed, and the difference is
+ *  not cosmetic: a card still reading `bat`, `temp` and `hum` compiled
+ *  perfectly and showed a dash in every tile, because the fields it asked for
+ *  no longer exist. TypeScript cannot catch that — the backend's shape is not
+ *  its business — so the tiles are pinned by a test against a real device
+ *  response instead.
+ *
+ *  The set mirrors what the display's own web interface shows, so the two can
+ *  be compared side by side without translating anything. */
+export interface DeviceState {
   version?: string;
   uid?: string;
+  hostname?: string;
   ip_address?: string;
-  app?: string;
-  uptime?: number;
-  ram?: number;
-  matrix?: boolean;
-  bri?: number;
-  lux?: number;
-  bat?: number;
-  temp?: number;
-  hum?: number;
-  wifi_signal?: number;
-  messages?: number;
+  board_type?: string;
+  current_app?: string;
+  uptime_seconds?: number;
+  free_heap_bytes?: number;
+  reset_reason?: string;
+  wifi_rssi?: number;
+  fps?: number;
+  brightness?: number;
+  matrix_power?: boolean;
+  light_level?: number;
+  ldr_raw?: number;
+  battery_percent?: number;
+  battery_voltage?: number;
+  low_battery?: boolean;
+  temperature?: number;
+  humidity?: number;
 }
 
 export interface TestResult {
@@ -45,7 +62,7 @@ export interface TestResult {
   params?: Params;
   firmware?: string | null;
   uid?: string | null;
-  stats?: AwtrixStats | null;
+  stats?: DeviceState | null;
 }
 
 // -- Connectors and widgets --------------------------------------------------

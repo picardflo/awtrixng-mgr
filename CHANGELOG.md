@@ -5,6 +5,40 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.3.2]
+
+La carte d'un afficheur ne montrait **rien** : batterie, wifi, température,
+humidité, luminosité et uptime, tous à `—`, alors que l'horloge répondait
+parfaitement. Vu par Florian sur son déploiement.
+
+### Corrigé
+- **La carte lisait les noms d'AWTRIX 3.** `bat`, `temp`, `hum`,
+  `wifi_signal`, `lux`, `bri`, `uptime` — le backend envoie désormais
+  `battery_percent`, `temperature`, `humidity`, `wifi_rssi`, `light_level`,
+  `brightness`, `uptime_seconds`. Le code compilait, les tests passaient, et
+  chaque tuile affichait un tiret.
+- **« AWTRIX 3 v1.1.2 »** sous le nom de l'afficheur. C'est NG.
+
+### Changé — aligné sur l'interface de l'horloge
+Les six tuiles sont désormais celles que montre l'afficheur lui-même, dans le
+même ordre, avec la même seconde ligne sous chacune : batterie `93 %` / `4.14
+V`, wifi `-59 dBm` / `bon`, luminosité `3.2 %` / `133 brut`, température,
+humidité, images/s. Et la ligne de pied : uptime, RAM libre, app en cours — et
+**« matrice éteinte »** quand le panneau est coupé, que le framebuffer seul ne
+dirait pas.
+
+Comparer les deux pages ne demande plus de traduire quoi que ce soit.
+
+### Ajouté
+- `ldr_raw` et `battery_pin_millivolts` au modèle, que l'interface de l'horloge
+  montre et que le nôtre ignorait.
+- **`tests/test_frontend_contract.py`** — le seul joint qu'aucun compilateur ne
+  surveille. L'interface TypeScript *décrit* le JSON du backend sans en
+  dériver : TypeScript la vérifie contre elle-même et se déclare satisfait, les
+  tests Python vérifient Python contre Python, et entre les deux, rien. Le test
+  lit les noms de champs dans le TypeScript et les compare au modèle Pydantic.
+  Vérifié en réintroduisant la panne : il la nomme.
+
 ## [0.3.1]
 
 Deux restes de l'ancien nom, vus sur le déploiement de Florian avant de l'être
