@@ -4,8 +4,9 @@
 servant de middleware entre des services externes et un ou plusieurs afficheurs
 [AWTRIX NG](https://github.com/Blueforcer/awtrix-ng).
 
-> **État : démarrage.** Le dépôt ne contient encore que le relevé de l'API,
-> mesuré sur matériel réel. Le code arrive.
+> **État : socle.** Version 0.1.0 — le client AWTRIX NG est écrit et
+> vérifié sur une horloge réelle. Il n'y a encore ni API REST, ni interface,
+> ni planificateur. Voir le [CHANGELOG](CHANGELOG.md).
 
 ---
 
@@ -44,6 +45,41 @@ Ce qui disparaît : la couche qui parlait à AWTRIX 3, remplacée par un client
   TC001 réelle**, avec les réponses brutes de l'appareil. Routes, payloads,
   mécanisme d'icônes, pièges rencontrés, et la procédure de récupération si
   l'horloge se bloque après un flash.
+- [`docs/ng-api/payload-keys.md`](docs/ng-api/payload-keys.md) — chaque clé de
+  payload sondée une par une sur le matériel : ce que le firmware accepte, ce
+  qu'il refuse en le nommant, et **ce qu'il accepte sans le valider**.
+- [`docs/architecture.md`](docs/architecture.md) — les décisions prises, et
+  celles héritées d'awtrixhub qui restent à rejuger.
+
+## Développer
+
+```bash
+cd backend
+python3 -m venv --without-pip .venv            # pas de python3-venv ici
+curl -sS https://bootstrap.pypa.io/get-pip.py | .venv/bin/python
+.venv/bin/pip install -e '.[dev]'
+.venv/bin/python -m pytest                     # la suite, sans matériel
+```
+
+Les tests qui parlent à une horloge réelle sont désélectionnés par défaut. Ils
+**écrivent** sur l'afficheur visé, refusent de démarrer sans hôte explicite, et
+refusent par leur nom les afficheurs en service :
+
+```bash
+AWTRIXNG_TEST_HOST=mon-horloge.local .venv/bin/python -m pytest -m device
+```
+
+<a id="versions"></a>
+## Versions
+
+| Niveau | Quand | Conséquence pour l'exploitant |
+|---|---|---|
+| Correctif `0.1.x` | défaut corrigé, interface ajustée, doc complétée | `git pull && docker compose up -d --build` |
+| Mineur `0.x.0` | nouveau widget, nouveau service, migration de base | automatique, mais du neuf apparaît |
+| Majeur `x.0.0` | variable obligatoire, format de sauvegarde incompatible | **une action de sa part** |
+
+`./scripts/bump-version.sh <version>` met d'accord les fichiers qui portent le
+numéro ; un test échoue s'ils divergent.
 
 ## Licence
 
