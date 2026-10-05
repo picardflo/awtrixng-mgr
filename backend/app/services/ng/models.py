@@ -4,6 +4,14 @@ Every field below was read from a real TC001 on NG 1.1.2; the raw responses
 are in `docs/ng-api/*.json`. Everything is optional and `extra="allow"` is on
 throughout: the firmware gains fields between releases, and a reader that
 breaks on an unknown one would turn a firmware update into an outage.
+
+**`validation_alias`, never `alias`.** The camelCase names are the firmware's,
+and they stop here: our own API speaks snake_case like every other model in
+this project. The distinction is not cosmetic. FastAPI serialises a response
+model with `by_alias=True` by default, so a plain `alias` would put
+`batteryPercent` on the wire — which is exactly what shipped, and why a device
+card showed readings for `temperature`, `humidity`, `fps` and `brightness`
+(the four fields with no alias) and a dash for everything else.
 """
 
 from typing import Any, ClassVar
@@ -20,32 +28,34 @@ class DeviceState(BaseModel):
     #: The MAC address without separators, e.g. "b0cbd8a1b560". Stable across
     #: a reflash, which makes it the right key for identifying a display.
     uid: str | None = None
-    board_type: str | None = Field(default=None, alias="boardType")
+    board_type: str | None = Field(default=None, validation_alias="boardType")
     soc: str | None = None
-    ip_address: str | None = Field(default=None, alias="ipAddress")
+    ip_address: str | None = Field(default=None, validation_alias="ipAddress")
     hostname: str | None = None
-    wifi_rssi: int | None = Field(default=None, alias="wifiRssi")
-    uptime_seconds: int | None = Field(default=None, alias="uptimeSeconds")
-    free_heap_bytes: int | None = Field(default=None, alias="freeHeapBytes")
-    battery_pin_millivolts: int | None = Field(default=None, alias="batteryPinMillivolts")
+    wifi_rssi: int | None = Field(default=None, validation_alias="wifiRssi")
+    uptime_seconds: int | None = Field(default=None, validation_alias="uptimeSeconds")
+    free_heap_bytes: int | None = Field(default=None, validation_alias="freeHeapBytes")
+    battery_pin_millivolts: int | None = Field(
+        default=None, validation_alias="batteryPinMillivolts"
+    )
     #: Why the device last restarted — "software", "poweron", a panic. Nothing
     #: equivalent existed on AWTRIX 3, and it is the first thing worth looking
     #: at when a display has lost its apps.
-    reset_reason: str | None = Field(default=None, alias="resetReason")
+    reset_reason: str | None = Field(default=None, validation_alias="resetReason")
     fps: int | None = None
     brightness: int | None = None
-    light_level: float | None = Field(default=None, alias="lightLevel")
+    light_level: float | None = Field(default=None, validation_alias="lightLevel")
     #: The raw LDR reading behind `light_level`. The display's own interface
     #: shows both, and the raw value is what tells a sensor reading zero from
     #: a sensor that is simply in the dark.
-    ldr_raw: int | None = Field(default=None, alias="ldrRaw")
-    battery_percent: int | None = Field(default=None, alias="batteryPercent")
-    battery_voltage: float | None = Field(default=None, alias="batteryVoltage")
-    low_battery: bool | None = Field(default=None, alias="lowBattery")
+    ldr_raw: int | None = Field(default=None, validation_alias="ldrRaw")
+    battery_percent: int | None = Field(default=None, validation_alias="batteryPercent")
+    battery_voltage: float | None = Field(default=None, validation_alias="batteryVoltage")
+    low_battery: bool | None = Field(default=None, validation_alias="lowBattery")
     temperature: float | None = None
     humidity: float | None = None
-    matrix_power: bool | None = Field(default=None, alias="matrixPower")
-    current_app: str | None = Field(default=None, alias="currentApp")
+    matrix_power: bool | None = Field(default=None, validation_alias="matrixPower")
+    current_app: str | None = Field(default=None, validation_alias="currentApp")
 
 
 class Capabilities(BaseModel):
@@ -59,14 +69,14 @@ class Capabilities(BaseModel):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
 
     effects: list[str] = Field(default_factory=list)
-    palette_effects: list[str] = Field(default_factory=list, alias="paletteEffects")
+    palette_effects: list[str] = Field(default_factory=list, validation_alias="paletteEffects")
     transitions: list[str] = Field(default_factory=list)
     overlays: list[str] = Field(default_factory=list)
     palettes: list[str] = Field(default_factory=list)
     #: {"buzzer": true, "track": false, "mp3": false, "radio": false} on a
     #: TC001. Whether to offer a melody field at all follows from this.
     audio: dict[str, bool] = Field(default_factory=dict)
-    script_updates: bool | None = Field(default=None, alias="scriptUpdates")
+    script_updates: bool | None = Field(default=None, validation_alias="scriptUpdates")
     gpio: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -83,7 +93,7 @@ class AppEntry(BaseModel):
 
     name: str
     enabled: bool | None = None
-    in_loop: bool | None = Field(default=None, alias="inLoop")
+    in_loop: bool | None = Field(default=None, validation_alias="inLoop")
     slot: int | None = None
     present: bool | None = None
     origin: str | None = None
@@ -128,8 +138,8 @@ class FileListing(BaseModel):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
 
     files: list[FileEntry] = Field(default_factory=list)
-    used_bytes: int | None = Field(default=None, alias="usedBytes")
-    total_bytes: int | None = Field(default=None, alias="totalBytes")
+    used_bytes: int | None = Field(default=None, validation_alias="usedBytes")
+    total_bytes: int | None = Field(default=None, validation_alias="totalBytes")
 
     @property
     def free_bytes(self) -> int | None:

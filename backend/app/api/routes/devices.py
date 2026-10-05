@@ -205,7 +205,9 @@ async def get_apps(device: DeviceDep) -> list[dict]:
     """
     client = client_for(device)
     try:
-        return [app.model_dump(by_alias=True) for app in await client.get_apps()]
+        # No `by_alias`: the camelCase belongs to the firmware and stops at
+        # the client. See app/services/ng/models.py.
+        return [app.model_dump() for app in await client.get_apps()]
     except AwtrixNgError as exc:
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, exc.message) from exc
     finally:

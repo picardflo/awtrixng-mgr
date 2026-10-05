@@ -5,6 +5,41 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.3.3]
+
+0.3.2 n'avait corrigé que quatre tuiles sur six. **Et son test passait au
+vert** pendant que la page restait vide — c'est la partie qui compte.
+
+### Corrigé
+- **FastAPI sérialise une réponse avec `by_alias=True`.** Les alias de
+  `DeviceState` existent pour *lire* le camelCase du firmware ; déclarés en
+  `alias`, ils l'*écrivaient* aussi, et le navigateur recevait
+  `batteryPercent` quand la carte demandait `battery_percent`. Les quatre
+  mesures qui s'affichaient — température, humidité, images/s, luminosité —
+  étaient exactement les quatre champs sans alias.
+- Passés en **`validation_alias`** : le camelCase du firmware s'arrête au
+  client, notre API parle snake_case comme tous ses autres modèles.
+- Même cause sur `GET /api/devices/{id}/apps`, qui sortait en `inLoop`.
+
+### Le test qui disait oui
+`test_frontend_contract.py` comparait le TypeScript à `DeviceState.model_fields`,
+c'est-à-dire aux noms **Python**, et non à ce qui circule. Il approuvait
+`battery_percent` pendant que le fil portait `batteryPercent`.
+
+Il compare désormais à la sérialisation réelle, produite comme FastAPI la
+produit, et vérifie en plus qu'aucune clé ne part en camelCase. Les deux
+versions ont été éprouvées en réintroduisant la panne : l'ancienne ne la voyait
+pas, la nouvelle nomme les treize champs manquants.
+
+**La leçon est générale : un test de contrat doit porter sur le fil, jamais sur
+le modèle censé le décrire.** Un test vert au-dessus d'une page cassée est pire
+que pas de test.
+
+### Ajouté
+- Le contrat couvre maintenant toutes les interfaces dont la forme vient du
+  firmware, `DeviceApp` comprise, et la liste est explicite : en ajouter une
+  est une décision.
+
 ## [0.3.2]
 
 La carte d'un afficheur ne montrait **rien** : batterie, wifi, température,

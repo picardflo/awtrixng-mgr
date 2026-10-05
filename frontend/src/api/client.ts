@@ -365,7 +365,7 @@ export const DATE_FORMATS = [
 export interface DeviceApp {
   name: string;
   enabled: boolean | null;
-  inLoop: boolean | null;
+  in_loop: boolean | null;
   slot: number | null;
   present: boolean | null;
   origin: string | null;
