@@ -104,13 +104,16 @@ async def seed(base: str, password: str = "") -> None:
             "display": {"text": "{{ next }}", "duration": 8, 
                         "show_progress": True},
         })
-        # The three air widgets: one call to a second host, shared between them.
+        # The two air widgets: one call to a second host, shared between them.
+        # "AIR 41" in the small font, not "41" in the large one — the word is
+        # the point, and it does not fit the large font beside an icon once
+        # the index reaches three digits.
         await _post(http, "/api/widgets", {
             "name": "Qualité de l'air", "connector_id": meteo["id"],
             "widget_type": "weather.air", "device_ids": [bureau["id"]],
             "refresh_seconds": 1800,
-            "display": {"text": "{{ aqi }}", "duration": 8,
-                        "font": "large", "show_progress": True},
+            "display": {"text": "AIR {{ aqi }}", "duration": 8,
+                        "font": "small", "show_progress": True},
         })
         await _post(http, "/api/widgets", {
             "name": "Indice UV", "connector_id": meteo["id"],

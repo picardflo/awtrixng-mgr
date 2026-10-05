@@ -5,6 +5,98 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.12.0]
+
+Florian, sur une capture des deux widgets : « je suis pas hyper-fan de ces deux
+widgets — regarde pour les faire évoluer aussi ».
+
+Il avait raison deux fois. Ces icônes sont illisibles, et ces deux widgets
+étaient les seuls à calculer une barre sans jamais la dessiner.
+
+![Avant et après, lus sur la dalle](docs/screenshots/panneau-air-uv.png)
+
+### Une icône illisible, deux fois
+
+**Qualité de l'air** affichait six icônes épelant « AQI » — trois lettres sur
+huit pixels, une par bande, dans la couleur de la bande. L'intention était
+bonne : à côté d'un « 41 » tout nu, trois lettres disent de quoi il s'agit. La
+dalle dit que c'est impossible. Florian a demandé ce qu'était ce pâté orange.
+
+**Indice UV** affichait un coin de soleil jaune au-dessus d'un « UV » magenta.
+Deux couleurs à lui, dont aucune n'était celle de la bande — le texte était
+vert à UV 2 et l'icône restait jaune et magenta.
+
+Le mot est donc passé **dans le texte**, où une police sait le dessiner, et
+l'icône garde ce qu'elle fait bien :
+
+| Widget | Icône | Texte |
+|---|---|---|
+| Qualité de l'air | **7789**, une rafale de vent animée | `AIR {{ aqi }}` |
+| Indice UV | **75377**, un soleil dont les rayons pulsent | `UV {{ uv \| round }}` |
+
+Une seule icône par widget, fixe à toutes les bandes. C'est la construction de
+**Humidité extérieure** — une goutte bleue fixe, la lecture dans la couleur —
+et les trois se lisent maintenant comme une famille. La bande, elle, atteint la
+dalle trois fois : le texte, la barre, et le fond de la barre.
+
+### Les couleurs ont survécu à leurs icônes
+
+Elles en étaient échantillonnées. Elles sont maintenant l'échelle elle-même.
+
+La légende 2024 de l'**Agence européenne pour l'environnement** était le
+remplacement évident, et a été mesurée contre l'actuelle sur la dalle : son
+« bon » est un cyan qui, à côté de la rafale, fusionne avec elle en une seule
+tache bleu-vert. Le nombre cesse d'être détachable de l'icône. L'échelle
+actuelle les sépare à chaque échelon — ce qui, sur 32 pixels, passe avant de
+coller à une légende que personne ne tient à côté de l'horloge.
+
+### Deux barres de plus qui existaient sans s'afficher
+
+Comme le Soleil en 0.7.2 et la Lune en 0.8.0 : `progress` était rempli à chaque
+collecte et le rendu le jetait, faute du drapeau. Les deux widgets l'ont
+maintenant par défaut — sur 100 pour l'indice européen, sur 11 pour l'UV.
+
+### Une quatrième ligne à la règle des polices
+
+La règle disait : la grande police est la police d'un widget qui a une barre.
+Sa table avait trois lignes mesurées sur quatre, et `AIR {{ aqi }}` est tombé
+dans la quatrième.
+
+| | rangées occupées | |
+|---|---|---|
+| petite, sans barre | 1..5 | centré |
+| grande, sans barre | 0..6 | une rangée trop haut |
+| grande, avec barre | 0..7 | remplissage exact |
+| **petite, avec barre** | **1..5** | **rangée 6 vide au-dessus de la barre** |
+
+Mesuré sur la dalle, à côté de l'icône : `AIR 100` en grande police **défile**,
+il lui manque des colonnes ; en petite il est fixe à toutes les valeurs. Et
+l'indice européen atteint trois chiffres — `air.py` le dit, et ce projet s'est
+déjà fait prendre à le traiter comme une note sur cent. Un widget qui défile le
+jour précis où il compte est le mauvais compromis.
+
+Donc `weather.air` garde la petite police, inscrit dans `NARROW_ON_PURPOSE`
+avec sa mesure. Un test vérifie que la liste ne couvre que des widgets qui sont
+réellement dans ce cas : laissée vieillir, elle laisserait passer le suivant.
+
+### La migration `8f1c2a7d4b60`
+
+Un `default_display` n'est lu qu'à la création d'un widget. Changer les valeurs
+par défaut laisse intacts les widgets déjà sur une horloge — c'est-à-dire
+exactement ceux dont Florian se plaignait.
+
+**Ce qu'elle ne touche pas** : un affichage dont le texte n'est plus l'un de
+ceux livrés par ce projet. Qui a tapé son propre gabarit a décidé de ce que sa
+dalle raconte, et ça prime sur une meilleure valeur par défaut — son widget
+garde tous ses champs, barre comprise.
+
+### Outillé
+- **`scripts/panel-shots.py`** : pousse chaque maquette sur le Bureau, relit
+  `/display/screen`, et pose les images côte à côte. Les aperçus de l'interface
+  sont fidèles, mais ils restent *notre* dessin de l'afficheur ; un choix entre
+  deux icônes se tranche sur la dalle. Il refuse un afficheur en service, comme
+  les tests matériels.
+
 ## [0.11.3]
 
 Audit demandé par Florian : « il doit rester 0 trace de awtrixhub ».

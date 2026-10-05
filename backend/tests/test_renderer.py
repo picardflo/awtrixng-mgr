@@ -329,6 +329,24 @@ def _fills_the_bottom_row(widget) -> bool:
     return widget.default_display.show_progress or widget.default_display.show_days
 
 
+#: Widgets that keep the small font although they draw a bar, and the reason.
+#:
+#: An exception list rather than a loosened rule: it is three lines to add one
+#: and the reason has to be written down, which is the point.
+#:
+#: `weather.air` — the text is "AIR {{ aqi }}", and the word is the whole
+#: improvement: "41" alone says nothing. Measured on a TC001 beside the
+#: 8-pixel icon, with the index at three digits:
+#:
+#:     "AIR 100", large   needs more than the 24 columns left — it scrolls
+#:     "AIR 100", small   static
+#:
+#: and the European index does reach three digits; `air.py` says so and this
+#: project has already been caught treating it as a scale out of a hundred.
+#: A widget that scrolls on exactly the day it matters is the wrong trade.
+NARROW_ON_PURPOSE = {"weather.air"}
+
+
 class TestTheFontRule:
     """The large font is the font of a widget that has a bar.
 
@@ -337,11 +355,20 @@ class TestTheFontRule:
         small, no bar      1..5    centred
         large, no bar      0..6    one row high
         large, with bar    0..7    fills the panel exactly
+        small, with bar    1..5    row 6 blank above the bar
 
     So it is not a matter of taste. `large` draws the seven rows above the
     bottom row, which is a perfect fit when something occupies it and a
     lopsided one when nothing does. "Something" is a progress bar or the seven
     day segments — they share that row and only one of them is ever drawn.
+
+    The fourth row of that table was measured later, when a widget turned up
+    whose text does not fit the large font. It is the mild case: the small
+    font does not move when a bar appears, so the text stays centred on rows
+    1..5 and row 6 goes blank. Readable, a little airy — which is why it is
+    allowed with a reason rather than forbidden outright, see
+    `NARROW_ON_PURPOSE`. The strict half of the rule is the other test: large
+    with nothing on the bottom row is lopsided every time.
 
     Width is unaffected either way — the same measurement
     gave identical column counts for both fonts, which is why the choice costs
@@ -358,9 +385,22 @@ class TestTheFontRule:
         wrong = [
             w.type
             for w in self.widgets()
-            if _fills_the_bottom_row(w) and w.default_display.font != "large"
+            if _fills_the_bottom_row(w)
+            and w.default_display.font != "large"
+            and w.type not in NARROW_ON_PURPOSE
         ]
         assert not wrong, f"these have a bar and sit squeezed above it: {wrong}"
+
+    def test_an_exception_is_an_exception(self):
+        """The list only excuses a widget that is actually in that position.
+        Left to rot it would start excusing widgets that no longer exist, and
+        the next one with the same problem would be waved through."""
+        narrow = {
+            w.type
+            for w in self.widgets()
+            if _fills_the_bottom_row(w) and w.default_display.font != "large"
+        }
+        assert narrow == NARROW_ON_PURPOSE
 
     def test_no_widget_uses_the_large_font_without_a_bar(self):
         """It would sit one row high, with nothing underneath to balance it."""

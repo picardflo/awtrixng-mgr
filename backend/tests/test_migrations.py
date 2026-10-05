@@ -249,3 +249,98 @@ def test_foreign_keys_are_on_again_afterwards(populated: Path):
         "    print(c.exec_driver_sql('PRAGMA foreign_keys').scalar())",
     )
     assert out.strip().endswith("1")
+
+
+# ---------------------------------------------------------------------------
+# 8f1c2a7d4b60 — air quality and UV say what they show
+#
+# The first migration in this project that rewrites what a user can see rather
+# than what the schema holds, which is why it is tested on a widget somebody
+# customised as well as on one they never touched.
+# ---------------------------------------------------------------------------
+
+BEFORE_REDESIGN = "30ca1cb373ca"
+
+
+@pytest.fixture
+def with_widgets(tmp_path: Path) -> Path:
+    """Three widgets: two on their shipped defaults, one written by hand."""
+    run(tmp_path, str(BACKEND / ".venv/bin/alembic"), "upgrade", BEFORE_REDESIGN)
+
+    db = sqlite3.connect(tmp_path / "awtrixng.db")
+    db.executescript(
+        """
+        INSERT INTO connector (id,type,name,config,secrets,enabled,status,
+                               consecutive_failures,created_at,updated_at)
+          VALUES (1,'weather','Meteo','{}','{}',1,'HEALTHY',0,'2026-10-05','2026-10-05');
+        INSERT INTO widget (id,name,connector_id,widget_type,config,display,
+                            refresh_seconds,enabled,position,status,
+                            consecutive_failures,created_at,updated_at)
+          VALUES
+           (1,'Qualite de l''air',1,'weather.air','{}',
+            '{"text":"{{ aqi }}","font":"large","show_progress":false,"duration":8}',
+            1800,1,0,'HEALTHY',0,'2026-10-05','2026-10-05'),
+           (2,'Indice UV',1,'weather.uv','{}',
+            '{"text":"UV {{ uv | round }}","font":"large","show_progress":false,"duration":8}',
+            1800,1,1,'HEALTHY',0,'2026-10-05','2026-10-05'),
+           (3,'Air a moi',1,'weather.air','{}',
+            '{"text":"{{ quality }}","font":"small","show_progress":false,"duration":12}',
+            1800,1,2,'HEALTHY',0,'2026-10-05','2026-10-05');
+        """
+    )
+    db.commit()
+    db.close()
+    return tmp_path
+
+
+def displays(data_dir: Path) -> dict[int, dict]:
+    import json
+
+    return {
+        widget_id: json.loads(raw)
+        for widget_id, raw in rows(data_dir, "SELECT id, display FROM widget")
+    }
+
+
+def test_the_bare_number_gains_its_word(with_widgets: Path):
+    start_app(with_widgets)
+    air = displays(with_widgets)[1]
+    assert air["text"] == "AIR {{ aqi }}"
+    assert air["font"] == "small"
+
+
+def test_the_bar_both_widgets_were_computing_is_switched_on(with_widgets: Path):
+    """Neither widget ever drew one. The projection filled `progress` at every
+    collection and the renderer dropped it for want of this flag — the same
+    fault the sun widget had, found the same way: by looking at a clock."""
+    start_app(with_widgets)
+    after = displays(with_widgets)
+    assert after[1]["show_progress"] is True
+    assert after[2]["show_progress"] is True
+
+
+def test_a_template_somebody_typed_is_left_alone(with_widgets: Path):
+    """Including its bar. Turning that on would be an improvement nobody
+    asked for on a widget whose owner has already said what they want."""
+    start_app(with_widgets)
+    mine = displays(with_widgets)[3]
+    assert mine == {
+        "text": "{{ quality }}",
+        "font": "small",
+        "show_progress": False,
+        "duration": 12,
+    }
+
+
+def test_the_fields_nobody_mentioned_are_kept(with_widgets: Path):
+    """A migration that wrote a whole display would silently reset `duration`,
+    `effect`, the colours — every field it did not think to carry over."""
+    start_app(with_widgets)
+    assert displays(with_widgets)[2]["duration"] == 8
+
+
+def test_starting_again_changes_nothing(with_widgets: Path):
+    start_app(with_widgets)
+    once = displays(with_widgets)
+    start_app(with_widgets)
+    assert displays(with_widgets) == once

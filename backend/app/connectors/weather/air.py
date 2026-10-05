@@ -38,11 +38,16 @@ CACHE_SECONDS = 1800
 
 @dataclass(frozen=True, slots=True)
 class Band:
-    """One step of a scale: what it is called, drawn and coloured."""
+    """One step of a scale: what it is called, and what colour says so.
+
+    No icon. Both scales used to carry one per band, and both have been
+    measured out of it — see `AQI_ICON` and `UV_ICON`. A band is a colour,
+    and the colour reaches the panel three times over: the text, the bar and
+    the bar's track.
+    """
 
     #: Never translated — what a template compares against.
     code: str
-    icon: int
     colour: str
 
 
@@ -65,24 +70,41 @@ def _pick(bands: tuple[tuple[float, Band], ...], value: float | None, last: Band
 #   - the index is the *highest* of the five pollutant indices, not an average
 #   - it is not a scale out of a hundred: above 100 it keeps going
 #
-# The colours are sampled from the icons themselves rather than chosen beside
-# them, so the text can never disagree with the disc it sits next to.
 # ---------------------------------------------------------------------------
 
-#: These spell "AQI" in the band's own colour. Preferred over a cloud on a
-#: coloured disc, which could be anything: beside a bare "30" on 32 pixels,
-#: three letters say what the number is.
+#: One icon for the widget, not one per band.
 #:
-#: 37022 is the same orange as 37016, pixel for pixel — a duplicate in the
-#: gallery, not a seventh band.
+#: Six icons spelling "AQI" stood here, each in its band's colour — three
+#: letters on eight pixels, chosen on the theory that beside a bare number
+#: they would say what the number was. Read back off the panel they are a
+#: smear, and Florian asked what the orange blob was meant to be. The theory
+#: was right and the execution impossible: eight pixels do not hold three
+#: letters.
+#:
+#: So the word moved into the text, where the font can draw it, and the icon
+#: went to the one thing it does well: 7789 "Air Quality", a gust blowing
+#: through, animated. The icon says *air*, the colour says *how good*. This is
+#: how `weather.humidity` is built — a fixed blue drop, the reading in the
+#: colour — and the two widgets now read as siblings.
+AQI_ICON = 7789
+
+#: The colours outlived the icons they were sampled from, and are now the
+#: scale itself: green, yellow, orange, red, purple, brown.
+#:
+#: The European Environment Agency's own 2024 legend was the obvious
+#: replacement and was measured against this one on the panel. Its best band
+#: is a cyan (#50f0e6) which, beside the gust, merges with it into one
+#: blue-green smear — the number stops being separable from the icon. The
+#: ramp below keeps them apart at every step, which on 32 pixels outranks
+#: matching a legend nobody is holding up next to the clock.
 AQI_BANDS: tuple[tuple[float, Band], ...] = (
-    (20, Band("good", 37015, "#8cfe0c")),
-    (40, Band("fair", 37018, "#fcfe1c")),
-    (60, Band("moderate", 37016, "#f48a1c")),
-    (80, Band("poor", 37017, "#f40214")),
-    (100, Band("very_poor", 37020, "#9402fc")),
+    (20, Band("good", "#8cfe0c")),
+    (40, Band("fair", "#fcfe1c")),
+    (60, Band("moderate", "#f48a1c")),
+    (80, Band("poor", "#f40214")),
+    (100, Band("very_poor", "#9402fc")),
 )
-AQI_WORST = Band("extremely_poor", 37023, "#845a24")
+AQI_WORST = Band("extremely_poor", "#845a24")
 
 AQI_ENGLISH = {
     "good": "Good",
@@ -112,19 +134,30 @@ def aqi_band(value: float | None) -> Band:
 # UV index — the WHO scale, which is a published standard.
 # ---------------------------------------------------------------------------
 
-UV_ICON = 64310
+#: 75377 "Sunny_Good": a sun whose rays pulse, animated.
+#:
+#: It replaces 64310, which drew a yellow corner of sun above the letters U
+#: and V in magenta. Two colours of its own, neither of them the band's, and
+#: on the panel the letters are unreadable — the text beside it says "UV"
+#: already, in a font built for it.
+#:
+#: Fixed yellow, deliberately: a sun is yellow at every index, and the band
+#: is said by the colour of "UV 7" and of the bar under it. Checked at both
+#: ends of the scale — a yellow sun beside green text at UV 2, beside orange
+#: at UV 7 — and it reads as a sun either way.
+UV_ICON = 75377
 
 #: Where the index stops having bands and becomes "extreme". A bar is drawn
 #: against this, and anything above fills it — which is what extreme means.
 UV_CEILING = 11.0
 
 UV_BANDS: tuple[tuple[float, Band], ...] = (
-    (3, Band("low", UV_ICON, "#6fd504")),
-    (6, Band("moderate", UV_ICON, "#f9ff1b")),
-    (8, Band("high", UV_ICON, "#f78818")),
-    (11, Band("very_high", UV_ICON, "#f60017")),
+    (3, Band("low", "#6fd504")),
+    (6, Band("moderate", "#f9ff1b")),
+    (8, Band("high", "#f78818")),
+    (11, Band("very_high", "#f60017")),
 )
-UV_EXTREME = Band("extreme", UV_ICON, "#9000fe")
+UV_EXTREME = Band("extreme", "#9000fe")
 
 UV_ENGLISH = {
     "low": "Low",

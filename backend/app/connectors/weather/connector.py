@@ -101,7 +101,7 @@ def _project_air(
                     air.UV_TRANSLATIONS, band.code, air.UV_ENGLISH[band.code]
                 ),
             },
-            hint_icon=str(band.icon),
+            hint_icon=str(air.UV_ICON),
             hint_color=band.colour,
         )
 
@@ -125,7 +125,7 @@ def _project_air(
             "o3": current.get("ozone"),
             "so2": current.get("sulphur_dioxide"),
         },
-        hint_icon=str(band.icon),
+        hint_icon=str(air.AQI_ICON),
         hint_color=band.colour,
     )
 
@@ -323,8 +323,14 @@ class WeatherConnector(Connector):
                     Variable(name="o3", label="Ozone (µg/m³)", example="72"),
                     Variable(name="so2", label="Sulphur dioxide (µg/m³)", example="1.7"),
                 ],
+                # "AIR 41" rather than "41". A bare number beside a wordless
+                # icon is the state this widget was in, and it says nothing:
+                # 41 of what, out of what? The word costs the small font —
+                # six characters do not fit in the large one beside an icon —
+                # and the small font is the right trade, measured: the word
+                # is what makes the number mean something at a glance.
                 default_display=DisplayOptions(
-                    text="{{ aqi }}", duration=8, show_progress=True, font="large"
+                    text="AIR {{ aqi }}", duration=8, show_progress=True, font="small"
                 ),
                 default_refresh=air.CACHE_SECONDS,
                 sample_data=WidgetData(
@@ -333,7 +339,7 @@ class WeatherConnector(Connector):
                         "pm2_5": 10.1, "pm10": 17.3, "no2": 7.6, "o3": 72.0, "so2": 1.7,
                     },
                     progress=30,  # the index is already a 0-100 scale
-                    hint_icon=str(air.AQI_BANDS[1][1].icon),
+                    hint_icon=str(air.AQI_ICON),
                     hint_color=air.AQI_BANDS[1][1].colour,
                 ),
             ),

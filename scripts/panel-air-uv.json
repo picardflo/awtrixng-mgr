@@ -1,0 +1,44 @@
+[
+  {
+    "label": "Qualité de l'air — avant : « AQI » sur huit pixels, et pas de barre",
+    "payload": {
+      "text": "41",
+      "font": "large",
+      "textColor": "#f48a1c",
+      "icon": "37016"
+    }
+  },
+  {
+    "label": "Qualité de l'air — après : une rafale, le mot, et la barre sur 100",
+    "payload": {
+      "text": "AIR 41",
+      "font": "small",
+      "textColor": "#f48a1c",
+      "icon": "7789",
+      "progress": 41,
+      "progressColor": "#f48a1c",
+      "progressTrackColor": "#2c1905"
+    }
+  },
+  {
+    "label": "Indice UV — avant : un coin de soleil au-dessus d'un « UV » magenta",
+    "payload": {
+      "text": "UV 7",
+      "font": "large",
+      "textColor": "#f78818",
+      "icon": "64310"
+    }
+  },
+  {
+    "label": "Indice UV — après : un soleil qui pulse, et la barre sur 11",
+    "payload": {
+      "text": "UV 7",
+      "font": "large",
+      "textColor": "#f78818",
+      "icon": "75377",
+      "progress": 64,
+      "progressColor": "#f78818",
+      "progressTrackColor": "#2c1805"
+    }
+  }
+]

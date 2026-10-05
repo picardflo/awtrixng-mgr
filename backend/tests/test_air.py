@@ -39,10 +39,13 @@ class TestTheEuropeanIndex:
         wrong, which is why neither is offered."""
         assert air.aqi_band(140).code == "extremely_poor"
 
-    def test_every_band_has_its_own_icon_and_colour(self):
+    def test_every_band_has_its_own_colour(self):
+        """Six bands, six colours. The icon is no longer one of them — see
+        `TestOneIconPerWidget` — so the colour is the only thing left that
+        tells two bands apart at a glance, and no two may share one."""
         bands = [band for _, band in air.AQI_BANDS] + [air.AQI_WORST]
-        assert len({b.icon for b in bands}) == 6
         assert len({b.colour for b in bands}) == 6
+        assert not any(hasattr(b, "icon") for b in bands)
 
     def test_a_missing_reading_lands_on_the_worst(self):
         """Not on "good": an unknown air quality must not look reassuring."""
@@ -102,13 +105,14 @@ class TestTheWidgets:
         assert values["quality_code"] == "fair"
         assert values["pm2_5"] == 10.1
 
-    def test_the_colour_matches_its_own_icon(self):
-        """Sampled from the icons themselves rather than chosen beside them:
-        the text can never disagree with the disc it sits next to."""
+    def test_the_band_reaches_the_panel_as_a_colour(self):
+        """The icon is fixed, so the band has exactly one way through: the
+        colour. The renderer paints the text, the bar and the bar's track
+        with it, which is why losing it here would be invisible until
+        somebody looked at a clock."""
         data = self.connector().project("weather.air", {}, LIVE)
-        band = air.aqi_band(30)
-        assert data.hint_icon == str(band.icon)
-        assert data.hint_color == band.colour
+        assert data.hint_color == air.aqi_band(30).colour
+        assert data.hint_icon == str(air.AQI_ICON)
 
     def test_uv_reads_the_same_response(self):
         values = self.connector().project("weather.uv", {}, LIVE).values
@@ -200,3 +204,70 @@ def test_a_withdrawn_widget_type_is_refused_not_defaulted():
     for withdrawn in ("weather.pollen", "weather.whatever"):
         with pytest.raises(ConnectorError, match="no longer offers"):
             connector.project(withdrawn, {}, raw)
+
+
+class TestOneIconPerWidget:
+    """Both scales used to pick an icon per band. Neither does now.
+
+    The reasoning is written out in `air.py`; what is pinned here is the
+    consequence, because it is the kind of thing a later "improvement" undoes
+    without noticing: an icon that changes with the reading is tempting, and
+    on eight pixels it buys a shape nobody can read while costing the one
+    thing that was legible — a stable picture of what the widget is.
+    """
+
+    def connector(self):
+        # Imported here like the sibling class above: the registry decides
+        # when a connector module is loaded, and importing at the top of a
+        # test file quietly changes that order.
+        from app.connectors.weather.connector import WeatherConnector
+
+        return WeatherConnector(
+            config={"place": {"latitude": 48.7167, "longitude": 1.9}}, secrets={}
+        )
+
+    @pytest.mark.parametrize("aqi", [0, 25, 45, 70, 90, 150])
+    def test_the_air_icon_never_changes(self, aqi: float):
+        raw = {"current": {"european_aqi": aqi}}
+        assert self.connector().project("weather.air", {}, raw).hint_icon == str(
+            air.AQI_ICON
+        )
+
+    @pytest.mark.parametrize("uv", [0, 2, 5, 7, 9, 12])
+    def test_the_uv_icon_never_changes(self, uv: float):
+        raw = {"current": {"uv_index": uv}}
+        assert self.connector().project("weather.uv", {}, raw).hint_icon == str(
+            air.UV_ICON
+        )
+
+    def test_the_two_do_not_share_one(self):
+        """A gust and a sun. Sharing an icon would make the two widgets
+        indistinguishable in the rotation, which is how the fuel pair went
+        wrong before."""
+        assert air.AQI_ICON != air.UV_ICON
+
+    @pytest.mark.parametrize("widget_type", ["weather.air", "weather.uv"])
+    def test_the_default_says_what_the_number_is(self, widget_type: str):
+        """"41" is not a reading, it is a digit pair. The icon can no longer
+        carry the word — it never could, that was the defect — so the template
+        has to."""
+        from app.connectors import registry
+
+        registry.load_all()
+        descriptor = registry.widget_descriptor(widget_type)
+        assert descriptor is not None
+        text = descriptor.default_display.text or ""
+        assert any(word in text for word in ("AIR", "UV"))
+
+    @pytest.mark.parametrize("widget_type", ["weather.air", "weather.uv"])
+    def test_the_default_draws_the_bar_it_computes(self, widget_type: str):
+        """Both projections fill `progress` on every collection. A default
+        that leaves `show_progress` off throws that away at the last step,
+        which is how it shipped and how nobody saw it."""
+        from app.connectors import registry
+
+        registry.load_all()
+        descriptor = registry.widget_descriptor(widget_type)
+        assert descriptor is not None
+        assert descriptor.default_display.show_progress is True
+        assert descriptor.sample_data.progress is not None
