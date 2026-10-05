@@ -82,7 +82,7 @@ async def run_widget(
             ),
         )
 
-    display = DisplayOptions.model_validate(widget.display or {})
+    display = DisplayOptions.from_stored(widget.display)
     payload = render(data, display, lifetime_seconds=lifetime_for(widget.refresh_seconds))
     # Kept so a list can show what the matrix shows, rather than only the icons
     # someone pinned by hand. None when the renderer withholds the app

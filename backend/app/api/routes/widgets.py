@@ -53,7 +53,7 @@ def _read(widget: Widget) -> WidgetRead:
         # existed would otherwise come back without it, and the form would
         # render a checkbox with no state. Every new option gets its default
         # filled in on read.
-        display=DisplayOptions.model_validate(widget.display or {}).model_dump(),
+        display=DisplayOptions.from_stored(widget.display).model_dump(),
         refresh_seconds=widget.refresh_seconds,
         enabled=widget.enabled,
         position=widget.position,

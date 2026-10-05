@@ -259,3 +259,39 @@ class TestRefreshAndReorder:
 def test_the_catalogue_needs_no_configuration(client, path):
     """A fresh install must be able to show what it offers."""
     assert client.get(path).json()
+
+
+@respx.mock
+def test_widgets_saved_before_an_option_was_withdrawn_still_list(client):
+    """The failure that emptied Florian's widget list.
+
+    One widget carrying a key the backend no longer knows made the whole
+    endpoint raise, and the page showed "aucun widget" over a database that
+    still held them all. Nothing was lost; nothing could be read.
+    """
+    from sqlmodel import Session
+
+    from app.db.session import engine
+    from app.models import Widget
+
+    device, connector = setup(client)
+    created = client.post(
+        "/api/widgets",
+        json={
+            "name": "Semaine",
+            "connector_id": connector["id"],
+            "device_ids": [device["id"]],
+            "widget_type": "weather.current",
+        },
+    ).json()
+
+    with Session(engine) as session:
+        widget = session.get(Widget, created["id"])
+        widget.display = {**widget.display, "show_series": "none", "center": True}
+        session.add(widget)
+        session.commit()
+
+    listed = client.get("/api/widgets")
+    assert listed.status_code == 200
+    assert [w["name"] for w in listed.json()] == ["Semaine"]
+    assert client.get("/api/summary").status_code == 200

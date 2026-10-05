@@ -5,6 +5,38 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.10.3]
+
+**Correctif urgent : la liste des widgets était vide.** Aucune donnée perdue —
+elles étaient en base et illisibles.
+
+### Ce qui s'est passé
+Deux décisions qui se percutent, les deux de moi :
+
+1. `extra="forbid"` a été posé sur `DisplayOptions` en 0.3.0, et c'était juste :
+   une clé que le backend ne connaît pas est une faute de frappe ou un contrôle
+   périmé, et c'est le silence qui avait laissé passer un `center=True` pendant
+   tout le portage.
+2. `show_series` a été retiré en 0.10.2, faute de données pour l'alimenter.
+
+Tout widget enregistré avant ce retrait porte la clé. `GET /api/widgets` levait
+une erreur sur le premier d'entre eux, et la page affichait « aucun widget »
+au-dessus d'une base qui les contenait tous.
+
+### Le correctif
+Les deux sens sont séparés, parce que ce ne sont pas la même question :
+
+- **Depuis un formulaire** : une clé inconnue reste **refusée par son nom**.
+  C'est ce qui attrape un contrôle périmé.
+- **Depuis la base** : les clés inconnues sont **écartées**, avec une ligne au
+  journal qui les nomme. Tout ce qui a encore un sens est conservé — un widget
+  ne revient pas à ses valeurs par défaut, il perd seulement ce qui n'existe
+  plus.
+
+### Pour l'exploitant
+Rien à faire. Après la mise à jour, les widgets réapparaissent avec leurs
+réglages, et le journal dit une fois quelles options ont été écartées.
+
 ## [0.10.2]
 
 **La barre des jours n'avait pas de case pour l'activer.** Florian a vu une

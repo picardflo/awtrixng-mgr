@@ -5,6 +5,8 @@ free of any AWTRIX notion is what makes a connector unaware of the display
 (§32.8).
 """
 
+import logging
+from collections.abc import Mapping
 from datetime import datetime
 from typing import Any, Literal
 
@@ -12,6 +14,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.base import utcnow
 from app.services.ng.payload import Font, IconMode, TextCase
+
+log = logging.getLogger(__name__)
 
 #: Measured on the device: anything else answers "unknown value" on
 #: scroll.mode / scroll.whenFits.
@@ -77,6 +81,30 @@ class DisplayOptions(BaseModel):
     """
 
     model_config = ConfigDict(extra="forbid")
+
+    @classmethod
+    def from_stored(cls, raw: Mapping[str, Any] | None) -> "DisplayOptions":
+        """Read options saved by an older version, dropping what is gone.
+
+        **`extra="forbid"` and a withdrawn option do not mix.** Forbidding is
+        right for a form: a key the backend does not know is a typo or a stale
+        control, and silence is how `center=True` survived a whole port. But
+        the same rule applied to the database turns the removal of an option
+        into the loss of every widget that carries it.
+
+        That is not hypothetical. `show_series` was withdrawn in 0.10.2
+        because nothing fed it; every widget saved before that carried the key,
+        `GET /api/widgets` raised on the first one, and the page said "aucun
+        widget" over a database that still held them all.
+
+        So the two directions are separated. In from a form: refused by name.
+        In from storage: kept if known, dropped with a line in the log if not.
+        """
+        known = {name: value for name, value in (raw or {}).items() if name in cls.model_fields}
+        withdrawn = sorted(set(raw or {}) - set(known))
+        if withdrawn:
+            log.info("display options no longer offered, ignored: %s", ", ".join(withdrawn))
+        return cls(**known)
 
     # -- Simple ---------------------------------------------------------------
     text: str = "{{ value }}"

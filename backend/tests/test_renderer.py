@@ -457,3 +457,52 @@ class TestTheWeekdayBar:
         from app.connectors.school import calendar as cal
 
         assert set(cal.week_days(cal.today(), [])) <= {"past", "today", "school", "off"}
+
+
+class TestOptionsSavedByAnOlderVersion:
+    """Withdrawing an option must not lose the widgets that carry it.
+
+    `extra="forbid"` was put on `DisplayOptions` in 0.3.0 and was right: a key
+    the backend does not know is a typo or a stale control, and silence is how
+    a `center=True` survived a whole port.
+
+    Applied to the database it is a different thing entirely. `show_series`
+    was withdrawn in 0.10.2 because nothing fed it; every widget saved before
+    that carried the key; `GET /api/widgets` raised on the first one; and the
+    page said "aucun widget" over a database that still held every one of
+    them. Florian lost his whole list.
+
+    So the two directions are separated, and these tests hold them apart.
+    """
+
+    STORED = {
+        "text": "Sem. B",
+        "font": "large",
+        # Withdrawn in 0.10.2, 0.7.0 and 0.7.0 respectively.
+        "show_series": "none",
+        "center": True,
+        "rainbow": False,
+    }
+
+    def test_a_withdrawn_option_is_dropped_rather_than_fatal(self):
+        options = DisplayOptions.from_stored(self.STORED)
+        assert options.text == "Sem. B"
+        assert options.font == "large"
+
+    def test_what_is_still_known_survives_intact(self):
+        """The point of dropping rather than falling back to defaults: a
+        widget keeps every setting that still means something."""
+        options = DisplayOptions.from_stored({**self.STORED, "duration": 12})
+        assert options.duration == 12
+
+    def test_a_form_still_cannot_invent_an_option(self):
+        """The other direction keeps its teeth. A control writing a key the
+        backend dropped must be refused, not absorbed."""
+        import pytest
+
+        with pytest.raises(ValueError):
+            DisplayOptions(text="x", show_series="none")
+
+    def test_nothing_stored_is_an_empty_set_of_defaults(self):
+        assert DisplayOptions.from_stored(None) == DisplayOptions()
+        assert DisplayOptions.from_stored({}) == DisplayOptions()
