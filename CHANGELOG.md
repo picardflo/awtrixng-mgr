@@ -5,6 +5,32 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.16.4]
+
+### `docs/circuit.md` — développer, publier, déployer
+
+`docs/publication.md` décrivait une opération à faire une fois. Elle est
+faite ; ce qui reste est un circuit qui tourne, et quatre pièges qui ne se
+devinent pas. La page les note :
+
+- **`git pull` ne met pas l'application à jour** — il met les fichiers à jour.
+  Le conteneur exécute ce qu'il a embarqué au dernier build, d'où un dépôt en
+  0.16.3 et une application en 0.16.2 sans que rien ne le signale.
+- **« stale info » au push** n'est pas un conflit, c'est une ignorance : un
+  clone qui n'a jamais rien récupéré du distant n'a rien à comparer.
+- **Deux conteneurs sains et l'interface morte** — corrigé en 0.15.1, mais le
+  symptôme mérite d'être reconnu.
+- **Un garde-fou réglé au mauvais endroit** — le `.env` de la VM ne couvre pas
+  les outils qui tournent sur le poste.
+
+Elle note aussi pourquoi l'identité git se règle **par dépôt** et pas
+globalement, et pourquoi il n'y a plus de réécriture d'historique à faire :
+l'historique corrigé a été adopté partout, Gogs compris, et les trois dépôts
+sont au même commit.
+
+Référencée depuis les deux README.
+
+
 ## [0.16.3]
 
 ### Le README passe en anglais, le français à côté

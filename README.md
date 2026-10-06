@@ -97,6 +97,8 @@ Under the bonnet: [`docs/architecture.md`](docs/architecture.md) for the
 decisions and their reasons, [`docs/ng-api/`](docs/ng-api/) for the measured
 API.
 
+- [`docs/circuit.md`](docs/circuit.md) — developing, publishing, deploying
+
 ## Configuration
 
 Everything is set in the interface. `.env` carries only what has to exist

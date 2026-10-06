@@ -99,6 +99,8 @@ Pour qui veut regarder sous le capot :
 [`docs/architecture.md`](docs/architecture.md) pour les décisions et leurs
 raisons, [`docs/ng-api/`](docs/ng-api/) pour l'API mesurée.
 
+- [`docs/circuit.md`](docs/circuit.md) — développer, publier, déployer
+
 ## Configuration
 
 Tout se règle dans l'interface. Le fichier `.env` ne porte que ce qui doit
