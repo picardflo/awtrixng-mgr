@@ -3,20 +3,25 @@
 Ce qu'il reste à faire à la main, et pourquoi chaque point ne peut pas être
 fait d'avance.
 
-## 1. La licence
+## 1. La licence — fait
 
-**AGPL-3.0**, décidée. Le fichier n'est pas dans le dépôt parce qu'un texte de
-licence se copie **à l'octet près** : l'écrire de mémoire ou le reformater est
-pire qu'utile. Il se pose en une commande, depuis une machine qui a Internet :
+**AGPL-3.0**, dans [`LICENSE`](../LICENSE).
 
-```bash
-curl -o LICENSE https://www.gnu.org/licenses/agpl-3.0.txt
-head -3 LICENSE    # doit afficher : GNU AFFERO GENERAL PUBLIC LICENSE
-wc -l LICENSE      # 661 lignes
+Le texte vient de l'API de GitHub (`api.github.com/licenses/agpl-3.0`) et non
+de gnu.org, injoignable depuis les deux machines le jour où il a fallu le
+poser. Un texte de licence se copie **à l'octet près**, donc il a été vérifié
+plutôt que cru :
+
+```
+661 lignes
+« GNU AFFERO GENERAL PUBLIC LICENSE »
+« Version 3, 19 November 2007 »
+« 13. Remote Network Interaction »   <- la clause propre à l'AGPL
+« Copyright (C) 2007 Free Software Foundation »
 ```
 
-GitHub peut aussi l'ajouter lui-même à la création du dépôt — c'est encore
-plus sûr, il sert le texte canonique.
+La clause 13 est celle qui distingue l'AGPL de la GPL : sans elle, le fichier
+aurait été une GPL mal étiquetée.
 
 ### Pourquoi celle-ci
 

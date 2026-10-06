@@ -5,6 +5,23 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.16.2]
+
+### La licence est posée
+
+[`LICENSE`](LICENSE) — AGPL-3.0, 661 lignes.
+
+Le texte vient de l'API de GitHub : **gnu.org était injoignable depuis les
+deux machines**, celle de développement comme la VM. Comme un texte de licence
+se copie à l'octet près, il a été vérifié plutôt que cru — titre, version,
+mention de copyright de la FSF, et surtout la **clause 13, « Remote Network
+Interaction »**, qui est celle qui distingue l'AGPL de la GPL. Sans elle, le
+fichier aurait été une GPL mal étiquetée.
+
+Le README porte désormais la mention de titulaire : une licence sans titulaire
+ne dit pas qui accorde quoi.
+
+
 ## [0.16.1]
 
 ### Le garde-fou protégeait la mauvaise moitié

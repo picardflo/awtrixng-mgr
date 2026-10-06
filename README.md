@@ -151,7 +151,7 @@ Ils refusent tout afficheur listé dans `AWTRIXNG_PROTECTED_HOSTS`.
 
 ## Licence
 
-[GNU AGPL v3](LICENSE).
+Copyright © 2026 Florian Picard — [GNU AGPL v3](LICENSE).
 
 Vous pouvez l'utiliser, le modifier, l'héberger. Si vous en faites un service
 accessible par le réseau, vous devez en publier les modifications. C'est la
