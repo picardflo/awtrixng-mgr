@@ -13,12 +13,20 @@ from app import __version__
 from app.api.deps import SessionDep
 from app.core.crypto import decrypt, encrypt
 from app.core.errors import AwtrixNgError
-from app.models import ConnectorInstance, Device, Widget, WidgetTarget
+from app.models import (
+    ConnectorInstance,
+    Device,
+    Reminder,
+    ReminderTarget,
+    Widget,
+    WidgetTarget,
+)
 from app.schemas.backup import (
     FORMAT_VERSION,
     Backup,
     BackupConnector,
     BackupDevice,
+    BackupReminder,
     BackupSummary,
     BackupWidget,
     RestoreResult,
@@ -27,6 +35,25 @@ from app.services.scheduler.loop import scheduler
 
 log = logging.getLogger(__name__)
 router = APIRouter(tags=["backup"])
+
+
+def _targets_by_address(session: SessionDep) -> dict[int, list[tuple[str, int]]]:
+    """Where each reminder currently rings, addressed rather than numbered.
+
+    Ids do not survive a restore — every display is deleted and recreated —
+    but a clock keeps its host and port, which is what makes a reminder
+    re-attachable afterwards.
+    """
+    found: dict[int, list[tuple[str, int]]] = {}
+    for reminder in session.exec(select(Reminder)).all():
+        addresses = []
+        for target in reminder.targets:
+            device = session.get(Device, target.device_id)
+            if device is not None:
+                addresses.append((device.host, device.port))
+        if addresses:
+            found[reminder.id] = addresses
+    return found
 
 
 def _count_secrets(backup: Backup) -> int:
@@ -54,6 +81,7 @@ def export_configuration(session: SessionDep) -> Backup:
     widgets = list(
         session.exec(select(Widget).order_by(Widget.position, Widget.id)).all()
     )
+    reminders = list(session.exec(select(Reminder).order_by(Reminder.id)).all())
 
     return Backup(
         app_version=__version__,
@@ -97,6 +125,37 @@ def export_configuration(session: SessionDep) -> Backup:
             )
             for widget in widgets
         ],
+        reminders=[
+            BackupReminder(
+                name=reminder.name,
+                message=reminder.message,
+                devices=reminder.device_ids,
+                icon=reminder.icon,
+                color=reminder.color,
+                at=reminder.at,
+                days=reminder.days,
+                every_weeks=reminder.every_weeks,
+                anchor=reminder.anchor,
+                on_date=reminder.on_date,
+                countdown_to=reminder.countdown_to,
+                duration_seconds=reminder.duration_seconds,
+                repeat_count=reminder.repeat_count,
+                repeat_every_minutes=reminder.repeat_every_minutes,
+                melody=reminder.melody,
+                rings_at_night=reminder.rings_at_night,
+                enabled=reminder.enabled,
+                background=reminder.background,
+                effect=reminder.effect,
+                overlay=reminder.overlay,
+                icon_mode=reminder.icon_mode,
+                text_case=reminder.text_case,
+                font=reminder.font,
+                scroll_mode=reminder.scroll_mode,
+                scroll_speed=reminder.scroll_speed,
+                scroll_when_fits=reminder.scroll_when_fits,
+            )
+            for reminder in reminders
+        ],
     )
 
 
@@ -126,6 +185,9 @@ def inspect_backup(backup: Backup, session: SessionDep) -> BackupSummary:
         devices=len(backup.devices),
         connectors=len(backup.connectors),
         widgets=len(backup.widgets),
+        # None, not 0: a file that predates format 2 says nothing about
+        # reminders, and printing a zero would read as "this backup has none".
+        reminders=None if backup.reminders is None else len(backup.reminders),
         secrets=_count_secrets(backup),
     )
 
@@ -148,10 +210,26 @@ def restore_configuration(backup: Backup, session: SessionDep) -> RestoreResult:
         )
 
     try:
+        # Where each surviving reminder rings, by host and port rather than by
+        # id. Deleting the displays below takes `reminder_target` with it —
+        # ON DELETE CASCADE, and the pragma is on at runtime — so a reminder
+        # kept from an older file would come back ringing on nothing at all.
+        # That is what version 1 did, silently: three reminders, three empty
+        # target lists, and a result saying "Configuration restored".
+        #
+        # Matching on the address is what makes it work in the ordinary case:
+        # the "Bureau" deleted and the "Bureau" recreated are the same clock.
+        rings_on = _targets_by_address(session)
+
         for widget in session.exec(select(Widget)).all():
             session.delete(widget)
         for instance in session.exec(select(ConnectorInstance)).all():
             session.delete(instance)
+        if backup.reminders is not None:
+            # Replaced, like everything else. Only a file that carries the
+            # section may clear it.
+            for reminder in session.exec(select(Reminder)).all():
+                session.delete(reminder)
         for device in session.exec(select(Device)).all():
             session.delete(device)
         session.flush()
@@ -213,6 +291,67 @@ def restore_configuration(backup: Backup, session: SessionDep) -> RestoreResult:
                     )
             kept += 1
 
+        # -- Reminders ------------------------------------------------------
+        by_address = {
+            (entry.host, entry.port): devices[entry.ref]
+            for entry in backup.devices
+            if entry.ref in devices
+        }
+
+        restored = 0
+        for entry in backup.reminders or []:
+            reminder = Reminder(
+                name=entry.name,
+                message=entry.message,
+                icon=entry.icon,
+                color=entry.color,
+                at=entry.at,
+                weekdays=",".join(str(day) for day in sorted(set(entry.days))),
+                every_weeks=entry.every_weeks,
+                anchor=entry.anchor,
+                on_date=entry.on_date,
+                countdown_to=entry.countdown_to,
+                duration_seconds=entry.duration_seconds,
+                repeat_count=entry.repeat_count,
+                repeat_every_minutes=entry.repeat_every_minutes,
+                melody=entry.melody,
+                rings_at_night=entry.rings_at_night,
+                enabled=entry.enabled,
+                background=entry.background,
+                effect=entry.effect,
+                overlay=entry.overlay,
+                icon_mode=entry.icon_mode,
+                text_case=entry.text_case,
+                font=entry.font,
+                scroll_mode=entry.scroll_mode,
+                scroll_speed=entry.scroll_speed,
+                scroll_when_fits=entry.scroll_when_fits,
+            )
+            session.add(reminder)
+            session.flush()
+            for ref in dict.fromkeys(entry.devices):
+                if ref in devices:
+                    session.add(
+                        ReminderTarget(reminder_id=reminder.id, device_id=devices[ref])
+                    )
+            restored += 1
+
+        # The reminders this installation already had, when the file could not
+        # speak about them. Re-attached to the displays that came back at the
+        # same address.
+        reattached = 0
+        if backup.reminders is None:
+            for reminder in session.exec(select(Reminder)).all():
+                for address in rings_on.get(reminder.id, ()):
+                    device_id = by_address.get(address)
+                    if device_id is not None:
+                        session.add(
+                            ReminderTarget(
+                                reminder_id=reminder.id, device_id=device_id
+                            )
+                        )
+                reattached += 1
+
         session.commit()
     except Exception as exc:  # noqa: BLE001
         session.rollback()
@@ -224,8 +363,12 @@ def restore_configuration(backup: Backup, session: SessionDep) -> RestoreResult:
     # The displays still carry the previous apps; reconciling clears what no
     # longer belongs and republishes the rest.
     scheduler.reconcile_soon()
-    log.info("restored %d device(s), %d service(s), %d widget(s)",
-             len(devices), len(connectors), kept)
+    log.info(
+        "restored %d device(s), %d service(s), %d widget(s), %d reminder(s)"
+        "%s",
+        len(devices), len(connectors), kept, restored,
+        f", kept {reattached} from before" if reattached else "",
+    )
 
     return RestoreResult(
         ok=True,
@@ -234,6 +377,8 @@ def restore_configuration(backup: Backup, session: SessionDep) -> RestoreResult:
         devices=len(devices),
         connectors=len(connectors),
         widgets=kept,
+        reminders=restored,
+        reminders_kept=reattached,
         secrets=_count_secrets(backup),
     )
 

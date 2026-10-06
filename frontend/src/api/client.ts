@@ -299,6 +299,10 @@ export interface BackupSummary {
   devices: number;
   connectors: number;
   widgets: number;
+  /** **null when the file predates format 2**, which is not the same as zero:
+   *  it holds no reminder section at all, so restoring it leaves the ones
+   *  already here alone instead of clearing them. */
+  reminders: number | null;
   /** How many credentials the file carries. */
   secrets: number;
 }

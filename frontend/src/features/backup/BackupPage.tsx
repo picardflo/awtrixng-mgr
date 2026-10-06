@@ -140,6 +140,14 @@ export function BackupPage() {
                 connectors: summary.connectors,
                 widgets: summary.widgets,
               })}
+              {/* `null`, not 0: a file written before format 2 holds no
+                  reminder section at all, and a reassuring "0 rappels" would
+                  be the interface inventing an answer the file never gave.
+                  Restoring it leaves the existing reminders alone, which is
+                  worth saying before the button is pressed. */}
+              {summary.reminders === null
+                ? `, ${t("backup.remindersUnknown")}`
+                : `, ${t("backup.fileHoldsReminders", { count: summary.reminders })}`}
               {summary.exported_at &&
                 ` · ${new Date(summary.exported_at).toLocaleString()}`}
               {summary.app_version && ` · v${summary.app_version}`}

@@ -34,6 +34,8 @@ export const en = {
   "backup.importHelp": "Pick a file: its contents are shown before anything happens.",
   "backup.notJson": "This file is not valid JSON.",
   "backup.fileHolds": "{devices} displays, {connectors} services, {widgets} widgets",
+  "backup.fileHoldsReminders": "{count} reminders",
+  "backup.remindersUnknown": "reminders not included (file from an earlier version — yours will be kept)",
   "backup.willReplace":
     "Restoring replaces everything: your current displays, services and widgets are removed first.",
   "backup.restore": "Replace my configuration",

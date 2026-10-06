@@ -29,6 +29,8 @@ export const fr: Record<MessageKey, string> = {
   "backup.importHelp": "Choisissez un fichier : son contenu s'affiche avant toute action.",
   "backup.notJson": "Ce fichier n'est pas du JSON valide.",
   "backup.fileHolds": "{devices} afficheurs, {connectors} services, {widgets} widgets",
+  "backup.fileHoldsReminders": "{count} rappels",
+  "backup.remindersUnknown": "rappels non inclus (fichier d'une version antérieure — les vôtres seront conservés)",
   "backup.willReplace":
     "Restaurer remplace tout : vos afficheurs, services et widgets actuels sont d'abord supprimés.",
   "backup.restore": "Remplacer ma configuration",

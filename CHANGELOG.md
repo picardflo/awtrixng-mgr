@@ -5,6 +5,77 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.15.0]
+
+Florian : « on a pas testé la sauvegarde et restauration — maintenant qu'on a
+une config correcte, qu'en penses-tu ? »
+
+Excellente idée, et pas pour la raison attendue. **La sauvegarde ne contenait
+pas les rappels.** Ni leurs heures, ni leurs rythmes, ni leurs mélodies, ni la
+minute de décalage qu'on venait de calculer ensemble pour que deux ne sonnent
+jamais en même temps. Huit rappels, zéro dans le fichier.
+
+Trouvé de la seule façon dont ce genre de trou se trouve : en exportant une
+vraie installation et en restaurant dans une vide. Rien n'est arrivé, et le
+résultat affichait « Configuration restaurée ».
+
+### Le deuxième défaut était pire que l'oubli
+
+Restaurer supprime chaque afficheur et le recrée. `reminder_target` référence
+`device.id` en `ON DELETE CASCADE`, et le pragma est actif à l'exécution.
+
+Donc une restauration ne se contentait pas de ne pas ramener les rappels :
+**elle détachait ceux qui étaient déjà là de leurs afficheurs.** Mesuré sur
+une instance jetable — cibles `[[1], [1], [1]]` avant, `[[], [], []]` après.
+Trois rappels qui ne sonneraient plus jamais nulle part, sans une erreur et
+sans une mention.
+
+### Format 2
+
+Le fichier porte maintenant les rappels, **avec toute leur présentation** :
+police, casse, effet, comportement de l'icône, défilement. Un rappel restauré
+sans sa police n'est pas le rappel sauvegardé, c'est un autre qui dit les
+mêmes mots.
+
+**`null` n'est pas une liste vide**, et la distinction décide de ce qu'une
+restauration fait :
+
+| ce que porte le fichier | ce que fait la restauration |
+|---|---|
+| une liste, même vide | elle remplace — restaurer veut dire « ressembler à la sauvegarde » |
+| **rien** (format 1) | elle **garde** les rappels existants et le dit |
+
+Un fichier antérieur ne peut rien dire des rappels ; les effacer sur sa parole
+serait obéir à une consigne qu'il n'a jamais donnée.
+
+### Et les rappels gardés sonnent encore
+
+C'est la moitié qui demandait du soin. Les afficheurs sont tous recréés, donc
+les cibles tombent avec la cascade quoi qu'on fasse. Elles sont rattachées
+**par hôte et port** plutôt que par identifiant : le « Bureau » supprimé et le
+« Bureau » recréé sont la même horloge.
+
+Vérifié sur une copie de l'installation de Florian, ses huit rappels recréés
+dessus :
+
+```
+A) vieux fichier (format 1)  -> reminders 0, kept 8, cibles [1,1,1,1,1,1,1,1]
+B) fichier courant (format 2) -> reminders 8, kept 0, cibles [1,1,1,1,1,1,1,1]
+                                 identiques au détail près : True
+```
+
+### Ce qui marchait, et qui a été vérifié aussi
+
+Afficheurs, services et widgets reviennent **champ par champ**, pas seulement
+en nombre : douze widgets vides seraient douze widgets. Comparé template,
+icône, couleur, position, intervalle — identique.
+
+### Mineur et non majeur
+
+Un fichier de format 1 se restaure toujours. Seul l'inverse est refusé — un
+fichier de format 2 sur une installation plus ancienne — et c'était déjà la
+règle. Rien à faire de la part de l'exploitant.
+
 ## [0.14.0]
 
 Florian : « peux-tu regarder pour t'aligner sur la charte graphique d'awtrix

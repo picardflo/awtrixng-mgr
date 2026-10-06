@@ -6,6 +6,9 @@ only ever shows once. The file therefore carries credentials in clear text,
 and has to say so.
 """
 
+from app.schemas.backup import FORMAT_VERSION
+
+
 def build(client):
     """A configuration worth losing: two displays, one service, two widgets."""
     salon = client.post("/api/devices", json={"name": "Salon", "host": "h1"}).json()
@@ -69,7 +72,11 @@ class TestExport:
     def test_an_empty_installation_exports_an_empty_file(self, client):
         backup = client.get("/api/backup").json()
         assert backup["devices"] == [] and backup["widgets"] == []
-        assert backup["format"] == 1
+        # An *empty list*, not a missing section: this file can speak about
+        # reminders and says there are none. The difference decides what a
+        # restore does — see `Backup.reminders`.
+        assert backup["reminders"] == []
+        assert backup["format"] == FORMAT_VERSION
 
 
 class TestRoundTrip:
@@ -244,3 +251,149 @@ class TestRefusals:
         after = client.get("/api/backup").json()
         assert len(after["devices"]) == len(before["devices"])
         assert len(after["widgets"]) == len(before["widgets"])
+
+
+class TestReminders:
+    """Reminders in the file, which version 1 left out entirely.
+
+    Found the only way this kind of hole ever is: by exporting a real
+    installation — eight reminders, their hours, their melodies, the minute of
+    separation worked out so two never ring at once — and restoring it into an
+    empty one. Nothing arrived, and the result said "Configuration restored".
+
+    The second half was worse than the omission. Restoring deletes every
+    display and recreates it, and `reminder_target` references `device.id` with
+    ON DELETE CASCADE. So a restore did not merely fail to bring reminders
+    back: it **cut the existing ones loose from their displays**, leaving
+    reminders that would never ring again, with no error and no mention.
+    """
+
+    def with_reminder(self, client, name="Poubelles", **extra):
+        device = client.get("/api/devices").json()[0]
+        return client.post(
+            "/api/reminders",
+            json={
+                "name": name,
+                "message": "SORTIR",
+                "at": "19:00:00",
+                "device_ids": [device["id"]],
+                **extra,
+            },
+        ).json()
+
+    def test_a_reminder_travels_with_everything_else(self, client):
+        build(client)
+        self.with_reminder(client)
+        backup = client.get("/api/backup").json()
+        assert [r["name"] for r in backup["reminders"]] == ["Poubelles"]
+
+    def test_its_whole_presentation_travels_too(self, client):
+        """A reminder restored without its font is not the reminder that was
+        backed up — it is a different one that says the same words."""
+        build(client)
+        self.with_reminder(
+            client,
+            font="large",
+            text_case="asTyped",
+            effect="TwinklingStars",
+            icon_mode="push",
+            scroll_when_fits="scroll",
+            melody="bip:d=16,o=6,b=140:c",
+            repeat_count=2,
+            every_weeks=2,
+        )
+        backup = client.get("/api/backup").json()
+        saved = backup["reminders"][0]
+        for field, value in (
+            ("font", "large"),
+            ("text_case", "asTyped"),
+            ("effect", "TwinklingStars"),
+            ("icon_mode", "push"),
+            ("scroll_when_fits", "scroll"),
+            ("melody", "bip:d=16,o=6,b=140:c"),
+            ("repeat_count", 2),
+            ("every_weeks", 2),
+        ):
+            assert saved[field] == value, field
+
+    def test_a_round_trip_brings_it_back_ringing_somewhere(self, client):
+        build(client)
+        self.with_reminder(client)
+        backup = client.get("/api/backup").json()
+
+        restored = client.post("/api/backup/restore", json=backup).json()
+        assert restored["reminders"] == 1
+
+        back = client.get("/api/reminders").json()
+        assert len(back) == 1
+        assert back[0]["device_ids"], "restored, and ringing on nothing"
+
+    def test_restoring_replaces_rather_than_adds(self, client):
+        build(client)
+        self.with_reminder(client, name="Celui du fichier")
+        backup = client.get("/api/backup").json()
+        self.with_reminder(client, name="Celui d'après")
+
+        client.post("/api/backup/restore", json=backup)
+        assert [r["name"] for r in client.get("/api/reminders").json()] == [
+            "Celui du fichier"
+        ]
+
+
+class TestAFileWithoutReminders:
+    """Format 1: a file that cannot speak about reminders.
+
+    `None` is not an empty list, and the difference decides what happens to
+    what is already there. An empty list says "there were none", and clearing
+    is right. A missing section says nothing at all, and clearing on its word
+    would be obeying an instruction it never gave.
+    """
+
+    def old_file(self, client):
+        backup = client.get("/api/backup").json()
+        backup["format"] = 1
+        del backup["reminders"]
+        return backup
+
+    def test_it_is_still_accepted(self, client):
+        build(client)
+        assert client.post("/api/backup/restore", json=self.old_file(client)).status_code == 200
+
+    def test_the_reminders_it_cannot_describe_are_kept(self, client):
+        build(client)
+        TestReminders().with_reminder(client, name="Déjà là")
+        file = self.old_file(client)
+
+        result = client.post("/api/backup/restore", json=file).json()
+        assert result["reminders"] == 0
+        assert result["reminders_kept"] == 1
+        assert [r["name"] for r in client.get("/api/reminders").json()] == ["Déjà là"]
+
+    def test_and_they_still_ring_on_their_display(self, client):
+        """The failure this whole class exists for. Every display is deleted
+        and recreated, so the targets cascade away; they are re-attached by
+        host and port, because the clock at h1 is the same clock."""
+        build(client)
+        TestReminders().with_reminder(client, name="Déjà là")
+        before = client.get("/api/reminders").json()[0]
+        assert before["device_ids"]
+
+        client.post("/api/backup/restore", json=self.old_file(client))
+
+        after = client.get("/api/reminders").json()[0]
+        assert after["device_ids"], "kept, but no longer ringing anywhere"
+        assert len(after["device_ids"]) == len(before["device_ids"])
+
+    def test_the_inspection_says_it_cannot_tell(self, client):
+        """`null`, never 0: a zero would read as "this backup has none"."""
+        build(client)
+        summary = client.post("/api/backup/inspect", json=self.old_file(client)).json()
+        assert summary["reminders"] is None
+
+    def test_a_current_file_counts_them(self, client):
+        build(client)
+        TestReminders().with_reminder(client)
+        summary = client.post(
+            "/api/backup/inspect", json=client.get("/api/backup").json()
+        ).json()
+        assert summary["reminders"] == 1

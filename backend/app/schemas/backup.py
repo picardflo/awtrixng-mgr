@@ -16,7 +16,7 @@ References use ids local to the file, not database ids: restoring into a fresh
 installation remaps everything.
 """
 
-from datetime import datetime
+from datetime import date, datetime, time
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -25,7 +25,13 @@ from app.models.base import utcnow
 
 #: Bumped when the shape changes. A file from the future is refused outright
 #: rather than half-imported.
-FORMAT_VERSION = 1
+#:
+#: 2 — reminders. Version 1 carried displays, services and widgets, and left
+#: every reminder out: their hours, their rhythms, their melodies and their
+#: targets were not in the file at all. Found by exporting a real
+#: installation and restoring it into an empty one, which is the only way
+#: this kind of hole is ever found.
+FORMAT_VERSION = 2
 
 
 class BackupDevice(BaseModel):
@@ -63,6 +69,47 @@ class BackupWidget(BaseModel):
     enabled: bool = True
 
 
+class BackupReminder(BaseModel):
+    """A reminder, with the displays it rings on.
+
+    Its whole presentation travels with it. A reminder restored without its
+    font or its letter case is not the reminder that was backed up — it is a
+    different one that happens to say the same words.
+    """
+
+    name: str
+    message: str
+    #: BackupDevice.ref values
+    devices: list[int] = Field(default_factory=list)
+    icon: str | None = None
+    color: str | None = None
+    #: "07:45:00"
+    at: time
+    #: Monday is 0.
+    days: list[int] = Field(default_factory=list)
+    every_weeks: int = 1
+    anchor: date | None = None
+    on_date: date | None = None
+    countdown_to: date | None = None
+    duration_seconds: int = 10
+    repeat_count: int = 0
+    repeat_every_minutes: int = 2
+    melody: str | None = None
+    rings_at_night: bool = False
+    enabled: bool = True
+
+    # The presentation block, as `MatrixText` declares it.
+    background: str | None = None
+    effect: str | None = None
+    overlay: str | None = None
+    icon_mode: str = "fixed"
+    text_case: str = "inherit"
+    font: str = "small"
+    scroll_mode: str = "wrap"
+    scroll_speed: int = 100
+    scroll_when_fits: str = "static"
+
+
 #: First field of the file, so it is the first thing anyone sees on opening it.
 WARNING = (
     "This file contains credentials in clear text. Keep it as carefully as you "
@@ -79,6 +126,14 @@ class Backup(BaseModel):
     devices: list[BackupDevice] = Field(default_factory=list)
     connectors: list[BackupConnector] = Field(default_factory=list)
     widgets: list[BackupWidget] = Field(default_factory=list)
+    #: **None, not an empty list, when the file predates format 2.**
+    #:
+    #: The distinction decides what a restore does. An empty list means "there
+    #: were no reminders", and restoring it clears them, because restore means
+    #: "look like the backup". `None` means the file cannot speak about
+    #: reminders at all, and clearing them on its word would be inventing an
+    #: instruction it never gave.
+    reminders: list[BackupReminder] | None = None
 
 
 class BackupSummary(BaseModel):
@@ -92,6 +147,10 @@ class BackupSummary(BaseModel):
     devices: int = 0
     connectors: int = 0
     widgets: int = 0
+    #: None when the file predates format 2 and holds no reminder section —
+    #: which is not the same as holding an empty one, and the interface says
+    #: so rather than printing a reassuring zero.
+    reminders: int | None = None
     #: How many credentials the file carries, so the warning can be concrete.
     secrets: int = 0
 
@@ -103,4 +162,9 @@ class RestoreResult(BaseModel):
     devices: int = 0
     connectors: int = 0
     widgets: int = 0
+    reminders: int = 0
+    #: Reminders the installation already had, kept because the file was
+    #: written before reminders were carried. Their targets are re-attached by
+    #: host and port — see the restore route.
+    reminders_kept: int = 0
     secrets: int = 0
