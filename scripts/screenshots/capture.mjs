@@ -29,6 +29,10 @@ const ONLY = args.only ? new RegExp(args.only) : null;
 /** "login" needs the demo started with --password, so it is a separate pass
  *  rather than a step in the middle of the others. */
 const SCENARIO = args.scenario ?? "main";
+/** "light" captures the pale theme. The interface follows the operating
+ *  system until someone chooses, and a headless Chromium reports dark — so
+ *  the light shots need the choice making for them. */
+const THEME = args.theme ?? "dark";
 const VIEWPORT = { width: 1280, height: 900 };
 
 const taken = [];
@@ -93,8 +97,12 @@ const context = await browser.newContext({
   locale: "fr-FR",
 });
 // The manual is in French, so the screenshots are too.
-await context.addInitScript(() =>
-  window.localStorage.setItem("awtrixng-mgr.locale", "fr"),
+await context.addInitScript(
+  ([locale, theme]) => {
+    window.localStorage.setItem("awtrixng-mgr.locale", locale);
+    window.localStorage.setItem("awtrixng-mgr.theme", theme);
+  },
+  ["fr", THEME],
 );
 
 /** A full-page screenshot renders a sticky header wherever the page happens
@@ -108,6 +116,25 @@ const UNSTICK = `
 
 const page = await context.newPage();
 await mkdir(OUT, { recursive: true });
+
+/** The pale theme, on the two pages that show the most of it: a dashboard of
+ *  tiles and a form. Not every shot twice — the manual would double in weight
+ *  to say the same thing, and the interface is the same interface. */
+if (SCENARIO === "light") {
+  await go(page, "dashboard");
+  await shot(page, "clair-dashboard");
+
+  await go(page, "widgets");
+  await click(page, /^Modifier$/i);
+  await page.waitForTimeout(1000);
+  await click(page, /Avancé/);
+  await page.waitForTimeout(500);
+  await shot(page, "clair-widget-edition");
+
+  await browser.close();
+  console.log(`\n${taken.length} capture(s) dans ${OUT}`);
+  process.exit(missed.length ? 1 : 0);
+}
 
 if (SCENARIO === "login") {
   await page.goto(BASE, { waitUntil: "networkidle" });

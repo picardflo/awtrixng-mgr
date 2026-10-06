@@ -3,47 +3,128 @@
 /* ---------------------------------------------------------------------------
    awtrixng-mgr design tokens (§9 bis)
 
-   Dark mode by default, dark surfaces, restrained contrast, vivid RGB accents
-   reserved for states and previews. No raw colour in the components:
-   everything goes through a token.
+   **Aligned on AWTRIX NG's own interface, and not by eye.** The firmware
+   serves its web UI from the clock, so the charter was read off it rather
+   than sampled from a screenshot:
+
+       curl http://<clock>/ | grep -o '\-\-[a-z]*: *#[0-9a-f]*'
+
+   which gives its palette, its radius, its two font sizes and its mono stack
+   exactly. Both themes come from there: NG switches on `:root[data-theme=…]`,
+   which is the mechanism copied below.
+
+   Two things are ours and stay ours:
+
+   - **The states keep their own colours.** NG's `--ok` and `--err` are muted
+     to sit quietly in a settings page. Here they say whether a widget is
+     reaching a clock, which is the one thing someone opens this app to learn,
+     so they keep more contrast than the chrome around them. The accent is
+     AWTRIX NG's; green still means it works and red still means it does not.
+   - **The matrix is black in both themes.** It is a photograph of a panel,
+     not a surface of the page: an unlit LED is unlit at noon too.
+
+   No raw colour in the components: everything goes through a token. That rule
+   is what made a second theme an afternoon rather than a rewrite — 37 literal
+   colours in the whole interface, and all but a handful are matrix pixels.
    --------------------------------------------------------------------------- */
 
 @theme {
-  /* Backgrounds and surfaces — lighter as we climb the hierarchy */
-  --color-bg: #08090c;
-  --color-surface: #101218;
-  --color-surface-2: #171a22;
-  --color-surface-3: #1f232d;
-  --color-border: #262b36;
-  --color-border-strong: #343a48;
+  /* -- Dark, the default, as AWTRIX NG ships it ---------------------------- */
 
-  /* Text */
-  --color-text: #e8eaf0;
-  --color-text-muted: #9aa1b1;
-  --color-text-faint: #646b7c;
+  /* Warm greys, not neutral ones: #222221 and #373632 lean yellow, which is
+     what keeps the apricot accent from looking like a sticker on slate. */
+  --color-bg: #171717;
+  --color-surface: #222221;
+  --color-surface-2: #292927;
+  --color-surface-3: #302f2b;
+  --color-border: #373632;
+  --color-border-strong: #514e47;
 
-  /* Accent — the RGB green of a lit LED */
-  --color-accent: #3ddc84;
-  --color-accent-dim: #1f7a4a;
-  --color-accent-glow: #3ddc8433;
+  --color-text: #f3f1ec;
+  --color-text-muted: #a6a198;
+  --color-text-faint: #78746c;
+
+  /* NG's `--acc`. It changes with the theme — pale on dark, deep on light —
+     because an apricot that reads well on #171717 is illegible on #f5f4f1. */
+  --color-accent: #f5a568;
+  --color-accent-dim: #b9794a;
+  --color-accent-glow: #f5a56845;
+  /* What is legible *on* the accent. NG's own `::selection` uses #23170e on
+     its apricot; a deep accent needs white instead, which is why this is a
+     token and not a constant in the button. */
+  --color-on-accent: #23170e;
 
   /* States (§18) — always paired with an icon or a label */
-  --color-success: #3ddc84;
-  --color-warning: #f5a524;
-  --color-danger: #f4526b;
-  --color-info: #4aa8ff;
-  --color-neutral: #646b7c;
+  --color-success: #6ee7a0;
+  --color-warning: #ffb65c;
+  --color-danger: #ff8f80;
+  --color-info: #79c0ff;
+  --color-neutral: #a6a198;
 
-  /* AWTRIX matrix */
-  --color-pixel-off: #15171d;
-  --color-matrix-bg: #05060a;
+  /* AWTRIX matrix — the panel itself, not the page */
+  --color-pixel-off: #1c1c1a;
+  --color-matrix-bg: #10100f;
 
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace;
+  /* Shadow, and the dotted backdrop's dot: the accent at 7 %. */
+  --color-shadow: #0008;
+  --color-dot: #f5a56812;
+
+  /* NG's own stack. "Segoe UI Variable" exists on Windows and falls through
+     to the system face everywhere else, which is what it is there for. */
+  --font-sans: "Segoe UI Variable", Aptos, system-ui, -apple-system, "Segoe UI",
+    sans-serif;
+  --font-mono: "Cascadia Mono", "IBM Plex Mono", ui-monospace, "JetBrains Mono",
+    Consolas, monospace;
+
+  /* NG's radius is 12px, which is what `rounded-xl` already draws, so there
+     is nothing to add for it. Its two type sizes — 11px for a label, 19px for
+     the value it labels — are applied in `ui.tsx`'s `Stat`, beside the rule
+     they were read from. The pair is the charter's signature far more than
+     the orange is. */
+}
+
+/* -- Light, as AWTRIX NG ships it ----------------------------------------- */
+:root[data-theme="light"] {
+  --color-bg: #f5f4f1;
+  --color-surface: #ffffff;
+  --color-surface-2: #f0eee9;
+  --color-surface-3: #e9e6e0;
+  --color-border: #e2dfd8;
+  --color-border-strong: #c8c3b9;
+
+  --color-text: #242321;
+  --color-text-muted: #706c65;
+  --color-text-faint: #96918a;
+
+  --color-accent: #ac470f;
+  --color-accent-dim: #8a3a0c;
+  --color-accent-glow: #ac470f26;
+  --color-on-accent: #ffffff;
+
+  --color-success: #2f6b22;
+  --color-warning: #945813;
+  --color-danger: #b3261e;
+  --color-info: #0550ae;
+  --color-neutral: #706c65;
+
+  /* Unchanged on purpose: see the note at the top. */
+  --color-pixel-off: #242423;
+  --color-matrix-bg: #181817;
+
+  --color-shadow: #342a201f;
+  --color-dot: #ac470f10;
 }
 
 html {
+  background: var(--color-bg);
+  color: var(--color-text);
+  /* Carries native controls — select menus, scrollbars, date pickers — with
+     the rest. Without it they stay dark on a light page. */
   color-scheme: dark;
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
 }
 
 body {
@@ -51,6 +132,10 @@ body {
   color: var(--color-text);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  /* AWTRIX NG's backdrop: a dot of the accent every 16 pixels, at 7 %. It is
+     what stops a page of dark cards from reading as a void. */
+  background-image: radial-gradient(circle, var(--color-dot) 1px, transparent 1.2px);
+  background-size: 16px 16px;
 }
 
 /* Focus stays visible everywhere: accessibility requirement of §9 sexies. */
@@ -58,6 +143,15 @@ body {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
   border-radius: 4px;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: #23170e;
+}
+
+:root[data-theme="light"] ::selection {
+  color: #ffffff;
 }
 
 /* Respect users sensitive to motion (scrolling text). */

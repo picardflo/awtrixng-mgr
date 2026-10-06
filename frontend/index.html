@@ -1,14 +1,47 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="dark" />
     <!-- SVG only: it stays crisp at every size and weighs under a kilobyte.
          Every browser that can run this interface can draw it. -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="theme-color" content="#3ddc84" />
     <title>awtrixng-mgr</title>
+    <!--
+      The theme, before the first paint.
+
+      React mounts after the browser has drawn, so deciding this in a
+      component means a white flash on a dark install, or a white page
+      turning dark in front of someone. Eight lines inline, run before the
+      stylesheet is applied, and nobody sees the wrong one.
+
+      The same two keys `useTheme.tsx` uses, deliberately duplicated: the
+      alternative is a module import, which is a network round trip, which is
+      the flash back again.
+    -->
+    <script>
+      (function () {
+        var chosen = null;
+        try {
+          chosen = localStorage.getItem("awtrixng-mgr.theme");
+        } catch (e) {
+          /* private browsing refuses it; the system preference still works */
+        }
+        var theme =
+          chosen === "light" || chosen === "dark"
+            ? chosen
+            : window.matchMedia &&
+                window.matchMedia("(prefers-color-scheme: light)").matches
+              ? "light"
+              : "dark";
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+        var meta = document.createElement("meta");
+        meta.name = "theme-color";
+        meta.content = theme === "light" ? "#f5f4f1" : "#171717";
+        document.head.appendChild(meta);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

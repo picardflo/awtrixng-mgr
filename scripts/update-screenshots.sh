@@ -20,13 +20,13 @@ FILTER="${1:-}"
 
 say() { printf '\n\033[1m%s\033[0m\n' "$*"; }
 
-say "1/5  Building the interface"
+say "1/6  Building the interface"
 (cd "$ROOT/frontend" && npm run --silent build)
 
-say "2/5  Installing Playwright if needed"
+say "2/6  Installing Playwright if needed"
 (cd "$ROOT/scripts/screenshots" && npm install --silent && npx playwright install --no-shell chromium >/dev/null)
 
-say "3/5  Starting the demo environment"
+say "3/6  Starting the demo environment"
 "$PYTHON" "$ROOT/scripts/demo/serve.py" --port "$PORT" >/tmp/awtrixng-mgr-demo.log 2>&1 &
 DEMO=$!
 cleanup() { kill "$DEMO" 2>/dev/null || true; wait "$DEMO" 2>/dev/null || true; }
@@ -42,7 +42,7 @@ curl -sf "http://127.0.0.1:$PORT/api/health" >/dev/null || {
 # Let the scheduler push the widgets, so the loop shown is the real one.
 sleep 6
 
-say "4/5  Capturing"
+say "4/6  Capturing"
 cd "$ROOT/scripts/screenshots"
 if [ -n "$FILTER" ]; then
   node capture.mjs --base "http://127.0.0.1:$PORT" --out "$OUT" --only "$FILTER"
@@ -50,7 +50,10 @@ else
   node capture.mjs --base "http://127.0.0.1:$PORT" --out "$OUT"
 fi
 
-say "5/5  Login screen (second pass, with a password)"
+say "5/6  Light theme (a dashboard and a form, nothing more)"
+node capture.mjs --base "http://127.0.0.1:$PORT" --out "$OUT" --scenario light --theme light
+
+say "6/6  Login screen (third pass, with a password)"
 cleanup
 "$PYTHON" "$ROOT/scripts/demo/serve.py" --port "$PORT" --password "demo" \
   >/tmp/awtrixng-mgr-demo-auth.log 2>&1 &

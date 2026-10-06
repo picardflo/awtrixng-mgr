@@ -53,6 +53,8 @@ export const en = {
   "common.loading": "Loading…",
   "common.unexpectedError": "Something went wrong.",
   "common.language": "Language",
+  "theme.toLight": "Switch to light",
+  "theme.toDark": "Switch to dark",
   "settings.clockLanguage": "Clock language",
   "settings.clockLanguageHelp": "What your clocks display: weather conditions, moon phases, countdowns. The language of this page is set separately, top right.",
   "settings.clockLanguageDiffers": "This page is in another language. That is allowed, and this setting is what the clocks use.",

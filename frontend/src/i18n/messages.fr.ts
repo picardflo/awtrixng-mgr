@@ -47,6 +47,8 @@ export const fr: Record<MessageKey, string> = {
   "common.loading": "Chargement…",
   "common.unexpectedError": "Une erreur inattendue s'est produite.",
   "common.language": "Langue",
+  "theme.toLight": "Passer en clair",
+  "theme.toDark": "Passer en sombre",
   "settings.clockLanguage": "Langue des horloges",
   "settings.clockLanguageHelp": "Ce que vos horloges affichent : conditions météo, phases de lune, décomptes. La langue de cette page se règle séparément, en haut à droite.",
   "settings.clockLanguageDiffers": "Cette page est dans une autre langue. C'est permis, et c'est ce réglage-ci que les horloges utilisent.",

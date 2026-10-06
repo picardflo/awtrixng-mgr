@@ -5,6 +5,88 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.14.0]
+
+Florian : « peux-tu regarder pour t'aligner sur la charte graphique d'awtrix
+ng ? et si tu peux je suis pas contre un mode clair + sombre — ça permettrait
+aussi de sortir de l'héritage awtrixhub ».
+
+### La charte a été lue, pas estimée
+
+Le firmware sert sa propre interface depuis l'horloge. Plutôt que de relever
+les couleurs à l'œil sur une capture :
+
+```
+curl http://awtrix-cl2.home.lan/ | grep -o -- '--[a-z]*: *#[0-9a-f]*'
+```
+
+ce qui donne sa palette exacte, son rayon de bordure, ses deux tailles de
+texte et sa pile de polices à chasse fixe. **Les deux thèmes viennent de là** :
+AWTRIX NG bascule sur `:root[data-theme=…]`, mécanisme repris tel quel.
+
+| | sombre | clair |
+|---|---|---|
+| fond | `#171717` | `#f5f4f1` |
+| carte | `#222221` | `#ffffff` |
+| accent | `#f5a568` | `#ac470f` |
+
+L'accent **change avec le thème**, comme chez eux : un abricot lisible sur du
+`#171717` est illisible sur du `#f5f4f1`. Et les gris sont **chauds**, pas
+neutres — `#222221`, `#373632` tirent vers le jaune, et c'est ce qui empêche
+l'abricot de ressembler à un autocollant posé sur de l'ardoise.
+
+### Deux choses restent à nous, et c'est écrit dans le fichier
+
+- **Les états gardent leurs couleurs.** `--ok` et `--err` d'AWTRIX NG sont
+  sourds, ce qui convient à une page de réglages. Ici ils disent si un widget
+  atteint une horloge, c'est-à-dire la seule chose qu'on vient chercher. Vert
+  veut toujours dire que ça tourne.
+- **La dalle est noire dans les deux thèmes.** C'est la photographie d'un
+  panneau, pas une surface de la page : une LED éteinte l'est aussi à midi.
+
+### La typographie, qui est la vraie signature
+
+Plus que l'orange. Relevée dans la feuille de style du firmware :
+
+```
+.vit .k { font-size:11px; color:var(--dim) }            l'intitulé
+.vit .v { font:500 19px/1.1 var(--mono) }               le chiffre
+.vit .v u { font-size:11px; color:var(--dim) }          son unité
+```
+
+L'unité est le détail qui compte : réduite à la taille de l'intitulé et
+assourdie, elle laisse les chiffres seuls en pleine graisse, et une rangée de
+tuiles se lit comme une rangée de nombres — ce que l'œil est là pour comparer.
+Les six tuiles d'un afficheur sont passées à ce traitement.
+
+### Le thème, avant le premier rendu
+
+Huit lignes en ligne dans `index.html`, pas un composant React : React monte
+après que le navigateur a dessiné, et décider là-bas veut dire un éclair blanc
+sur une installation sombre.
+
+Tant que personne ne choisit, la page **suit le système** et continue de le
+suivre. Choisir épingle, et c'est le choix qui est stocké — jamais « auto,
+résolu en sombre le soir où on a cliqué ».
+
+### Ce qui rendait ça faisable
+
+La règle « aucune couleur en dur dans les composants » tenait depuis le début :
+**37 valeurs littérales dans toute l'interface, et presque toutes sont des
+pixels de dalle.** Un second thème a donc été un bloc de jetons, pas une
+réécriture.
+
+`backend/tests/test_theme.py` compare maintenant les deux blocs : un jeton
+déclaré d'un côté et oublié de l'autre est invisible jusqu'à ce que quelqu'un
+bascule. Éprouvé en retirant `--color-text-faint` du bloc clair — il le nomme.
+
+### La marque
+
+Elle garde sa forme : neuf pixels, et celle d'AWTRIX NG est un glyphe à eux.
+S'aligner n'est pas se faire passer pour. Ce qui change, ce sont ses quatre
+encres, qui étaient celles de l'ancienne palette — un vert froid, un bleu
+froid — et qui lisaient comme un reste sur une page de gris chauds.
+
 ## [0.13.0]
 
 Florian : « comme pour les widgets, je dois pouvoir choisir la taille du texte

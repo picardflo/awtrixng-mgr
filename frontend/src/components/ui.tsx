@@ -29,7 +29,7 @@ type Variant = "primary" | "ghost" | "danger";
 
 const VARIANTS: Record<Variant, string> = {
   primary:
-    "bg-[var(--color-accent)] text-[#05210f] hover:brightness-110 font-medium",
+    "bg-[var(--color-accent)] text-[var(--color-on-accent)] hover:brightness-110 font-medium",
   ghost:
     "border border-[var(--color-border-strong)] text-[var(--color-text)] hover:bg-[var(--color-surface-2)]",
   danger:
@@ -145,24 +145,46 @@ export function EmptyState({
  *  The display's own interface puts the raw value beneath the interpreted one
  *  — 93 % over 4.14 V, -63 dBm over "good", 5 % over "184 raw". It is worth
  *  copying: the interpreted number is what you read at a glance, and the raw
- *  one is what you need the day it looks wrong. */
+ *  one is what you need the day it looks wrong.
+ *
+ *  So is its typography, which is the stronger half of the resemblance. Read
+ *  off the firmware's own stylesheet rather than eyeballed from a screenshot:
+ *
+ *      .vit .k { font-size:11px; color:var(--dim) }           the label
+ *      .vit .v { font:500 19px/1.1 var(--mono) }              the figure
+ *      .vit .v u { font-size:11px; color:var(--dim) }         its unit
+ *      .vit .s { font:11px/1.2 var(--mono); color:var(--dim) } the detail
+ *
+ *  The unit is the point. Dropping it to label size and muting it leaves the
+ *  digits alone at full weight, so a column of tiles reads as a column of
+ *  numbers — which is what the eye is there to compare. */
 export function Stat({
   label,
   value,
+  unit,
   detail,
 }: {
   label: string;
   value: ReactNode;
+  /** Shown small and muted beside the figure: "%", "dBm", "°C". */
+  unit?: string;
   detail?: ReactNode;
 }) {
   return (
-    <div className="rounded-lg bg-[var(--color-surface-2)] px-3 py-2">
-      <div className="text-[10px] uppercase tracking-wide text-[var(--color-text-faint)]">
-        {label}
+    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-2">
+      <div className="text-[11px] leading-none text-[var(--color-text-muted)]">{label}</div>
+      <div className="mt-1.5 flex items-baseline gap-[2px] font-mono text-[19px] font-medium leading-[1.1]">
+        {value}
+        {unit && (
+          <span className="text-[11px] font-normal text-[var(--color-text-muted)]">
+            {unit}
+          </span>
+        )}
       </div>
-      <div className="mt-0.5 font-mono text-sm">{value}</div>
       {detail && (
-        <div className="font-mono text-[10px] text-[var(--color-text-faint)]">{detail}</div>
+        <div className="mt-1 font-mono text-[11px] leading-[1.2] text-[var(--color-text-muted)]">
+          {detail}
+        </div>
       )}
     </div>
   );

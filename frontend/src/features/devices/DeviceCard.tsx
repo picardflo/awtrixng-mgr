@@ -45,6 +45,11 @@ export function DeviceCard({
     return value === undefined || value === null ? t("unit.none") : `${value}${unit}`;
   }
 
+  /** The unit, but only when there is a figure to attach it to. */
+  function unitFor(value: number | undefined | null, unit: string): string | undefined {
+    return value === undefined || value === null ? undefined : unit;
+  }
+
   /** Wi-Fi quality in words: the raw RSSI means nothing to most people. */
   function wifiQuality(rssi?: number): string | undefined {
     if (rssi === undefined) return undefined;
@@ -166,26 +171,38 @@ export function DeviceCard({
       {stats && (
         <>
           <div className="mx-4 mb-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+            {/* The unit is passed apart from the figure, not glued to it:
+                it is drawn small and muted so the digits stand alone. When
+                there is no reading the dash takes the tile on its own — a
+                lone "%" beside nothing reads as a measurement of zero. */}
             <Stat
               label={t("device.stat.battery")}
-              value={num(stats.battery_percent, " %")}
+              value={num(stats.battery_percent)}
+              unit={unitFor(stats.battery_percent, "%")}
               detail={num(stats.battery_voltage, " V")}
             />
             <Stat
               label={t("device.stat.wifi")}
-              value={num(stats.wifi_rssi, " dBm")}
+              value={num(stats.wifi_rssi)}
+              unit={unitFor(stats.wifi_rssi, "dBm")}
               detail={wifiQuality(stats.wifi_rssi)}
             />
             <Stat
               label={t("device.stat.light")}
-              value={num(stats.light_level, " %")}
+              value={num(stats.light_level)}
+              unit={unitFor(stats.light_level, "%")}
               detail={num(stats.ldr_raw, ` ${t("device.stat.raw")}`)}
             />
             <Stat
               label={t("device.stat.temperature")}
-              value={num(stats.temperature, " °C")}
+              value={num(stats.temperature)}
+              unit={unitFor(stats.temperature, "°C")}
             />
-            <Stat label={t("device.stat.humidity")} value={num(stats.humidity, " %")} />
+            <Stat
+              label={t("device.stat.humidity")}
+              value={num(stats.humidity)}
+              unit={unitFor(stats.humidity, "%")}
+            />
             <Stat
               label={t("device.stat.fps")}
               value={num(stats.fps)}

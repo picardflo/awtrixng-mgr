@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "./api/client";
 import { LocaleSwitcher } from "./components/LocaleSwitcher";
+import { ThemeSwitcher } from "./components/ThemeSwitcher";
 import { ToastProvider } from "./components/Toast";
 import { Button } from "./components/ui";
 import { AuthGate, useAuth } from "./features/auth/AuthGate";
@@ -13,6 +14,7 @@ import { useI18n } from "./i18n";
 import type { MessageKey } from "./i18n/messages.en";
 import { LOGO_PIXELS } from "./logo";
 import { Dashboard } from "./pages/Dashboard";
+import { ThemeProvider } from "./theme/useTheme";
 
 /** Navigation.
  *
@@ -79,14 +81,19 @@ function Shell() {
       <header className="sticky top-0 z-40 border-b border-[var(--color-border)] bg-[var(--color-bg)]/85 backdrop-blur">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
           <Logo />
+          {/* The active tab is marked by a two-pixel rule underneath, which
+              is how AWTRIX NG marks its own — a filled pill reads as a button
+              that is stuck down. */}
           <nav className="flex flex-wrap gap-1 text-sm">
             {NAV.map((item) => (
               <button
                 key={item.id}
                 onClick={() => go(item.id)}
-                className={`rounded-lg px-2.5 py-1 transition
+                className={`relative rounded-lg px-2.5 py-1 transition
+                  after:absolute after:inset-x-2 after:-bottom-[3px] after:h-[2px]
+                  after:rounded-full after:transition
                   ${route === item.id
-                    ? "bg-[var(--color-surface-2)] text-[var(--color-text)]"
+                    ? "bg-[var(--color-surface-2)] text-[var(--color-text)] after:bg-[var(--color-accent)]"
                     : "text-[var(--color-text-muted)] hover:text-[var(--color-text)]"}`}
               >
                 {t(item.label)}
@@ -94,6 +101,7 @@ function Shell() {
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-3">
+            <ThemeSwitcher />
             <LocaleSwitcher />
             {version && (
               <span className="font-mono text-xs text-[var(--color-text-faint)]">
@@ -121,10 +129,12 @@ function Shell() {
 
 export default function App() {
   return (
-    <ToastProvider>
-      <AuthGate>
-        <Shell />
-      </AuthGate>
-    </ToastProvider>
+    <ThemeProvider>
+      <ToastProvider>
+        <AuthGate>
+          <Shell />
+        </AuthGate>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }
