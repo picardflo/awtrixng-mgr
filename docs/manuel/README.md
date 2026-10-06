@@ -1,7 +1,7 @@
 # awtrixng-mgr
 
 Manuel d'utilisation et d'exploitation. L'installation est dans le
-[README du dépôt](../../README.md) ; ce wiki commence
+[README du dépôt](../../README.fr.md) ; ce wiki commence
 une fois qu'awtrixng-mgr tourne.
 
 ![Tableau de bord](../screenshots/dashboard.png)

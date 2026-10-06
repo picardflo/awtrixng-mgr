@@ -5,6 +5,29 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.16.3]
+
+### Le README passe en anglais, le français à côté
+
+Florian : « OK pour un README en EN d'ailleurs EN par défaut et liens vers FR ».
+
+C'est le bon arbitrage. L'interface est bilingue depuis le début, mais le
+README est la seule page que lira quelqu'un qui tombe sur le dépôt — et la
+majorité des utilisateurs d'AWTRIX ne lisent pas le français.
+
+`README.md` est donc l'anglais, `README.fr.md` le français, et chacun ouvre
+sur la bascule vers l'autre.
+
+Deux choses dites franchement plutôt que tues :
+
+- **Les carburants et les vacances scolaires sont français**, marqués comme
+  tels dans le tableau. Ils viennent de données ouvertes françaises et ne
+  marcheront pas ailleurs. Le reste fonctionne partout où Open-Meteo
+  fonctionne, c'est-à-dire partout.
+- **Le manuel reste en français.** L'annoncer vaut mieux que de laisser
+  quelqu'un cliquer sur onze pages pour s'en apercevoir.
+
+
 ## [0.16.2]
 
 ### La licence est posée

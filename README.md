@@ -1,164 +1,164 @@
 # awtrixng-mgr
 
-**Donnez à votre horloge AWTRIX NG quelque chose à dire.**
+**English** · [Français](README.fr.md)
 
-Une application web auto-hébergée qui va chercher la météo, la qualité de
-l'air, le prix du carburant, les vacances scolaires ou la phase de la lune, et
-les compose en apps sur un ou plusieurs afficheurs
-[AWTRIX NG](https://github.com/Blueforcer/awtrix-ng). Plus les rappels : un
-message, à une heure, sur les horloges de votre choix.
+**Give your AWTRIX NG clock something to say.**
 
-Pas de compte, pas de nuage, pas d'abonnement. Un `docker compose up` sur votre
-réseau.
+A self-hosted web app that fetches the weather, air quality, fuel prices,
+school holidays or the moon phase, and composes them into apps on one or more
+[AWTRIX NG](https://github.com/Blueforcer/awtrix-ng) displays. Plus reminders:
+a message, at a time, on the clocks you choose.
 
-![Tableau de bord](docs/screenshots/dashboard.png)
+No account, no cloud, no subscription. One `docker compose up` on your own
+network.
+
+![Dashboard](docs/screenshots/dashboard.png)
 
 ---
 
-## Démarrage rapide
+## Quick start
 
-Il vous faut une horloge AWTRIX NG joignable sur le réseau, et Docker.
+You need an AWTRIX NG clock reachable on your network, and Docker.
 
 ```bash
-git clone https://github.com/<vous>/awtrixng-mgr.git
+git clone https://github.com/picardflo/awtrixng-mgr.git
 cd awtrixng-mgr
 docker compose up -d --build
 ```
 
-Ouvrez `http://<l-hote>/`, puis :
+Open `http://<host>/`, then:
 
-1. **Afficheurs → Ajouter un AWTRIX.** Donnez le nom réseau de l'horloge,
-   par exemple `awtrix-salon.lan`. « Tester la connexion » doit afficher sa
-   version de firmware.
-2. **Services → Météo.** Cherchez votre ville. Aucune clé d'API : Open-Meteo
-   est ouvert.
-3. **Widgets → Ajouter.** Choisissez le service, choisissez « Météo actuelle »,
-   enregistrez.
+1. **Displays → Add an AWTRIX.** Give the clock's network name, say
+   `awtrix-lounge.lan`. "Test connection" should report its firmware version.
+2. **Services → Weather.** Search for your town. No API key: Open-Meteo is
+   open.
+3. **Widgets → Add.** Pick the service, pick "Current weather", save.
 
-L'app part sur l'horloge dans la seconde et prend sa place dans la rotation.
+The app reaches the clock within a second and takes its place in the rotation.
 
-**Avant de l'exposer à qui que ce soit**, posez un mot de passe — voir
-[Sécurité](docs/manuel/Securite.md). Sans lui, tout le monde sur votre réseau
-peut lire vos identifiants de services.
+**Before letting anyone else near it**, set a password — see
+[Security](docs/manuel/Securite.md). Without one, anybody on your network can
+read your service credentials.
 
-Le [guide de démarrage](docs/manuel/Demarrage.md) reprend tout cela avec les
-captures d'écran.
+The interface speaks English and French; each browser picks its own.
 
-## Ce que ça affiche
+## What it shows
 
 | | |
 |---|---|
-| **Météo** | température, pluie à venir, humidité, vent, lever et coucher du soleil, avec les surimpressions natives de NG — il pleut sur le texte quand il pleut dehors |
-| **Qualité de l'air** | indice européen et les cinq polluants ; indice UV sur l'échelle de l'OMS |
-| **Carburants** | le moins cher autour de chez vous, depuis les données ouvertes françaises |
-| **Vacances scolaires** | semaine A/B et décompte, zones françaises |
-| **Lune** | phase et illumination |
-| **Rappels** | à heure fixe, avec mélodie, répétition et compte à rebours |
+| **Weather** | temperature, rain ahead, humidity, wind, sunrise and sunset, with NG's native overlays — it rains over the text when it rains outside |
+| **Air quality** | the European index and the five pollutants behind it; UV on the WHO scale |
+| **Moon** | phase and illumination |
+| **Reminders** | at a fixed time, with a melody, repeats and a countdown |
+| **Fuel prices** 🇫🇷 | the cheapest pump near you, from the French open data feed |
+| **School holidays** 🇫🇷 | week A/B and a countdown, French zones |
 
-Chaque widget se règle : gabarit de texte, icône, couleur, police, défilement,
-barre de progression, effets. Un aperçu montre ce que la dalle fera **avant**
-d'enregistrer — la police y est celle du firmware, relevée sur le matériel.
+The last two are France-specific, because that is where they come from. The
+rest works anywhere Open-Meteo does, which is everywhere.
 
-![Édition d'un widget](docs/screenshots/widget-edition.png)
+Every widget is adjustable: text template, icon, colour, font, scrolling,
+progress bar, effects. A preview shows what the panel will do **before** you
+save — and the font in it is the firmware's own, read off the hardware.
 
-## Ce qui rend ce projet un peu différent
+![Editing a widget](docs/screenshots/widget-edition.png)
 
-**Tout a été mesuré sur une vraie horloge.** L'API d'AWTRIX NG n'est pas
-documentée exhaustivement : chaque route, chaque clé de payload a été poussée
-sur une Ulanzi TC001 et relue sur la dalle. Ce qui est accepté sans effet —
-et il y en a — n'est pas proposé dans l'interface. Les relevés bruts sont dans
-[`docs/ng-api/`](docs/ng-api/).
+## What makes this one a bit different
 
-**Les pannes trouvées sont devenues des tests.** Pas des correctifs : des
-tests qui nomment la panne. Une sauvegarde qui ne contenait pas les rappels,
-un proxy qui gardait une adresse morte, une option d'affichage qu'aucun
-contrôle ne pouvait régler — chacune a son test, et le
-[CHANGELOG](CHANGELOG.md) raconte comment elle a été trouvée.
+**Everything was measured on a real clock.** AWTRIX NG's API is not
+exhaustively documented, so every route and every payload key was pushed to an
+Ulanzi TC001 and read back off the panel. What the firmware accepts without
+acting on — and there is some — is not offered in the interface. The raw
+readings are in [`docs/ng-api/`](docs/ng-api/).
 
-**Clair ou sombre**, aligné sur la charte d'AWTRIX NG — ses propres couleurs,
-relevées dans l'interface que le firmware sert lui-même.
+**The failures found became tests.** Not fixes: tests that name the failure.
+A backup that did not contain the reminders, a proxy holding a dead address, a
+display option no control could reach — each has its test, and the
+[CHANGELOG](CHANGELOG.md) tells how it was found.
 
-![Thème clair](docs/screenshots/clair-dashboard.png)
+**Light or dark**, aligned on AWTRIX NG's own palette — read out of the
+interface the firmware serves itself, not sampled from a screenshot.
 
-## Manuel
+![Light theme](docs/screenshots/clair-dashboard.png)
 
-Dans [`docs/manuel/`](docs/manuel/README.md) :
+## Manual
 
-- [Démarrage](docs/manuel/Demarrage.md) — de l'horloge nue au premier widget
-- [Widgets](docs/manuel/Widgets.md) — les options d'affichage en détail
-- [Météo](docs/manuel/Widget-Meteo.md) · [Carburants](docs/manuel/Widget-Carburants.md)
-- [Rappels](docs/manuel/Rappels.md) — messages à heure fixe
-- [Afficheurs](docs/manuel/Afficheurs.md) — régler l'horloge elle-même
-- [Sécurité](docs/manuel/Securite.md) · [Sauvegarde et maintenance](docs/manuel/Maintenance.md)
-- [Dépannage](docs/manuel/Depannage.md) — les symptômes qui ne désignent rien
-- [Ce que NG change](docs/manuel/AWTRIX-NG.md) — si vous venez d'AWTRIX 3
+**The manual is in French**, in [`docs/manuel/`](docs/manuel/README.md). An
+English edition is not written yet; the pages are short and translate well
+enough in a browser.
 
-Pour qui veut regarder sous le capot :
-[`docs/architecture.md`](docs/architecture.md) pour les décisions et leurs
-raisons, [`docs/ng-api/`](docs/ng-api/) pour l'API mesurée.
+- [Getting started](docs/manuel/Demarrage.md) — from a bare clock to a first widget
+- [Widgets](docs/manuel/Widgets.md) — the display options in detail
+- [Reminders](docs/manuel/Rappels.md) · [Displays](docs/manuel/Afficheurs.md)
+- [Security](docs/manuel/Securite.md) · [Backup and maintenance](docs/manuel/Maintenance.md)
+- [Troubleshooting](docs/manuel/Depannage.md) — the symptoms that point at nothing
+- [What NG changes](docs/manuel/AWTRIX-NG.md) — if you are coming from AWTRIX 3
+
+Under the bonnet: [`docs/architecture.md`](docs/architecture.md) for the
+decisions and their reasons, [`docs/ng-api/`](docs/ng-api/) for the measured
+API.
 
 ## Configuration
 
-Tout se règle dans l'interface. Le fichier `.env` ne porte que ce qui doit
-exister avant le premier démarrage — voir
-[`.env.example`](.env.example), qui commente chaque ligne.
+Everything is set in the interface. `.env` carries only what has to exist
+before the first start — see [`.env.example`](.env.example), which comments
+every line.
 
-Les deux à connaître :
+The two worth knowing:
 
 ```ini
-# Mot de passe de l'interface. Vide = aucune authentification.
+# Interface password. Empty = no authentication at all.
 AWTRIXNG_PASSWORD=
 
-# Afficheurs que les outils en ligne de commande doivent refuser d'écrire.
-# Vide par défaut. À remplir le jour où vous en avez deux.
+# Displays the command-line tools must refuse to write to.
+# Empty by default. Fill it the day you own two.
 AWTRIXNG_PROTECTED_HOSTS=
 ```
 
-## Développement
+## Development
 
 ```bash
 cd backend && python -m venv .venv && .venv/bin/pip install -e ".[dev]"
-.venv/bin/python -m pytest          # ~990 tests, aucun matériel requis
+.venv/bin/python -m pytest          # ~990 tests, no hardware required
 cd ../frontend && npm install && npm run dev
 ```
 
-Les tests qui écrivent sur une vraie horloge sont écartés par défaut :
+The tests that write to a real clock are deselected by default:
 
 ```bash
-AWTRIXNG_TEST_HOST=awtrix-labo.lan .venv/bin/python -m pytest -m device
+AWTRIXNG_TEST_HOST=awtrix-lab.lan .venv/bin/python -m pytest -m device
 ```
 
-Ils refusent tout afficheur listé dans `AWTRIXNG_PROTECTED_HOSTS`.
+They refuse any display listed in `AWTRIXNG_PROTECTED_HOSTS`.
 
-## Versions
+## Versioning
 
-| Niveau | Quand | Conséquence |
+| Level | When | What it costs you |
 |---|---|---|
-| Correctif `0.1.x` | défaut corrigé, interface ajustée, doc complétée | `git pull && docker compose up -d --build` |
-| Mineur `0.x.0` | nouveau widget, nouveau service, migration de base | automatique, mais du neuf apparaît |
-| Majeur `x.0.0` | variable obligatoire, format de sauvegarde incompatible | **une action de votre part** |
+| Patch `0.1.x` | a defect fixed, the interface adjusted, docs filled in | `git pull && docker compose up -d --build` |
+| Minor `0.x.0` | a new widget, a new service, a database migration | automatic, but something new appears |
+| Major `x.0.0` | a required variable, an incompatible backup format | **something for you to do** |
 
-## Remerciements
+## Thanks
 
-- [**AWTRIX NG**](https://github.com/Blueforcer/awtrix-ng) de Blueforcer, le
-  firmware sans lequel rien de tout ceci n'aurait d'objet. Ce projet n'en
-  contient aucune ligne : il dialogue avec son API HTTP.
-- [**Open-Meteo**](https://open-meteo.com), [**data.economie.gouv.fr**](https://data.economie.gouv.fr)
-  et [l'API des vacances scolaires](https://data.education.gouv.fr), ouverts et
-  sans clé.
-- [**LaMetric**](https://developer.lametric.com) pour la galerie d'icônes. Les
-  icônes ne sont jamais redistribuées : l'horloge va les chercher elle-même.
+- [**AWTRIX NG**](https://github.com/Blueforcer/awtrix-ng) by Blueforcer, the
+  firmware without which none of this would have a point. This project
+  contains none of its code: it talks to its HTTP API.
+- [**Open-Meteo**](https://open-meteo.com),
+  [**data.economie.gouv.fr**](https://data.economie.gouv.fr) and
+  [the French school calendar API](https://data.education.gouv.fr) — open, and
+  keyless.
+- [**LaMetric**](https://developer.lametric.com) for the icon gallery. Icons
+  are never redistributed: the clock fetches them itself.
 
 ## Licence
 
 Copyright © 2026 Florian Picard — [GNU AGPL v3](LICENSE).
 
-Vous pouvez l'utiliser, le modifier, l'héberger. Si vous en faites un service
-accessible par le réseau, vous devez en publier les modifications. C'est la
-raison d'être de ce choix : ces outils existent parce que leurs équivalents
-commerciaux sont hors de prix, et cette licence est celle qui empêche d'en
-refaire un produit fermé.
+Use it, modify it, host it. If you make it a service reachable over a network,
+you must publish your changes. That is the point of the choice: these tools
+exist because the commercial equivalents are priced out of reach, and this is
+the licence that stops them becoming a closed product again.
 
-AWTRIX NG, lui, est sous
-[PolyForm Noncommercial](https://github.com/Blueforcer/awtrix-ng) — une licence
-distincte, qui s'applique au firmware et non à ce projet.
+AWTRIX NG itself is under
+[PolyForm Noncommercial](https://github.com/Blueforcer/awtrix-ng) — a separate
+licence, which covers the firmware and not this project.
