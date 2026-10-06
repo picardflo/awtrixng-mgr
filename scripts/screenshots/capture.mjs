@@ -234,6 +234,10 @@ await shot(page, "rappels");
 
 await click(page, /^Modifier$/);
 await page.waitForTimeout(1000);
+// Unfolded, like the widget builder's: since 0.13.0 the block is the same
+// component in both forms, and a collapsed section documents neither.
+await click(page, /Avancé/);
+await page.waitForTimeout(500);
 await shot(page, "rappel-edition");
 
 // Duplicating opens the form on a copy and creates nothing: the list below

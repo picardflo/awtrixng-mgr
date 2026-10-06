@@ -4,13 +4,21 @@ from datetime import date, datetime, time
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.schemas.widget_data import ScrollMode
+from app.schemas.matrix_text import MatrixText, ScrollMode, ScrollWhenFits
+from app.services.ng.payload import Font, IconMode, TextCase
 
 #: Monday is 0, as everywhere else in Python.
 WEEKDAYS = range(7)
 
 
-class ReminderBase(BaseModel):
+class ReminderBase(MatrixText):
+    """A reminder, as the API takes and gives it.
+
+    It inherits its presentation from `MatrixText`, the same declaration the
+    widgets use. Everything below is what makes it a reminder rather than a
+    widget: a time, a rhythm, a melody.
+    """
+
     name: str = Field(min_length=1)
     message: str = Field(min_length=1)
     icon: str | None = None
@@ -27,11 +35,6 @@ class ReminderBase(BaseModel):
     #: Set, the message may use {{ countdown }}, {{ days }} and {{ date }}.
     countdown_to: date | None = None
     duration_seconds: int = Field(default=10, ge=1, le=120)
-    #: `center` and `rainbow` are gone with AWTRIX 3: measured on NG, there is
-    #: no centring key, and `palette` colours effects rather than text.
-    scroll_mode: ScrollMode = "wrap"
-    scroll_speed: int = Field(default=100, ge=0, le=500)
-    background: str | None = None
     repeat_count: int = Field(default=0, ge=0, le=10)
     repeat_every_minutes: int = Field(default=2, ge=1, le=60)
     melody: str | None = None
@@ -65,9 +68,18 @@ class ReminderUpdate(BaseModel):
     on_date: date | None = None
     countdown_to: date | None = None
     duration_seconds: int | None = Field(default=None, ge=1, le=120)
+    # The presentation options, each nullable so a PATCH can leave it alone.
+    # Listed rather than inherited: `MatrixText` carries defaults, and a
+    # default in a PATCH body overwrites a choice the user made.
+    background: str | None = None
+    effect: str | None = None
+    overlay: str | None = None
+    icon_mode: IconMode | None = None
+    text_case: TextCase | None = None
+    font: Font | None = None
     scroll_mode: ScrollMode | None = None
     scroll_speed: int | None = Field(default=None, ge=0, le=500)
-    background: str | None = None
+    scroll_when_fits: ScrollWhenFits | None = None
     repeat_count: int | None = Field(default=None, ge=0, le=10)
     repeat_every_minutes: int | None = Field(default=None, ge=1, le=60)
     melody: str | None = None

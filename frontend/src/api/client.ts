@@ -128,6 +128,25 @@ export const FONTS: Font[] = ["small", "large"];
 export const SCROLL_MODES: ScrollMode[] = ["wrap", "bounce", "static", "loop"];
 export const SCROLL_WHEN_FITS: ScrollWhenFits[] = ["static", "scroll"];
 
+/** Weather the firmware draws *over* the text. The display lists what it has
+ *  in `GET /api/v1/capabilities`; this is that list on NG 1.1.2, kept here so
+ *  the form works before the device has answered. */
+export const OVERLAYS = ["rain", "snow", "drizzle", "storm", "thunder", "frost"];
+
+/** Animations the firmware draws *behind* the text, named as it names them —
+ *  an unknown one comes back refused by name, so these are not guesses.
+ *
+ *  Some of them fill the panel: `Matrix` and `Plasma` light every pixel and
+ *  the text is read against them rather than on black, while `TwinklingStars`
+ *  leaves the words legible. Measured on a TC001, which is why the choice is
+ *  left open instead of being cut down to the pretty ones. */
+export const EFFECTS = [
+  "BrickBreaker", "Checkerboard", "ColorWaves", "Fade", "Fireworks",
+  "LookingEyes", "Matrix", "MovingLine", "Pacifica", "PingPong", "Plasma",
+  "PlasmaCloud", "Radar", "Ripple", "Snake", "SwirlIn", "SwirlOut",
+  "TheaterChase", "TwinklingStars",
+];
+
 /** The user's presentation choices.
  *
  *  Three options the previous project offered are gone, each because the
@@ -160,7 +179,6 @@ export interface DisplayOptions {
   progress_color: string | null;
   /** null = a dark wash of the bar's own colour. */
   progress_background: string | null;
-  show_series: "none" | "bar" | "line";
   /** Seven day segments on the bottom row instead of a progress bar — the
    *  shape the firmware draws under its own Time and Date apps. They share
    *  that row, so only one of the two is ever drawn. */
@@ -483,12 +501,22 @@ export interface Reminder {
   /** Set, the message may use {{ countdown }}, {{ days }} and {{ date }}. */
   countdown_to: string | null;
   duration_seconds: number;
-  /** The display options a widget also has. Those a reminder cannot use —
-   *  progress bar, hide-when-empty — are deliberately absent: it carries no
-   *  data to measure or to miss. */
+  /** The presentation options a widget also has, declared once on the backend
+   *  in `matrix_text.py`. Those a reminder cannot use — progress bar, weekday
+   *  segments, hide-when-empty — are deliberately absent: it carries no data
+   *  to measure or to miss.
+   *
+   *  `overlay` here means none when null: a widget's null means "let the
+   *  service choose", and a reminder has no service. */
+  background: string | null;
+  effect: string | null;
+  overlay: string | null;
+  icon_mode: IconMode;
+  text_case: TextCase;
+  font: Font;
   scroll_mode: ScrollMode;
   scroll_speed: number;
-  background: string | null;
+  scroll_when_fits: ScrollWhenFits;
   repeat_count: number;
   repeat_every_minutes: number;
   melody: string | null;

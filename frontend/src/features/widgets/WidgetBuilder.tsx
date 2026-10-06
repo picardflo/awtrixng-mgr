@@ -8,28 +8,8 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import {
-  api,
-  ApiError,
-  FONTS,
-  ICON_MODES,
-  iconThumbnail,
-  SCROLL_MODES,
-  SCROLL_WHEN_FITS,
-  TEXT_CASES,
-} from "../../api/client";
-import type {
-  Font,
-  IconMode,
-  ScrollMode,
-  ScrollWhenFits,
-  TextCase,
-} from "../../api/client";
-import type { MessageKey } from "../../i18n/messages.en";
-
-/** The six the firmware draws, as it lists them in its capabilities. Kept
- *  here as a fallback; the display's own list is authoritative. */
-const OVERLAYS = ["rain", "snow", "drizzle", "storm", "thunder", "frost"];
+import { api, ApiError, iconThumbnail } from "../../api/client";
+import { MatrixTextFields } from "../../components/MatrixTextFields";
 import type {
   ConnectorInstance,
   Device,
@@ -40,6 +20,7 @@ import type {
 } from "../../api/client";
 import {
   AwtrixMatrixPreview,
+  dim,
   MATRIX_WIDTH,
 } from "../../components/AwtrixMatrixPreview";
 import { textWidth } from "../../components/pixelFont";
@@ -276,7 +257,15 @@ export function WidgetBuilder({
   // scrolls — which is fine, but it monopolises the app's slot, so it is
   // worth knowing before saving.
   const columnsFree = MATRIX_WIDTH - (icon ? 9 : 0);
-  const columnsUsed = textWidth(preview?.text ?? "");
+  // Measured after the letter case, because that is what the clock draws: a
+  // stock display shows capitals unless `text_case` says otherwise, and a
+  // capital is a column wider than the lowercase it replaces. One column
+  // decides nothing often, and decides everything at the boundary.
+  const drawn =
+    display.text_case === "asTyped"
+      ? (preview?.text ?? "")
+      : (preview?.text ?? "").toUpperCase();
+  const columnsUsed = textWidth(drawn);
   const willScroll =
     columnsUsed > columnsFree && display.scroll_mode !== "static";
 
@@ -467,98 +456,25 @@ export function WidgetBuilder({
 
         {advanced && (
           <div className="space-y-4 rounded-lg bg-[var(--color-surface-2)] p-3">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label={t("builder.scrollMode")} hint={t("builder.scrollModeHelp")}>
-                <NativeSelect
-                  value={display.scroll_mode}
-                  onChange={(value) => patch({ scroll_mode: value as ScrollMode })}
-                  options={SCROLL_MODES.map((mode) => ({
-                    value: mode,
-                    label: t(`builder.scrollMode.${mode}`),
-                  }))}
-                />
-              </Field>
-              <Field
-                label={t("builder.scrollWhenFits")}
-                hint={t("builder.scrollWhenFitsHelp")}
-              >
-                <NativeSelect
-                  value={display.scroll_when_fits}
-                  onChange={(value) =>
-                    patch({ scroll_when_fits: value as ScrollWhenFits })
-                  }
-                  options={SCROLL_WHEN_FITS.map((mode) => ({
-                    value: mode,
-                    label: t(`builder.scrollWhenFits.${mode}`),
-                  }))}
-                />
-              </Field>
-              <Field label={t("builder.scrollSpeed")} hint="%">
-                <Input
-                  type="number"
-                  min={0}
-                  max={500}
-                  value={display.scroll_speed}
-                  onChange={(event) =>
-                    patch({ scroll_speed: Number(event.target.value) || 100 })
-                  }
-                />
-              </Field>
-              <Field label={t("builder.iconMode")} hint={t("builder.iconModeHelp")}>
-                <NativeSelect
-                  value={display.icon_mode}
-                  onChange={(value) => patch({ icon_mode: value as IconMode })}
-                  options={ICON_MODES.map((mode) => ({
-                    value: mode,
-                    label: t(`builder.iconMode.${mode}`),
-                  }))}
-                />
-              </Field>
-              <Field label={t("builder.font")} hint={t("builder.fontHelp")}>
-                <NativeSelect
-                  value={display.font}
-                  onChange={(value) => patch({ font: value as Font })}
-                  options={FONTS.map((name) => ({
-                    value: name,
-                    label: t(`builder.font.${name}`),
-                  }))}
-                />
-              </Field>
-              <Field label={t("builder.textCase")}>
-                <NativeSelect
-                  value={display.text_case}
-                  onChange={(value) => patch({ text_case: value as TextCase })}
-                  options={TEXT_CASES.map((mode) => ({
-                    value: mode,
-                    label: t(`builder.textCase.${mode}`),
-                  }))}
-                />
-              </Field>
-              <Field label={t("builder.overlay")} hint={t("builder.overlayHelp")}>
-                <NativeSelect
-                  value={display.overlay ?? ""}
-                  onChange={(value) => patch({ overlay: value || null })}
-                  options={[
-                    // Empty means "whatever the service proposes", the same
-                    // rule the icon and the colour already follow. The weather
-                    // connector reads it off the WMO code; the others propose
-                    // nothing, and nothing is drawn.
-                    { value: "", label: t("builder.overlayAuto") },
-                    ...OVERLAYS.map((name) => ({
-                      value: name,
-                      label: t(`builder.overlay.${name}` as MessageKey),
-                    })),
-                  ]}
-                />
-              </Field>
-              <Field label={t("builder.background")}>
-                <Input
-                  value={display.background ?? ""}
-                  placeholder="#000000"
-                  onChange={(event) => patch({ background: event.target.value || null })}
-                />
-              </Field>
-            </div>
+            <MatrixTextFields
+              value={display}
+              onChange={patch}
+              // A weather widget proposes an overlay from the WMO code, so
+              // leaving it empty is a choice and not an absence.
+              overlayFromService
+            />
+            <Field label={t("builder.repeat")} hint={t("builder.repeatHelp")}>
+              <Input
+                type="number"
+                min={1}
+                max={20}
+                value={display.repeat ?? ""}
+                placeholder={t("builder.repeatAuto")}
+                onChange={(event) =>
+                  patch({ repeat: Number(event.target.value) || null })
+                }
+              />
+            </Field>
             {display.show_progress && canShowProgress && (
               <Field label={t("builder.progressColor")} hint={t("builder.progressColorHelp")}>
                 <div className="flex items-center gap-2">
@@ -573,6 +489,34 @@ export function WidgetBuilder({
                     placeholder={preview?.data.hint_color ?? "#00ff00"}
                     onChange={(event) =>
                       patch({ progress_color: event.target.value || null })
+                    }
+                  />
+                </div>
+              </Field>
+            )}
+            {/* The unfilled part, beside the filled one it belongs with.
+                Empty is not black but a dark wash of the bar's own colour —
+                which is what carries a chosen palette all the way through, so
+                the placeholder shows what empty will actually draw. */}
+            {display.show_progress && canShowProgress && (
+              <Field
+                label={t("builder.progressBackground")}
+                hint={t("builder.progressBackgroundHelp")}
+              >
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={display.progress_background ?? dim(barColour)}
+                    onChange={(event) =>
+                      patch({ progress_background: event.target.value })
+                    }
+                    className="h-8 w-10 shrink-0 cursor-pointer rounded border border-[var(--color-border)] bg-transparent"
+                  />
+                  <Input
+                    value={display.progress_background ?? ""}
+                    placeholder={dim(barColour)}
+                    onChange={(event) =>
+                      patch({ progress_background: event.target.value || null })
                     }
                   />
                 </div>
@@ -618,7 +562,7 @@ export function WidgetBuilder({
 
         <div className="flex justify-center rounded-md border border-[var(--color-border)] bg-[var(--color-matrix-bg)] p-2">
           <AwtrixMatrixPreview
-            text={preview?.text ?? ""}
+            text={drawn}
             icon={icon}
             iconUrl={icon && /^\d+$/.test(icon) ? iconThumbnail(icon) : null}
             color={colour}

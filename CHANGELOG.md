@@ -5,6 +5,70 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.13.0]
+
+Florian : « comme pour les widgets, je dois pouvoir choisir la taille du texte
+et les différentes options dans "Avancé" qui seraient compatibles avec les
+rappels ».
+
+Un rappel en offrait **trois** — défilement, vitesse, fond — contre **dix**
+pour un widget. Il n'y avait pas de raison : le formulaire des rappels avait
+été écrit en premier et n'avait jamais rattrapé l'autre.
+
+### Une seule déclaration, pour les deux
+
+`app/schemas/matrix_text.py` porte désormais la liste, et `DisplayOptions`
+comme `ReminderBase` en héritent. Côté interface, `MatrixTextFields.tsx` est le
+**même composant** dans les deux formulaires.
+
+Un rappel gagne donc : **police**, **casse du texte**, **comportement de
+l'icône**, **effet de fond**, **surimpression météo**, et **ce que fait un
+texte qui tient**.
+
+Ce qu'il n'a toujours pas, et pourquoi : pas de barre de progression ni de
+segments de semaine — il ne porte aucune donnée à mesurer ; pas de
+`hide_when_empty` — rien à manquer ; pas de `repeat` — il a déjà
+`repeat_count`, qui répète la notification entière à quelques minutes
+d'intervalle, et deux « répéter » dans le même formulaire seraient un piège.
+
+### Mesuré sur la route des notifications, pas déduite de l'autre
+
+Une app poussée et une notification ne sont pas le même point d'entrée, et ce
+firmware répond `{"ok": true}` à des choses qu'il ignore ensuite. Chaque option
+a donc été poussée sur `POST /api/v1/notifications` et relue sur la dalle :
+
+| | sur la dalle |
+|---|---|
+| `font`, `textCase`, `iconMode` | agissent |
+| `effect`, `overlay`, `scroll.whenFits` | agissent |
+| `palette` seule | **aucun effet** — elle colore un effet, pas du texte |
+| `textCase: upper` | invisible : l'horloge écrit déjà en capitales |
+
+### Trois options de widget que personne ne pouvait régler
+
+Trouvées en alignant les deux formulaires, par le test censé l'interdire.
+
+`test_every_display_option_has_a_control` cherchait le **nom du champ n'importe
+où dans le fichier**. Or « effect » apparaît dans le commentaire *« on mount
+this effect would overwrite »*. Il validait donc `effect`, `repeat` et
+`progress_background` alors qu'aucun des trois n'avait de contrôle : on ne
+pouvait donner un effet à un widget qu'en postant du JSON à la main.
+
+Le test voisin analysait déjà `patch({ nom` pour trouver la faute inverse. Les
+deux lisent maintenant la même chose, et les trois contrôles manquants sont là.
+
+### Et la largeur se mesure après la casse
+
+L'avertissement « ce texte va défiler » mesurait le texte tel que saisi. Une
+horloge d'origine écrit en capitales, et une capitale est une colonne plus
+large que la minuscule qu'elle remplace. Une colonne ne décide rien souvent, et
+décide tout à la limite.
+
+### Retiré
+- `show_series` traînait encore dans l'interface TypeScript, supprimé du
+  backend en 0.10.2. Le test de contrat ne regardait que ce que le formulaire
+  *écrit*, pas ce que l'interface *déclare*.
+
 ## [0.12.0]
 
 Florian, sur une capture des deux widgets : « je suis pas hyper-fan de ces deux

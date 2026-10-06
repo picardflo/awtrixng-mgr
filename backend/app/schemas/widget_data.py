@@ -13,14 +13,13 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.base import utcnow
-from app.services.ng.payload import Font, IconMode, TextCase
+from app.schemas.matrix_text import MatrixText, ScrollMode, ScrollWhenFits
 
 log = logging.getLogger(__name__)
 
-#: Measured on the device: anything else answers "unknown value" on
-#: scroll.mode / scroll.whenFits.
-ScrollMode = Literal["wrap", "bounce", "static", "loop"]
-ScrollWhenFits = Literal["static", "scroll"]
+#: Re-exported: these were defined here before the presentation options moved
+#: to `matrix_text`, and half the project imports them from this module.
+__all__ = ["DataStatus", "DisplayOptions", "ScrollMode", "ScrollWhenFits", "WidgetData"]
 
 #: "empty" is not a failure: no Plex stream playing is a normal state, and the
 #: widget may legitimately hide instead of showing stale data.
@@ -56,7 +55,7 @@ class WidgetData(BaseModel):
     fetched_at: datetime = Field(default_factory=utcnow)
 
 
-class DisplayOptions(BaseModel):
+class DisplayOptions(MatrixText):
     """The user's presentation choices. Simple mode first, advanced after.
 
     `extra="forbid"`, deliberately. A `center=True` left behind in a connector
@@ -120,38 +119,23 @@ class DisplayOptions(BaseModel):
     duration: int = Field(default=7, ge=1, le=120)
 
     # -- Advanced -------------------------------------------------------------
-    background: str | None = None
-    effect: str | None = None
-    #: Weather drawn by the firmware *over* the text — rain, snow, drizzle,
-    #: storm, thunder, frost. New in NG, and the device lists what it supports
-    #: in GET /api/v1/capabilities.
+    #
+    # The presentation options a reminder shares are inherited from
+    # `MatrixText`: background, effect, overlay, icon mode, letter case, font
+    # and scrolling. What stays here is what only a widget can mean.
+
+    #: For a widget, `overlay = None` is not "none" but "let the connector
+    #: choose", exactly as for `icon` — the weather one proposes it from the
+    #: WMO code. This is how to have none at all.
     #:
-    #: None means "let the connector choose", exactly as for `icon`: the
-    #: weather connector proposes one from the WMO code and most connectors
-    #: propose nothing. To have none at all, use `show_overlay`.
-    overlay: str | None = None
     #: An overlay costs no horizontal space, but it does move, and a widget
-    #: read at a glance may be better still. This is the way to say so.
+    #: read at a glance may be better still.
     show_overlay: bool = True
+
+    #: How many times the text is drawn before the app hands over. A reminder
+    #: has `repeat_count` instead, which repeats the whole notification
+    #: minutes apart — a different thing that would be confusing beside this.
     repeat: int | None = None
-
-    #: How the icon behaves beside scrolling text. Was an integer 0/1/2.
-    icon_mode: IconMode = "fixed"
-    #: Was an integer 0/1/2. "inherit" follows the display's own setting.
-    text_case: TextCase = "inherit"
-
-    #: `large` draws seven rows instead of five — and the seven above the
-    #: progress bar, so a number can fill the panel and keep its bar. Measured
-    #: on a TC001: a two-digit figure with an icon and a bar still fits in the
-    #: 32 columns. AWTRIX 3 had one font and no say in it.
-    font: Font = "small"
-
-    #: What the text does when it does not fit the panel.
-    scroll_mode: ScrollMode = "wrap"
-    scroll_speed: int = Field(default=100, ge=0, le=500)
-    #: What it does when it *does* fit. "static" leaves it still, which is
-    #: what anyone expects of a short word.
-    scroll_when_fits: ScrollWhenFits = "static"
 
     show_progress: bool = False
     #: Filled part. None leaves the firmware's own colour.

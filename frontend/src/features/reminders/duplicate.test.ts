@@ -15,9 +15,18 @@ const SOURCE: Reminder = {
   on_date: null,
   countdown_to: null,
   duration_seconds: 15,
+  // The presentation block. Not all on their defaults on purpose: a copy
+  // that quietly reset the font would be exactly the kind of loss this test
+  // is here to catch.
+  background: null,
+  effect: "TwinklingStars",
+  overlay: null,
+  icon_mode: "push",
+  text_case: "asTyped",
+  font: "large",
   scroll_mode: "wrap",
   scroll_speed: 100,
-  background: null,
+  scroll_when_fits: "scroll",
   repeat_count: 1,
   repeat_every_minutes: 3,
   melody: "bip:d=16,o=6,b=140:c,p,c",

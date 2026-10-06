@@ -325,7 +325,52 @@ class TestDisplayOptions:
     notification. The ones a reminder cannot use are absent on purpose — it
     carries no data, so no progress bar and nothing to hide when a service
     returns none.
+
+    Three of them were offered for a long time and seven were not, which
+    Florian found from the outside: « comme pour les widgets, je dois pouvoir
+    choisir la taille du texte ». They now come from one declaration,
+    `app/schemas/matrix_text.py`, and each was measured on **this** route
+    before being offered — a pushed app and a notification are different
+    endpoints, and this firmware answers `{"ok": true}` to keys it ignores.
     """
+
+    def test_the_whole_shared_list_is_offered(self):
+        """Not a list retyped here: the two are compared.
+
+        Retyping it is how they drifted in the first place, and a test that
+        retyped it would drift with them.
+        """
+        from app.models import Reminder
+        from app.schemas.matrix_text import MatrixText
+
+        missing = sorted(set(MatrixText.model_fields) - set(Reminder.model_fields))
+        assert not missing, f"a reminder cannot set: {missing}"
+
+    def test_the_new_ones_reach_the_payload(self):
+        """Measured on the display, one key at a time, on
+        `POST /api/v1/notifications`: each of these moved pixels."""
+        payload = pass_.payload_for(
+            a_reminder(
+                font="large",
+                text_case="asTyped",
+                icon_mode="push",
+                effect="TwinklingStars",
+                overlay="rain",
+                scroll_when_fits="scroll",
+            )
+        ).to_json()
+        assert payload["font"] == "large"
+        assert payload["textCase"] == "asTyped"
+        assert payload["iconMode"] == "push"
+        assert payload["effect"] == "TwinklingStars"
+        assert payload["overlay"] == "rain"
+        assert payload["scroll"] == {"whenFits": "scroll"}
+
+    def test_inherit_sends_no_case_at_all(self):
+        """"inherit" is not a value the firmware knows — it is our word for
+        "do not send this key", so that the display keeps its own setting."""
+        payload = pass_.payload_for(a_reminder(text_case="inherit")).to_json()
+        assert "textCase" not in payload
 
     def test_they_reach_the_payload(self):
         payload = pass_.payload_for(
@@ -342,7 +387,7 @@ class TestDisplayOptions:
         """Sending an explicit value everywhere would freeze the clock on our
         opinion rather than its own settings."""
         payload = pass_.payload_for(a_reminder()).to_json()
-        for key in ("scroll", "backgroundColor"):
+        for key in ("scroll", "backgroundColor", "textCase", "effect", "overlay"):
             assert key not in payload, key
 
     def test_the_options_awtrix3_had_and_ng_does_not_are_gone(self):
@@ -381,6 +426,16 @@ class TestDisplayOptions:
         ).json()
         assert updated["scroll_mode"] == "bounce"
         assert updated["scroll_speed"] == 40, "an unrelated field moved"
+
+        # The ones added with the shared declaration, through the same door.
+        given = client.patch(
+            f"/api/reminders/{created['id']}",
+            json={"font": "large", "text_case": "asTyped", "effect": "Pacifica"},
+        ).json()
+        assert given["font"] == "large"
+        assert given["text_case"] == "asTyped"
+        assert given["effect"] == "Pacifica"
+        assert given["scroll_mode"] == "bounce", "an unrelated field moved"
 
 
 class TestEveryNWeeks:

@@ -81,9 +81,15 @@ class Reminder(SQLModel, table=True):
     #: Seconds the notification stays up.
     duration_seconds: int = Field(default=10, ge=1, le=120)
 
-    #: The display options a widget offers, minus those that make no sense
-    #: here: a reminder has no data, so no progress bar and nothing to hide
-    #: when a service returns nothing.
+    #: The presentation options a widget offers, minus those that make no
+    #: sense here: a reminder has no data, so no progress bar, no weekday
+    #: segments and nothing to hide when a service returns nothing.
+    #:
+    #: The rest is now the **same list**, declared once in
+    #: `app/schemas/matrix_text.py` and measured on the notification route as
+    #: well as on the pushed-app one. It used to be three options against a
+    #: widget's ten, and nobody could say why the font was among the seven
+    #: missing.
     #:
     #: `center` and `rainbow` were here on AWTRIX 3 and are gone: NG has no
     #: centring key at all, and `palette` colours effects rather than text —
@@ -94,7 +100,22 @@ class Reminder(SQLModel, table=True):
     #: word for the same thing.
     scroll_mode: str = Field(default="wrap")
     scroll_speed: int = Field(default=100, ge=0, le=500)
+    #: What the text does when it *does* fit — "static" or "scroll".
+    scroll_when_fits: str = Field(default="static")
     background: str | None = None
+    #: An animation behind the text. Some fill the panel; see `MatrixText`.
+    effect: str | None = None
+    #: Weather drawn over the text. Nothing proposes one for a reminder, so
+    #: None here means none, full stop.
+    overlay: str | None = None
+    #: "fixed", "pushOnce" or "push" — what the icon does while text scrolls.
+    icon_mode: str = Field(default="fixed")
+    #: "inherit", "upper" or "asTyped". A stock display shows capitals, so
+    #: "Ritaline" arrives as "RITALINE" unless this says otherwise.
+    text_case: str = Field(default="inherit")
+    #: "small" or "large". Five rows or seven — and no extra width either way,
+    #: so a message that scrolls in one scrolls in the other.
+    font: str = Field(default="small")
 
     #: Blind repetition: it fires again every `repeat_every_minutes`, this many
     #: extra times. awtrixng-mgr cannot know whether anyone saw it — HTTP carries

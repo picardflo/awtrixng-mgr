@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { api, ApiError, iconThumbnail, SCROLL_MODES } from "../../api/client";
-import type { Device, Reminder, ReminderInput, ScrollMode } from "../../api/client";
+import { api, ApiError, iconThumbnail } from "../../api/client";
+import type { Device, Reminder, ReminderInput } from "../../api/client";
 import { AwtrixMatrixPreview, MATRIX_WIDTH } from "../../components/AwtrixMatrixPreview";
+import { MatrixTextFields } from "../../components/MatrixTextFields";
 import { IconPicker } from "../../components/IconPicker";
 import { useToast } from "../../components/Toast";
-import { Button, Card, Field, Input, NativeSelect, Toggle } from "../../components/ui";
+import { Button, Card, Field, Input, Toggle } from "../../components/ui";
 import { textWidth } from "../../components/pixelFont";
 import { useI18n } from "../../i18n";
 import { MELODIES, looksLikeRtttl } from "./melodies";
@@ -82,9 +83,17 @@ function blank(): ReminderInput {
     message: "",
     icon: null,
     color: null,
+    // The presentation block, on the same defaults `MatrixText` gives a
+    // widget: five rows, the display's own letter case, still when it fits.
+    background: null,
+    effect: null,
+    overlay: null,
+    icon_mode: "fixed",
+    text_case: "inherit",
+    font: "small",
     scroll_mode: "wrap",
     scroll_speed: 100,
-    background: null,
+    scroll_when_fits: "static",
     at: "07:30:00",
     days: [0, 1, 2, 3, 4],
     every_weeks: 1,
@@ -195,8 +204,12 @@ export function ReminderForm({
   // saving — a scrolling alert takes longer to read than it stays up.
   const shown =
     renderMessage(draft.message, draft.countdown_to) || t("reminders.messagePlaceholder");
+  // Upper-cased before measuring, because that is what the clock draws: a
+  // stock display shows capitals unless `text_case` says otherwise, and "ne
+  // pas oublier" measured as typed fits where "NE PAS OUBLIER" does not.
+  const drawn = draft.text_case === "asTyped" ? shown : shown.toUpperCase();
   const columnsFree = MATRIX_WIDTH - (draft.icon ? 9 : 0);
-  const columnsUsed = textWidth(shown);
+  const columnsUsed = textWidth(drawn);
   const willScroll = columnsUsed > columnsFree && draft.scroll_mode !== "static";
 
   // Empty days or no display would be refused by the server; saying so here
@@ -443,36 +456,10 @@ export function ReminderForm({
 
           {advanced && (
             <div className="space-y-4 rounded-lg bg-[var(--color-surface-2)] p-3">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field label={t("builder.scrollSpeed")} hint="%">
-                  <Input
-                    type="number"
-                    min={10}
-                    max={200}
-                    value={draft.scroll_speed}
-                    onChange={(e) =>
-                      patch({ scroll_speed: Number(e.target.value) || 100 })
-                    }
-                  />
-                </Field>
-                <Field label={t("builder.scrollMode")} hint={t("builder.scrollModeHelp")}>
-                  <NativeSelect
-                    value={draft.scroll_mode}
-                    onChange={(value) => patch({ scroll_mode: value as ScrollMode })}
-                    options={SCROLL_MODES.map((mode) => ({
-                      value: mode,
-                      label: t(`builder.scrollMode.${mode}`),
-                    }))}
-                  />
-                </Field>
-                <Field label={t("builder.background")}>
-                  <Input
-                    value={draft.background ?? ""}
-                    placeholder="#000000"
-                    onChange={(e) => patch({ background: e.target.value || null })}
-                  />
-                </Field>
-              </div>
+              {/* The same block the widget builder shows, from the same
+                  component: a reminder had three of these and a widget ten,
+                  and nobody could say why the font was among the missing. */}
+              <MatrixTextFields value={draft} onChange={patch} />
             </div>
           )}
 
@@ -540,7 +527,7 @@ export function ReminderForm({
           </p>
           <div className="flex justify-center rounded-md border border-[var(--color-border)] bg-[var(--color-matrix-bg)] p-2">
             <AwtrixMatrixPreview
-              text={shown}
+              text={drawn}
               icon={draft.icon}
               // Both are needed: `icon` only reserves the 8x8 slot, and
               // without the image the preview draws a checker to show where it
@@ -553,6 +540,7 @@ export function ReminderForm({
               }
               color={draft.color || "#3ddc84"}
               background={draft.background}
+              font={draft.font}
               noScroll={draft.scroll_mode === "static"}
               scrollSpeed={draft.scroll_speed}
               scale={7}

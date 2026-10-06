@@ -304,13 +304,40 @@ BUILDER = (
     / "frontend" / "src" / "features" / "widgets" / "WidgetBuilder.tsx"
 )
 
+SHARED_FIELDS = (
+    Path(__file__).resolve().parents[2]
+    / "frontend" / "src" / "components" / "MatrixTextFields.tsx"
+)
+REMINDER_FORM = (
+    Path(__file__).resolve().parents[2]
+    / "frontend" / "src" / "features" / "reminders" / "ReminderForm.tsx"
+)
+
 #: Options the form sets without naming, or deliberately does not offer.
 NOT_A_CONTROL = {
-    # Set by the icon picker and the colour swatches, not by a named field.
+    # Set by the icon picker, not by a named field.
     "icon",
-    # Written by the preview's own colour input.
-    "progress_color",
 }
+
+
+def controls_in(*paths: Path) -> set[str]:
+    """The option names a form actually writes.
+
+    **Not a substring search, which is how this test passed over a hole.** It
+    looked for the field's name anywhere in the file, and `effect` appears in
+    the comment "on mount this effect would overwrite" — so `effect`, `repeat`
+    and `progress_background` were reported as controlled while none of the
+    three could be set from the interface at all. A widget could only be given
+    an effect by someone posting JSON by hand.
+
+    The sibling test below already parsed `patch({ name` to find the opposite
+    fault. Both directions now read the same thing.
+    """
+    written = re.compile(r"(?:patch|onChange)\(\{\s*(\w+)")
+    found: set[str] = set()
+    for path in paths:
+        found |= set(written.findall(path.read_text(encoding="utf-8")))
+    return found
 
 
 def test_every_display_option_has_a_control():
@@ -318,16 +345,48 @@ def test_every_display_option_has_a_control():
     system connects them."""
     from app.schemas.widget_data import DisplayOptions
 
-    form = BUILDER.read_text(encoding="utf-8")
+    offered = controls_in(BUILDER, SHARED_FIELDS)
     missing = sorted(
         name
         for name in DisplayOptions.model_fields
-        if name not in NOT_A_CONTROL and name not in form
+        if name not in NOT_A_CONTROL and name not in offered
     )
     assert not missing, (
         f"these display options cannot be set from the builder: {missing}. "
         "A widget created before one of them can never be given it."
     )
+
+
+def test_a_reminder_offers_the_same_presentation_as_a_widget():
+    """The gap Florian found: « comme pour les widgets, je dois pouvoir
+    choisir la taille du texte ».
+
+    A reminder had three of these and a widget had ten, and the reason was
+    that the reminder form had been written first and never caught up. Both
+    now render `MatrixTextFields`, so the only way to break this is to stop —
+    which is what this checks.
+    """
+    from app.schemas.matrix_text import MatrixText
+
+    offered = controls_in(SHARED_FIELDS)
+    missing = sorted(name for name in MatrixText.model_fields if name not in offered)
+    assert not missing, f"no control for: {missing}"
+
+    for form in (BUILDER, REMINDER_FORM):
+        assert "MatrixTextFields" in form.read_text(encoding="utf-8"), (
+            f"{form.name} no longer uses the shared block — the two will drift "
+            "again, which is the whole reason it exists."
+        )
+
+
+def test_a_reminder_sets_no_option_the_backend_drops():
+    """`ReminderUpdate` ignores an unknown key instead of refusing it, so a
+    stale control here would be a silence rather than a 422."""
+    from app.schemas.reminder import ReminderCreate
+
+    written = controls_in(REMINDER_FORM)
+    unknown = sorted(written - set(ReminderCreate.model_fields))
+    assert not unknown, f"the reminder form writes fields that do not exist: {unknown}"
 
 
 def test_the_builder_sets_no_option_that_does_not_exist():

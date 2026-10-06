@@ -177,6 +177,15 @@ def payload_for(
         # None rather than a value: the display has its own scroll settings,
         # and sending ours everywhere would freeze it on our opinion.
         scroll=_scroll_for(reminder),
+        # The presentation a reminder now shares with a widget. Each was
+        # measured on **this** route, not assumed from the other one: a pushed
+        # app and a notification are different endpoints, and this firmware
+        # answers `{"ok": true}` to things it then ignores.
+        font=reminder.font or None,
+        text_case=reminder.text_case if reminder.text_case != "inherit" else None,
+        icon_mode=reminder.icon_mode or None,
+        effect=reminder.effect or None,
+        overlay=reminder.overlay or None,
         # Wake the matrix: an alert nobody can see is not an alert.
         wakeup=True,
         hold=False,
@@ -195,6 +204,8 @@ def _scroll_for(reminder: Reminder) -> Scroll | None:
         fields["mode"] = reminder.scroll_mode
     if reminder.scroll_speed != 100:
         fields["speed"] = reminder.scroll_speed
+    if reminder.scroll_when_fits != "static":
+        fields["when_fits"] = reminder.scroll_when_fits
     return Scroll(**fields) if fields else None
 
 
