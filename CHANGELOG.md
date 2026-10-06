@@ -5,6 +5,37 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.16.1]
+
+### Le garde-fou protégeait la mauvaise moitié
+
+Florian a rempli `AWTRIXNG_PROTECTED_HOSTS` dans le `.env` de sa VM, et on lui
+a dit qu'il était couvert. Il était couvert pour la moitié qui n'a jamais été
+le danger.
+
+Compose lit `.env` **pour le conteneur**. Or les outils qui écrivent le plus
+sur une dalle ne tournent pas dedans : le banc d'essai de maquettes,
+l'extracteur de police et les tests matériels tournent sur un poste de
+développement et poussent des dizaines d'images. Seule la ligne de commande du
+conteneur était protégée — celle qui envoie une notification.
+
+C'est exactement le reproche que ce fichier adresse aux avertissements écrits :
+**un garde-fou qu'il faut se rappeler n'en est pas un.**
+
+`protected_hosts()` lit désormais un `.env` à la racine de la copie de travail
+quand la variable est absente de l'environnement. Dans le conteneur rien ne
+change : la variable y est toujours définie, et le fichier n'y est même pas
+monté. Une variable vide reste un « pas de garde-fou » délibéré, qu'un fichier
+oublié ne peut pas contredire.
+
+Vérifié sur les deux chemins :
+
+```
+panel-shots.py   -> « awtrix-cl1 est un afficheur en service : j'arrête »
+pytest -m device -> « refusing to run »
+```
+
+
 ## [0.16.0]
 
 Florian : « reste à préparer le dépôt en vue d'une publication sur GitHub ».

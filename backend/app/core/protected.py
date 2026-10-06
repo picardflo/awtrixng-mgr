@@ -25,6 +25,7 @@ one character in a hostname.
 """
 
 import os
+from pathlib import Path
 
 #: Empty: see above. The guard is opt-in because its content is personal.
 DEFAULT_PROTECTED = ""
@@ -34,8 +35,32 @@ class ProtectedHostError(Exception):
     """Raised instead of writing to a display that is in service."""
 
 
+#: Read when the variable is absent from the environment.
+#:
+#: The tools that most need this guard — the panel bench, the font extractor,
+#: the hardware tests — run on a workstation, not in the container. Compose
+#: reads `.env` for the container and nothing reads it for them, so a list
+#: filled in `.env` protected the half that was never the danger. Reading the
+#: same file here closes that, and costs nothing in the container, where the
+#: variable is always already set and the file is not even mounted.
+ENV_FILE = Path(__file__).resolve().parents[3] / ".env"
+
+
+def _from_env_file() -> str:
+    try:
+        for line in ENV_FILE.read_text(encoding="utf-8").splitlines():
+            name, sep, value = line.partition("=")
+            if sep and name.strip() == "AWTRIXNG_PROTECTED_HOSTS":
+                return value.strip().strip("\"'")
+    except OSError:
+        pass
+    return ""
+
+
 def protected_hosts() -> set[str]:
-    raw = os.environ.get("AWTRIXNG_PROTECTED_HOSTS", DEFAULT_PROTECTED)
+    raw = os.environ.get("AWTRIXNG_PROTECTED_HOSTS")
+    if raw is None:
+        raw = _from_env_file() or DEFAULT_PROTECTED
     return {name.strip().lower() for name in raw.split(",") if name.strip()}
 
 
