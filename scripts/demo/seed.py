@@ -45,7 +45,7 @@ async def seed(base: str, password: str = "") -> None:
         carburants = await _post(http, "/api/connectors", {
             "type": "fuel", "name": "Carburants",
             "config": {
-                "place": {"name": "Les Essarts-le-Roi", "latitude": 48.7167,
+                "place": {"name": "Rambouillet", "latitude": 48.6436,
                           "longitude": 1.9, "country": "France",
                           "admin1": "Île-de-France"},
                 "radius": 10,

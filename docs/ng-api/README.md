@@ -20,7 +20,7 @@ framebuffer de l'horloge pour vérification. **La chaîne complète fonctionne.*
 
 ## Les icônes — la bonne nouvelle
 
-Le travail d'icônes d'awtrixhub se transfère presque sans retouche.
+Le travail d'icônes du projet précédent se transfère presque sans retouche.
 
 | | AWTRIX 3 | AWTRIX NG |
 |---|---|---|
@@ -74,11 +74,11 @@ et les apps poussées ne persistent pas au redémarrage.
 
 - **`GET /api/v1/capabilities`** — l'appareil déclare ce qu'il sait faire :
   19 effets, 22 transitions, 8 palettes, 6 overlays météo. Plus besoin de coder
-  ces listes en dur comme le faisait awtrixhub.
+  ces listes en dur comme le faisait le projet précédent.
 - **`overlay`** dans le payload — `rain`, `snow`, `drizzle`, `storm`,
   `thunder`, `frost`, dessinés par le firmware **par-dessus** le texte.
 - **`palette`** avec arrêts de couleur — le dégradé de température interpolé à
-  la main dans awtrixhub pourrait devenir déclaratif.
+  la main dans le projet précédent pourrait devenir déclaratif.
 - **`barChart`, `lineChart`, `draw`** — graphiques et primitives de dessin
   (pixel, ligne, rectangle, cercle, bitmap).
 - **Le son** — `buzzerVolume` et `soundEnabled` sont des réglages ; les

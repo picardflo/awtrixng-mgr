@@ -411,7 +411,7 @@ export const en = {
   "connector.fuel.description": "The cheapest pump near a place, from the French open data feed. No account, no API key.",
   "field.fuel.place.label": "Place",
   "field.fuel.place.help": "Distances are measured from here.",
-  "field.fuel.place.placeholder": "Les Essarts-le-Roi, Lyon…",
+  "field.fuel.place.placeholder": "Rambouillet, Lyon…",
   "field.fuel.radius.label": "Radius",
   "field.fuel.radius.help": "How far to look. As the crow flies.",
   "field.fuel.fuels.label": "Fuels",

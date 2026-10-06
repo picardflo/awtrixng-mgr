@@ -10,16 +10,16 @@ So this pushes each layout to an app of its own, switches to it, and reads
 `/display/screen` back: the pixels the panel is actually lighting. The result
 is `docs/screenshots/panneau-air-uv.png` and anything like it.
 
-    ./scripts/panel-shots.py cas.json sortie.png
+    AWTRIXNG_PANEL=awtrix-desk.lan ./scripts/panel-shots.py cas.json sortie.png
 
 where `cas.json` is a list of `{"label": ..., "payload": {...}}`, the payload
 being what the firmware takes — `text`, `icon`, `font`, `textColor`,
 `progress`, `progressColor`, `progressTrackColor`.
 
-**It writes to the display it is pointed at.** `HOST` is the Bureau, the one
-this project experiments on; the displays in service are listed in
-`app/core/protected.py` and this refuses them for the same reason the device
-tests do.
+**It writes to the display it is pointed at.** Name it in `AWTRIXNG_PANEL`;
+there is no default, because a default here is someone else's clock. Whatever
+`AWTRIXNG_PROTECTED_HOSTS` lists is refused, for the same reason the device
+tests refuse it.
 
 Two precautions, both bought by a bench that lied:
 
@@ -31,6 +31,7 @@ Two precautions, both bought by a bench that lied:
 """
 import io
 import json
+import os
 import sys
 import time
 import urllib.error
@@ -38,7 +39,8 @@ import urllib.request
 
 from PIL import Image, ImageDraw, ImageFont
 
-HOST = "http://awtrix-cl2.home.lan/api/v1"
+_PANEL = os.environ.get("AWTRIXNG_PANEL", "")
+HOST = f"http://{_PANEL}/api/v1"
 LAMETRIC = "https://developer.lametric.com/content/apps/icon_thumbs/{}"
 APP = "panelshots"
 
@@ -159,7 +161,12 @@ def main(spec_path, out_path):
     sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[1] / "backend"))
     from app.core.protected import is_protected
 
-    host = HOST.split("//", 1)[1].split("/", 1)[0]
+    if not _PANEL:
+        raise SystemExit(
+            "AWTRIXNG_PANEL n'est pas défini : nommez l'afficheur sur lequel "
+            "écrire, par exemple AWTRIXNG_PANEL=awtrix-desk.lan"
+        )
+    host = _PANEL
     if is_protected(host):
         raise SystemExit(f"{host} est un afficheur en service : ce script écrit, j'arrête.")
 

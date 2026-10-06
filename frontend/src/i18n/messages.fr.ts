@@ -393,7 +393,7 @@ export const fr: Record<MessageKey, string> = {
   "connector.fuel.description": "La pompe la moins chère près d'un lieu, depuis les données ouvertes de l'État. Aucun compte, aucune clé API.",
   "field.fuel.place.label": "Lieu",
   "field.fuel.place.help": "Les distances sont mesurées depuis ce point.",
-  "field.fuel.place.placeholder": "Les Essarts-le-Roi, Lyon…",
+  "field.fuel.place.placeholder": "Rambouillet, Lyon…",
   "field.fuel.radius.label": "Rayon",
   "field.fuel.radius.help": "Jusqu'où chercher. À vol d'oiseau.",
   "field.fuel.fuels.label": "Carburants",

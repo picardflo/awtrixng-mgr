@@ -10,7 +10,7 @@ import pytest
 
 from app.connectors.weather import sun
 
-#: A real Open-Meteo answer for Les Essarts-le-Roi, trimmed. Two days, because
+#: A real Open-Meteo answer for Rambouillet, trimmed. Two days, because
 #: that is what makes "next" answerable after the sun has gone down.
 PARIS = {
     "utc_offset_seconds": 7200,
@@ -126,7 +126,7 @@ class TestTheWidget:
         from app.connectors.weather.connector import WeatherConnector
 
         return WeatherConnector(
-            config={"place": {"latitude": 48.7167, "longitude": 1.9}}, secrets={}
+            config={"place": {"latitude": 48.6436, "longitude": 1.9}}, secrets={}
         )
 
     def values(self, raw: dict, monkeypatch, at: datetime) -> dict:
@@ -199,7 +199,7 @@ class TestTheColourSaysWhichEvent:
         from app.connectors.weather.connector import WeatherConnector
 
         connector = WeatherConnector(
-            config={"place": {"latitude": 48.7167, "longitude": 1.9}}, secrets={}
+            config={"place": {"latitude": 48.6436, "longitude": 1.9}}, secrets={}
         )
         return connector.project("weather.sun", {}, PARIS)
 

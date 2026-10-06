@@ -12,7 +12,7 @@ import pytest
 
 from app.connectors.weather import air
 
-#: A real answer for Les Essarts-le-Roi, trimmed.
+#: A real answer for Rambouillet, trimmed.
 LIVE = {
     "current": {
         "european_aqi": 30, "pm10": 17.3, "pm2_5": 10.1,
@@ -96,7 +96,7 @@ class TestTheWidgets:
         from app.connectors.weather.connector import WeatherConnector
 
         return WeatherConnector(
-            config={"place": {"latitude": 48.7167, "longitude": 1.9}}, secrets={}
+            config={"place": {"latitude": 48.6436, "longitude": 1.9}}, secrets={}
         )
 
     def test_air_reports_the_index_and_the_pollutants(self):
@@ -157,7 +157,7 @@ class TestTheRequest:
     async def test_it_asks_the_air_quality_host(self, respx_mock):
         route = respx_mock.get(air.ENDPOINT).respond(json=LIVE)
         async with httpx.AsyncClient() as client:
-            await air.fetch(client, 48.7167, 1.9)
+            await air.fetch(client, 48.6436, 1.9)
         params = route.calls.last.request.url.params
         assert "european_aqi" in params["current"]
         assert "grass_pollen" in params["current"]
@@ -223,7 +223,7 @@ class TestOneIconPerWidget:
         from app.connectors.weather.connector import WeatherConnector
 
         return WeatherConnector(
-            config={"place": {"latitude": 48.7167, "longitude": 1.9}}, secrets={}
+            config={"place": {"latitude": 48.6436, "longitude": 1.9}}, secrets={}
         )
 
     @pytest.mark.parametrize("aqi", [0, 25, 45, 70, 90, 150])

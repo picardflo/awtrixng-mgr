@@ -55,7 +55,7 @@ class FuelConnector(Connector):
                 label="Place",
                 type="place",
                 required=True,
-                placeholder="Les Essarts-le-Roi, Lyon…",
+                placeholder="Rambouillet, Lyon…",
                 help="Distances are measured from here.",
             ),
             FormField(
@@ -118,7 +118,7 @@ class FuelConnector(Connector):
                         example="SP95-E10",
                     ),
                     Variable(
-                        name="station", label="Town of the station", example="Les Essarts-le-Roi"
+                        name="station", label="Town of the station", example="Rambouillet"
                     ),
                     Variable(
                         name="short",
@@ -156,7 +156,7 @@ class FuelConnector(Connector):
                         "price": 1.99,
                         "fuel": "SP95-E10",
                         "short": "E10",
-                        "station": "Les Essarts-le-Roi",
+                        "station": "Rambouillet",
                         "address": "12 RUE DE PARIS",
                         "distance": 1.3,
                         "updated": "03/10/2026",

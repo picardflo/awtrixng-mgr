@@ -111,7 +111,7 @@ class Reminder(SQLModel, table=True):
     #: "fixed", "pushOnce" or "push" — what the icon does while text scrolls.
     icon_mode: str = Field(default="fixed")
     #: "inherit", "upper" or "asTyped". A stock display shows capitals, so
-    #: "Ritaline" arrives as "RITALINE" unless this says otherwise.
+    #: "Poubelles" arrives as "POUBELLES" unless this says otherwise.
     text_case: str = Field(default="inherit")
     #: "small" or "large". Five rows or seven — and no extra width either way,
     #: so a message that scrolls in one scrolls in the other.

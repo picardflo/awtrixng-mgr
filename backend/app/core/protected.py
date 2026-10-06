@@ -9,15 +9,25 @@ So the rule executes. Both the device tests and the CLI ask here before they
 touch anything, and the answer is a refusal before a single request leaves the
 machine.
 
-The default names the lounge clock, which runs AWTRIX 3 and is the one the
-family looks at. Override with `AWTRIXNG_PROTECTED_HOSTS`, comma separated;
-set it empty to disable the guard entirely, which is what a published copy of
-this project would do.
+**The list is empty by default**, and that is the right default for anyone
+but its author: a name that means something here means nothing on your
+network, and a guard full of someone else's hostnames protects nobody while
+looking like it protects something.
+
+Fill it with yours. One per display you want these tools to refuse, comma
+separated, as names or addresses:
+
+    AWTRIXNG_PROTECTED_HOSTS=awtrix-lounge,awtrix-lounge.lan,192.168.1.40
+
+It is worth doing the day you own two. The one you experiment on and the one
+the household looks at are the same model, answer the same API, and differ by
+one character in a hostname.
 """
 
 import os
 
-DEFAULT_PROTECTED = "awtrix-cl1,awtrix-cl1.home.lan"
+#: Empty: see above. The guard is opt-in because its content is personal.
+DEFAULT_PROTECTED = ""
 
 
 class ProtectedHostError(Exception):

@@ -25,7 +25,7 @@ secondes, ce qui distingue « fixe », « animé » et « animé autrement ».
 | `center` | **Aucune clé de centrage dans NG.** Et il n'en faut pas : le firmware centre seul tout texte qui tient. `"A"` tombe colonnes 14-16, `"ABC"` colonnes 10-20, `"ABCDEFGH"` colonnes 0-30 — chaque fois là où un centrage les mettrait. |
 | `rainbow` | `palette` colore les **effets**, pas le texte. Poussé `{"text":"ARC","palette":"Rainbow"}`, relu l'écran : **une seule couleur allumée**. |
 | `lifetimeMode` | `unknown key`. Le marquage « périmé » d'AWTRIX 3 — contour rouge plutôt que suppression — n'a pas d'équivalent. |
-| Apps natives | **NG n'offre aucun moyen de les désactiver.** `DELETE /api/v1/apps/Battery` répond `{"ok":true}` et ne change rien ; aucun des 42 réglages ne les gouverne ; `/apps/<nom>` n'accepte que DELETE. Le panneau d'awtrixhub, qui redémarrait l'horloge pour ça, n'a plus d'objet. |
+| Apps natives | **NG n'offre aucun moyen de les désactiver.** `DELETE /api/v1/apps/Battery` répond `{"ok":true}` et ne change rien ; aucun des 42 réglages ne les gouverne ; `/apps/<nom>` n'accepte que DELETE. Le panneau du projet précédent, qui redémarrait l'horloge pour ça, n'a plus d'objet. |
 | Découpage des séries | Inutile. Mesuré : 40 valeurs envoyées, le firmware en dessine **les 15 dernières** — la même queue que le découpage manuel gardait. |
 
 ## Ce qui a changé de nom ou de forme
@@ -93,7 +93,7 @@ de plus de le rester.
 **`PUT /api/v1/apps/order` est cassée** en 1.1.2. Seule méthode autorisée, et
 *tout* corps JSON — `{}`, `[]`, `{"order":[…]}` — répond
 `{"error":{"code":"invalidJson"}}`. Pas de réordonnancement natif : on garde la
-méthode d'awtrixhub, supprimer puis republier dans l'ordre. **À resonder à
+méthode du projet précédent, supprimer puis republier dans l'ordre. **À resonder à
 chaque version du firmware.**
 
 **Rien n'est journalisé quand le panneau s'éteint.** Une horloge trouvée noire

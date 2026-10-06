@@ -5,6 +5,86 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.16.0]
+
+Florian : « reste à préparer le dépôt en vue d'une publication sur GitHub ».
+
+### La licence : AGPL-3.0
+
+AWTRIX NG est sous **PolyForm Noncommercial** — source-available, usage
+commercial exclu. Ça ne nous lie pas : ce projet ne contient aucune ligne du
+firmware, il parle à son API HTTP, et utiliser une API ne crée pas d'œuvre
+dérivée. Le choix était donc libre.
+
+L'AGPL a été retenue pour ce qu'elle empêche : quiconque en fait un service
+accessible par le réseau doit en publier les modifications. Ces outils
+existent parce que leurs équivalents commerciaux sont hors de prix, et c'est
+la licence qui empêche d'en refaire un produit fermé — tout en restant une
+vraie licence open source, donc packageable et contribuable.
+
+**Le fichier `LICENSE` n'est pas dans ce commit.** Un texte de licence se copie
+à l'octet près, et cette machine n'a pas d'accès sortant : la seule copie
+locale trouvée était reformatée (633 lignes contre 661). Il se pose en une
+commande, décrite dans [`docs/publication.md`](docs/publication.md).
+
+### Le manuel entre dans le dépôt
+
+Onze pages, de `docs/manuel/`. Ses images pointaient vers un Gogs privé,
+injoignable depuis Internet ; elles sont désormais relatives. Le manuel voyage
+donc avec le code, se versionne avec lui, et marche dans un fork comme hors
+ligne.
+
+`check-wiki.py` devient `check-manual.py` et **vérifie l'inverse de ce qu'il
+vérifiait**. Les règles d'un wiki Gogs — liens absolus, images en URL brute —
+étaient des contournements de ses limites ; dans le dépôt, un lien est un
+chemin qui résout ou ne résout pas. Il refuse en prime tout renvoi vers un hôte
+privé.
+
+### Anonymisé
+
+- **Les relevés** météo, air, soleil et carburants portaient le village de
+  l'auteur. Ils portent une ville voisine, à géométrie équivalente : distances
+  et prix restent cohérents.
+- **Un test est tombé en le faisant**, et il avait raison de tomber. Il lisait
+  `stations(...)[0]` et vérifiait une date ; déplacer le point de référence a
+  réordonné la liste et le test a échoué sur une date dont il n'a jamais
+  parlé. Il nomme maintenant la station qu'il veut — un test qui casse pour la
+  mauvaise raison masque celle pour laquelle il existe.
+- **Le nom d'un médicament d'enfant** traînait dans un commentaire d'exemple.
+- **Plus aucun renvoi** vers le dépôt privé ni vers `gogs.home.lan`, dans
+  aucun fichier qu'un lecteur verra.
+
+### Le garde-fou devient vide par défaut
+
+`AWTRIXNG_PROTECTED_HOSTS` nommait l'horloge du salon de l'auteur. Sur le
+réseau de quelqu'un d'autre, c'est une liste de noms qui ne veulent rien dire
+— elle ne protège personne **tout en ayant l'air de protéger**, ce qui est
+pire que pas de garde-fou du tout, puisqu'elle invite à la confiance.
+
+Il est désormais à remplir, et `.env.example` explique quand : le jour où vous
+en avez deux. Celle sur laquelle vous essayez des choses et celle que la
+maison regarde sont le même modèle, répondent à la même API, et ne diffèrent
+que d'un caractère.
+
+> **Pour l'installation de Florian : à remplir.** Le Salon n'est plus protégé
+> par défaut.
+
+Dans le même esprit, `panel-shots.py` et `extract-font.py` **demandent**
+l'afficheur (`AWTRIXNG_PANEL`) au lieu d'en supposer un.
+
+### Le README, réécrit
+
+Pour quelqu'un qui découvre le projet. Il s'ouvrait sur l'histoire d'un dépôt
+privé que ce lecteur ne verra jamais ; il s'ouvre maintenant sur ce que
+l'application fait, et sur un démarrage en trois étapes.
+
+### `scripts/prepare-publication.sh`
+
+Réécrit l'adresse de l'auteur dans l'historique — une centaine de commits
+portent une adresse professionnelle — sur un **clone jetable**. Jamais sur ce
+dépôt : réécrire l'historique change chaque empreinte, et le `git pull` de la
+machine de déploiement tomberait en rejet.
+
 ## [0.15.1]
 
 ### Tout `/api/` répondait 502 avec un backend parfaitement sain
@@ -148,7 +228,7 @@ règle. Rien à faire de la part de l'exploitant.
 
 Florian : « peux-tu regarder pour t'aligner sur la charte graphique d'awtrix
 ng ? et si tu peux je suis pas contre un mode clair + sombre — ça permettrait
-aussi de sortir de l'héritage awtrixhub ».
+aussi de sortir de l'héritage le projet précédent ».
 
 ### La charte a été lue, pas estimée
 
@@ -384,12 +464,12 @@ garde tous ses champs, barre comprise.
 
 ## [0.11.3]
 
-Audit demandé par Florian : « il doit rester 0 trace de awtrixhub ».
+Audit demandé par Florian : « il doit rester 0 trace du projet précédent ».
 
 ### Retiré
 - **`secrets.example.md`** — un vrai reste. Il documentait **Zabbix et
   Tautulli**, deux connecteurs qui n'existent dans aucun des deux projets, et
-  disait que « la configuration réelle d'awtrixhub se fait via l'interface ».
+  disait que « la configuration réelle du projet précédent se fait via l'interface ».
   Supprimé, et l'exception correspondante du `.gitignore` avec.
 - Un nom de test qui parlait de l'autre projet.
 
@@ -400,7 +480,7 @@ qui s'exécute.
 `test_the_name_never_appears_in_running_code` **analyse l'arbre syntaxique** de
 tout `backend/app/`, écarte les docstrings et vérifie ce qui reste —
 identifiants, chaînes littérales, attributs. Éprouvé en remettant
-`awtrixhub_session` comme nom de cookie : il le nomme.
+`le projet précédent_session` comme nom de cookie : il le nomme.
 
 Et `test_the_built_interface_carries_no_trace` lit le `dist/` réellement servi.
 
@@ -410,7 +490,7 @@ Et `test_the_built_interface_carries_no_trace` lit le `dist/` réellement servi.
 | `CHANGELOG.md`, `README.md` | la filiation du projet |
 | `docs/architecture.md` | les ADR héritées et celles qu'il a fallu rejuger |
 | `docs/ng-vs-awtrix3.md`, `docs/ng-api/` | les comparaisons mesurées |
-| deux docstrings de migration | **pourquoi** elles désactivent les clés étrangères : awtrixhub y a perdu toutes ses cibles de widget |
+| deux docstrings de migration | **pourquoi** elles désactivent les clés étrangères : Le projet précédent y a perdu toutes ses cibles de widget |
 | `test_no_leftovers.py` | le test qui interdit le reste |
 
 **Zéro dans `frontend/src`, zéro dans les chaînes d'interface, zéro dans
@@ -420,7 +500,7 @@ pourquoi une migration est écrite ainsi est la ligne la plus utile du fichier.
 
 ## [0.11.2]
 
-La documentation et le wiki, calqués sur la logique d'awtrixhub.
+La documentation et le wiki, calqués sur la logique du projet précédent.
 
 ### Ajouté
 - **L'environnement de démonstration** : deux afficheurs AWTRIX NG inventés et
@@ -431,7 +511,7 @@ La documentation et le wiki, calqués sur la logique d'awtrixhub.
 - **`./scripts/update-screenshots.sh`** et les **19 captures** du wiki. Elles ne
   touchent aucun matériel : un réconciliateur pointé sur une horloge en service
   effacerait ses apps.
-- **`scripts/check-wiki.py`**, qui refuse un lien mal formé, une ancre, une
+- **`scripts/check-manual.py`**, qui refuse un lien mal formé, une ancre, une
   image manquante ou un tableau irrégulier.
 - **Le wiki, onze pages**, dont une neuve — « Ce que NG change » — pour qui
   vient d'AWTRIX 3.
@@ -444,7 +524,7 @@ ce qui a changé ; l'interface ne le doit pas. Un test refuse désormais toute
 chaîne d'interface qui le dit.
 
 ### Au passage
-Dans le wiki d'awtrixhub, `Maintenance.md` porte le titre « Dépannage » : son
+Dans le wiki du projet précédent, `Maintenance.md` porte le titre « Dépannage » : son
 contenu a été écrasé un jour par celui de l'autre page. La page équivalente est
 ici écrite à neuf — l'erreur n'est pas héritée.
 
@@ -724,7 +804,7 @@ inventer.
 - **Indice UV** rapporté à **11**, le plafond au-delà duquel l'indice n'a plus
   de bande et s'appelle « extrême ». Une barre pleine dit exactement ça.
 - **Qualité de l'air** rapportée à **100**. L'indice européen **dépasse 100** —
-  c'est le maximum de cinq polluants, une leçon déjà payée sur awtrixhub — donc
+  c'est le maximum de cinq polluants, une leçon déjà payée sur le projet précédent — donc
   barre pleine signifie « hors échelle », ce qui est la lecture honnête.
 - **Pollens : pas de barre.** Les grains par mètre cube n'ont pas de plafond
   officiel, et une barre contre un nombre inventé vaut moins que pas de barre.
@@ -942,7 +1022,7 @@ annule silencieusement un réglage qu'on vient de changer.
 Elle touche une table qui a **déjà des lignes en production**, et elle supprime
 six colonnes. SQLite reconstruit la table pour ça, et la suppression de
 l'ancienne **cascade** sur `widget_target` et `reminder_target` — exactement la
-panne qui avait vidé les cibles de widget sur awtrixhub, en silence. Écrite à
+panne qui avait vidé les cibles de widget sur le projet précédent, en silence. Écrite à
 la main : clés étrangères désactivées autour de la reconstruction, fenêtre
 recopiée avant la suppression, valeurs par défaut sur les colonnes ajoutées.
 
@@ -1138,7 +1218,7 @@ identifiants : rien ne casse quand ils sont faux.
   prenait en plein milieu : `AWTRIXHI`, un bandeau qui a l'air cassé.
   Remplacé par `AWTRIXNG`, **31 colonnes sur 32** — il tient, donc il se lit à
   tout instant.
-- **Le cookie de session** s'appelait encore `awtrixhub_session`. Ce n'est pas
+- **Le cookie de session** s'appelait encore `le projet précédent_session`. Ce n'est pas
   cosmétique : les deux applications peuvent tourner derrière le même Caddy, et
   un nom partagé ferait que se connecter à l'une déconnecte de l'autre — avec
   un symptôme qui ne désigne rien.
@@ -1146,13 +1226,13 @@ identifiants : rien ne casse quand ils sont faux.
 ### Ajouté
 - `tests/test_no_leftovers.py`, qui balaie le code du backend et du frontend à
   la recherche de l'ancien nom. Les trois casses sont vérifiées, et le
-  répertoire des migrations est exclu : sa documentation parle d'awtrixhub
+  répertoire des migrations est exclu : sa documentation parle du projet précédent
   volontairement.
 
 ## [0.3.0]
 
 **L'application entière, portée sur AWTRIX NG.** Backend, planificateur,
-connecteurs, API REST et interface React viennent d'awtrixhub ; tout ce qui
+connecteurs, API REST et interface React viennent du projet précédent ; tout ce qui
 parle au firmware a été réécrit, et **chaque option a été essayée sur une
 horloge réelle** plutôt que traduite sur le papier.
 
@@ -1218,7 +1298,7 @@ horloge réelle** plutôt que traduite sur le papier.
 ### Mesuré, et qui reste à surveiller
 - **`PUT /api/v1/apps/order` est cassée** en 1.1.2 : seule méthode autorisée,
   et *tout* corps JSON — `{}` compris — répond `invalidJson`. Donc pas de
-  réordonnancement natif ; on garde la méthode d'awtrixhub, supprimer puis
+  réordonnancement natif ; on garde la méthode du projet précédent, supprimer puis
   republier dans l'ordre.
 - **Panneau éteint, le framebuffer continue d'être dessiné.** Un aperçu bâti
   sur `/display/screen` montrerait l'heure sur une horloge noire. Se fier à
@@ -1270,14 +1350,14 @@ refusé, avant qu'une seule requête ne quitte la machine.
 Premier code du dépôt : le socle backend et le **client AWTRIX NG**, c'est-à-dire
 la seule couche qui parle au firmware. Rien de visible encore — pas d'API REST,
 pas d'interface, pas de planificateur. C'est la pièce dont tout le reste dépend,
-et la seule qui soit vraiment nouvelle : le reste se reprend d'awtrixhub.
+et la seule qui soit vraiment nouvelle : le reste se reprend du projet précédent.
 
 ### Ajouté
 - **`app/services/ng/`** — transport HTTP, modèle de payload, client, icônes.
   Toutes les routes `/api/v1/` dont le projet aura besoin : état, capacités,
   réglages, apps, notifications, fichiers, écran, journal.
 - **`app/core/`** — erreurs, configuration, garde-fous d'URL sortante, journal
-  qui masque les secrets. Repris d'awtrixhub, préfixe d'environnement
+  qui masque les secrets. Repris du projet précédent, préfixe d'environnement
   `AWTRIXNG_`.
 - **65 tests**, dont **9 qui tournent contre une horloge réelle**
   (`pytest -m device`, désélectionnés par défaut).
@@ -1294,7 +1374,7 @@ et la seule qui soit vraiment nouvelle : le reste se reprend d'awtrixhub.
 - **NG supprime une app par son nom exact**, pas par préfixe. Vérifié en
   poussant `zz1`, `zz12` et `zz1x` puis en supprimant `zz1` : les deux autres
   sont restées. C'était la raison d'être du nommage sur largeur fixe
-  d'awtrixhub (`ah000123`) — voir ADR-001.
+  du projet précédent (`ah000123`) — voir ADR-001.
 - **Le champ `origin` des apps** distingue `builtin` de `pushed`. Une app du
   firmware ne peut plus être prise pour une orpheline, ce qui est la panne qui
   a vidé une horloge en service deux fois sur le projet précédent.
@@ -1310,4 +1390,4 @@ et la seule qui soit vraiment nouvelle : le reste se reprend d'awtrixhub.
 ### À faire ensuite
 - Le modèle de données et les migrations, puis le planificateur, puis l'API
   REST, puis l'interface. Les connecteurs (météo, air, carburants, vacances,
-  lune) se reprennent d'awtrixhub avec leurs tests.
+  lune) se reprennent du projet précédent avec leurs tests.

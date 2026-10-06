@@ -1,17 +1,26 @@
 #!/usr/bin/env python3
 """Extract both AWTRIX NG fonts from the display itself.
 
+    AWTRIXNG_PANEL=awtrix-desk.lan ./scripts/extract-font.py
+
 The preview's font was transcribed by hand from screenshots and does not
 match: its 'A' is 010/101/111/101/101 where the firmware draws
 110/101/111/101/101. Rather than correct a drawing by eye, each glyph is
 pushed to the panel on its own and read back out of the framebuffer.
 """
 import json
+import os
 import sys
 import time
 import urllib.request
 
-H = "http://awtrix-cl2.home.lan/api/v1"
+#: L'afficheur sur lequel lire la police. Pas de valeur par défaut : une
+#: valeur par défaut ici est l'horloge de quelqu'un d'autre.
+_PANEL = os.environ.get("AWTRIXNG_PANEL") or sys.exit(
+    "AWTRIXNG_PANEL n'est pas défini : AWTRIXNG_PANEL=awtrix-desk.lan "
+    f"{sys.argv[0]}"
+)
+H = f"http://{_PANEL}/api/v1"
 
 def call(m, p, b=None):
     d = json.dumps(b, ensure_ascii=False).encode("utf-8") if b is not None else None

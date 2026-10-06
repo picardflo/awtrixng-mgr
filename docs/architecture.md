@@ -15,7 +15,7 @@ Le dépôt en est au socle : `app/core/` et `app/services/ng/`. Les ADR ci-desso
 sont celles que ce code tranche. Les suivantes viendront avec le modèle de
 données, le planificateur et l'interface.
 
-L'ancêtre, **awtrixhub**, porte 23 ADR dans son propre `docs/architecture.md`.
+L'ancêtre, **le projet précédent**, porte 23 ADR dans son propre `docs/architecture.md`.
 La plupart tiennent et seront reprises telles quelles le jour où le code
 correspondant arrivera. Celles que l'arrivée de NG oblige à rejuger sont listées
 en fin de page.
@@ -26,7 +26,7 @@ en fin de page.
 
 **Décision.** Une app poussée s'appelle `ng000123` : un préfixe et six chiffres.
 
-**Ce qui a changé.** awtrixhub faisait de même (`ah000123`) pour une raison
+**Ce qui a changé.** le projet précédent faisait de même (`ah000123`) pour une raison
 précise : **AWTRIX 3 supprimait par préfixe**, donc supprimer `ah1` emportait
 `ah12`. La largeur fixe garantissait qu'aucun nom ne puisse être le préfixe d'un
 autre.
@@ -39,7 +39,7 @@ chose : parmi les apps dont `origin` vaut `pushed`, c'est elle qui distingue les
 nôtres de celles qu'un script Berry ou un autre outil a posées. `is_managed()`
 reste une question à réponse nette.
 
-**La conséquence à retenir :** la raison écrite dans awtrixhub est périmée. Qui
+**La conséquence à retenir :** la raison écrite dans le projet précédent est périmée. Qui
 lit ce nommage et croit protéger une suppression par préfixe se trompe sur ce
 que fait le firmware.
 
@@ -75,7 +75,7 @@ La requête est arrivée ; c'est ce qui compte pour qui diagnostique.
 **Décision.** Effets, transitions, palettes, overlays et présence d'un buzzer
 viennent de `GET /api/v1/capabilities`. Rien de tout cela n'est écrit en dur.
 
-**Pourquoi.** awtrixhub n'avait pas le choix : AWTRIX 3 donnait `/api/effects`
+**Pourquoi.** le projet précédent n'avait pas le choix : AWTRIX 3 donnait `/api/effects`
 et `/api/transitions`, mais rien sur l'audio ni sur les overlays, qui se
 devinaient donc. Résultat : une liste codée en dur dans l'application, qui
 ment dès que le firmware évolue — dans un sens comme dans l'autre.
@@ -130,13 +130,13 @@ disparaît sans prévenir le jour où l'horloge en question passe en NG.
 
 ---
 
-## Les ADR d'awtrixhub à rejuger
+## Les ADR du projet précédent à rejuger
 
 NG retire l'argument qui fondait celles-ci. Elles seront tranchées quand le code
 correspondant arrivera, pas avant — les inscrire ici évite de les reprendre par
 inertie.
 
-| ADR d'awtrixhub | Pourquoi la rejuger |
+| ADR du projet précédent | Pourquoi la rejuger |
 |---|---|
 | **ADR-004** — nommage des apps sur largeur fixe | **Tranchée**, voir ADR-001 : la raison a changé, la décision tient. |
 | **ADR-022** — la plage horaire du mode chambre vit dans l'application | Elle y était placée *parce que le firmware n'en avait pas*. À revoir au regard de ce que NG sait faire seul. |
@@ -145,6 +145,6 @@ inertie.
 | ADR sur les listes d'effets et de transitions | **Tranchée**, voir ADR-003. |
 
 Deux apports de NG n'ont pas d'équivalent à rejuger, mais ouvrent des
-possibilités qu'awtrixhub ne pouvait pas offrir : les **overlays météo** dessinés
+possibilités qu'le projet précédent ne pouvait pas offrir : les **overlays météo** dessinés
 par le firmware par-dessus le texte, et les **scripts Berry** embarqués sur
 l'appareil.

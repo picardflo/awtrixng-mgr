@@ -326,12 +326,12 @@ AIR = {
     }
 }
 
-#: Four stations around Les Essarts-le-Roi, shaped like the real feed. Fixed
+#: Four stations around Rambouillet, shaped like the real feed. Fixed
 #: prices: a screenshot must not change with the pumps.
 FUEL = {
     "total_count": 4,
     "results": [
-        {"id": 1, "ville": "Les Essarts-le-Roi", "adresse": "37 RN 10", "cp": "78690",
+        {"id": 1, "ville": "Rambouillet", "adresse": "37 RN 10", "cp": "78690",
          "geom": {"lat": 48.7260, "lon": 1.8930},
          "e10_prix": 1.99, "e10_maj": "2026-09-30T00:01:00+00:00",
          "sp98_prix": None, "sp98_maj": None},
@@ -357,7 +357,7 @@ PLACES = {
             "timezone": "Europe/Paris", "population": 472317,
         },
         {
-            "id": 6453366, "name": "Les Essarts-le-Roi", "latitude": 48.7167,
+            "id": 6453366, "name": "Rambouillet", "latitude": 48.6436,
             "longitude": 1.9, "country": "France", "country_code": "FR",
             "admin1": "Île-de-France", "timezone": "Europe/Paris", "population": 6500,
         },

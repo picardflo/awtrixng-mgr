@@ -1,7 +1,7 @@
 """Fuel prices.
 
 The upstream feed is never called here: `RESPONSE` is a trimmed real answer
-for Les Essarts-le-Roi, so the arithmetic and the filtering are pinned without
+for Rambouillet, so the arithmetic and the filtering are pinned without
 depending on what the pumps charge today.
 """
 
@@ -14,7 +14,7 @@ from app.connectors.fuel import prices
 from app.connectors.fuel.connector import FuelConnector
 from app.core.errors import ConnectorError
 
-HOME = (48.7167, 1.9)
+HOME = (48.6436, 1.9)
 
 #: Four stations, shaped like the real records: a null price means the station
 #: does not sell that fuel, and `geom` is what distance is measured from.
@@ -23,7 +23,7 @@ RESPONSE = {
     "results": [
         {
             "id": 1,
-            "ville": "Les Essarts-le-Roi",
+            "ville": "Rambouillet",
             "adresse": "37 RN 10",
             "cp": "78690",
             "geom": {"lat": 48.7260, "lon": 1.8930},
@@ -106,7 +106,7 @@ class TestWhichStationsSellIt:
         """Station 4 sells neither, station 1 has no SP98."""
         towns = [s.town for s in prices.stations(RESPONSE, "sp98", *HOME)]
         assert "Auffargis" not in towns
-        assert "Les Essarts-le-Roi" not in towns
+        assert "Rambouillet" not in towns
 
     def test_they_come_back_nearest_first(self):
         found = prices.stations(RESPONSE, "e10", *HOME)
@@ -115,8 +115,15 @@ class TestWhichStationsSellIt:
         )
 
     def test_the_date_is_parsed(self):
-        first = prices.stations(RESPONSE, "e10", *HOME)[0]
-        assert first.updated == datetime.fromisoformat("2026-10-03T00:01:00+00:00")
+        """Named, not taken by position.
+
+        It read `[0]` and happened to pass, because the nearest station also
+        had the date being checked. Moving the fixture's home a few kilometres
+        reordered the list and the test failed on a date it was never about —
+        a test that breaks for the wrong reason hides the one it was for.
+        """
+        found = {station.id: station for station in prices.stations(RESPONSE, "e10", *HOME)}
+        assert found["1"].updated == datetime.fromisoformat("2026-10-03T00:01:00+00:00")
 
     def test_a_record_without_coordinates_is_skipped_not_fatal(self):
         broken = {"results": [{"ville": "X", "e10_prix": 1.5, "geom": None}]}
@@ -139,7 +146,7 @@ class TestCheapest:
             "results": [r for r in RESPONSE["results"] if r["id"] != 2]
         }
         best = prices.cheapest(prices.stations(without_the_cheapest, "e10", *HOME))
-        assert best.town == "Les Essarts-le-Roi"
+        assert best.town == "Rambouillet"
 
     def test_nothing_is_not_a_crash(self):
         assert prices.cheapest([]) is None
@@ -241,12 +248,12 @@ class TestTheRequestItself:
     async def test_the_radius_and_the_point_reach_the_query(self, respx_mock):
         route = respx_mock.get(self.URL).respond(json={"results": [], "total_count": 0})
         async with httpx.AsyncClient() as client:
-            await prices.fetch(client, 48.7167, 1.9, 15, ("e10",))
+            await prices.fetch(client, 48.6436, 1.9, 15, ("e10",))
 
         query = route.calls.last.request.url.params
         # Longitude first inside POINT(): the opposite order silently returns
         # stations in the wrong hemisphere rather than an error.
-        assert "POINT(1.9 48.7167)" in query["where"]
+        assert "POINT(1.9 48.6436)" in query["where"]
         assert "15km" in query["where"]
         assert "e10_prix" in query["select"]
 
@@ -314,7 +321,7 @@ class TestDenseAreas:
         """Paging must not turn fifteen stations into several round trips."""
         route = respx_mock.get(self.URL).mock(side_effect=self._answer(15))
         async with httpx.AsyncClient() as client:
-            await prices.fetch(client, 48.7167, 1.9, 10, ("e10",))
+            await prices.fetch(client, 48.6436, 1.9, 10, ("e10",))
         assert route.call_count == 1
 
     @pytest.mark.asyncio
