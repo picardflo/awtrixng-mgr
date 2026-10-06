@@ -5,6 +5,62 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.15.1]
+
+### Tout `/api/` répondait 502 avec un backend parfaitement sain
+
+Rencontré par Florian en ajoutant un mot de passe. Le symptôme ne désignait
+rien :
+
+```
+docker compose ps
+  awtrixng-mgr-backend    Up About a minute   (healthy)
+  awtrixng-mgr-frontend   Up About an hour    (healthy)
+
+journal du backend
+  GET /api/health 200
+  pushed app ng000001 … ng000012
+```
+
+Deux conteneurs sains, le backend poussant ses douze apps sur les deux
+horloges — et l'interface injoignable.
+
+**C'est la durée qui trahit.** Le backend a une minute, le frontend une heure.
+
+`proxy_pass http://awtrixng-mgr-backend:8000;` nomme le backend littéralement,
+et nginx résout un nom littéral **une seule fois, au démarrage**, puis garde
+l'adresse pour toujours. `docker compose up -d --build` ne recrée que les
+conteneurs dont l'image a changé : le backend est revenu sur une adresse neuve
+du réseau Docker, et le frontend, intact et toujours en marche, a continué
+d'écrire à l'ancienne.
+
+Une variable dans `proxy_pass` force la résolution à chaque requête, et
+`127.0.0.11` est le résolveur embarqué de Docker :
+
+```nginx
+resolver 127.0.0.11 valid=10s ipv6=off;
+set $backend http://awtrixng-mgr-backend:8000;
+proxy_pass $backend;
+```
+
+`ipv6=off` n'est pas décoratif : sans lui le résolveur peut rendre une AAAA,
+alors qu'uvicorn n'écoute qu'en IPv4 (`0.0.0.0`), et la panne rentrerait par
+l'autre porte.
+
+**Ce que ça coûtait sans qu'on le sache** : chaque mise à jour où seul le
+backend change — c'est-à-dire presque toutes — laissait l'interface morte
+jusqu'à ce que quelqu'un redémarre le frontend. Le contournement était
+`docker compose restart awtrixng-mgr-frontend`, que personne ne pouvait
+deviner devant deux conteneurs `healthy`.
+
+`tests/test_nginx.py` épingle les quatre points : la variable, le résolveur,
+son TTL, et le fait que `proxy_pass` ne porte pas de chemin — une barre
+oblique de trop enverrait `/foo` là où le backend attend `/api/foo`.
+
+**Non vérifié localement** : ni nginx ni Docker ne sont installés sur la
+machine de développement. La configuration est contrôlée par lecture, et se
+valide sur la VM par `docker compose exec awtrixng-mgr-frontend nginx -t`.
+
 ## [0.15.0]
 
 Florian : « on a pas testé la sauvegarde et restauration — maintenant qu'on a
