@@ -26,11 +26,14 @@ from app.models.base import utcnow
 #: Bumped when the shape changes. A file from the future is refused outright
 #: rather than half-imported.
 #:
-#: 2 — reminders. Version 1 carried displays, services and widgets, and left
-#: every reminder out: their hours, their rhythms, their melodies and their
-#: targets were not in the file at all. Found by exporting a real
-#: installation and restoring it into an empty one, which is the only way
-#: this kind of hole is ever found.
+#: 2 — reminders, and the quiet hours of each display. Version 1 carried
+#: displays, services and widgets, and left every reminder out: their hours,
+#: their rhythms, their melodies and their targets were not in the file at
+#: all. The quiet window went the same way, and the two belong together —
+#: a reminder's `rings_at_night` is the exception to that window.
+#:
+#: Found by exporting a real installation and restoring it into an empty one,
+#: which is the only way this kind of hole is ever found.
 FORMAT_VERSION = 2
 
 
@@ -43,6 +46,14 @@ class BackupDevice(BaseModel):
     #: In clear text. Re-encrypted with the local key on restore.
     password: str | None = None
     enabled: bool = True
+
+    #: The quiet window, which was left out of format 1 along with the
+    #: reminders — and the two belong together: a reminder's
+    #: `rings_at_night` is the exception to *this*, so restoring one without
+    #: the other restores a rule and loses what it applies to.
+    quiet_hours: bool = False
+    quiet_from: time | None = None
+    quiet_to: time | None = None
 
 
 class BackupConnector(BaseModel):

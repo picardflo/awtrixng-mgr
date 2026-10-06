@@ -397,3 +397,55 @@ class TestAFileWithoutReminders:
             "/api/backup/inspect", json=client.get("/api/backup").json()
         ).json()
         assert summary["reminders"] == 1
+
+
+class TestTheQuietWindow:
+    """The displays' quiet hours, left out of format 1 with the reminders.
+
+    The two belong together, which is why they were fixed together: a
+    reminder's `rings_at_night` is the exception to *this* window. Restoring
+    one without the other brings back the exceptions and loses the rule they
+    apply to — the 06:30 alarm marked "rings anyway" comes home to an
+    installation where nothing is quiet, and the distinction it was given
+    means nothing.
+    """
+
+    def test_it_travels(self, client):
+        build(client)
+        device = client.get("/api/devices").json()[0]
+        client.put(
+            f"/api/devices/{device['id']}/quiet-hours",
+            json={"enabled": True, "start": "22:30:00", "end": "06:45:00"},
+        )
+        saved = client.get("/api/backup").json()["devices"]
+        theirs = next(d for d in saved if d["name"] == device["name"])
+        assert theirs["quiet_hours"] is True
+        assert theirs["quiet_from"] == "22:30:00"
+        assert theirs["quiet_to"] == "06:45:00"
+
+    def test_a_round_trip_brings_it_back(self, client):
+        build(client)
+        device = client.get("/api/devices").json()[0]
+        client.put(
+            f"/api/devices/{device['id']}/quiet-hours",
+            json={"enabled": True, "start": "22:30:00", "end": "06:45:00"},
+        )
+        backup = client.get("/api/backup").json()
+
+        client.put(
+            f"/api/devices/{device['id']}/quiet-hours",
+            json={"enabled": False, "start": "01:00:00", "end": "02:00:00"},
+        )
+        client.post("/api/backup/restore", json=backup)
+
+        after = client.get("/api/devices").json()[0]
+        window = client.get(f"/api/devices/{after['id']}/quiet-hours").json()
+        assert window == {"enabled": True, "start": "22:30:00", "end": "06:45:00"}
+
+    def test_a_display_without_one_restores_without_one(self, client):
+        build(client)
+        backup = client.get("/api/backup").json()
+        client.post("/api/backup/restore", json=backup)
+        for device in client.get("/api/devices").json():
+            window = client.get(f"/api/devices/{device['id']}/quiet-hours").json()
+            assert window["enabled"] is False

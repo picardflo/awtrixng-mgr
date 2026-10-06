@@ -64,6 +64,18 @@ B) fichier courant (format 2) -> reminders 8, kept 0, cibles [1,1,1,1,1,1,1,1]
                                  identiques au détail près : True
 ```
 
+### Un troisième trou, trouvé en vérifiant qu'il n'y en avait pas d'autre
+
+**Les heures calmes de chaque afficheur** n'étaient pas dans le fichier non
+plus. Les deux vont ensemble, et c'est pourquoi ils sont corrigés ensemble :
+le « sonne malgré les heures calmes » d'un rappel est l'exception à *cette*
+fenêtre. Restaurer l'un sans l'autre ramène les exceptions et perd la règle à
+laquelle elles s'appliquent.
+
+La vérification a été faite modèle par modèle plutôt qu'à l'œil : chaque champ
+de `Device`, `ConnectorInstance`, `Widget` et `Reminder` qui n'est pas
+technique est maintenant porté par le fichier.
+
 ### Ce qui marchait, et qui a été vérifié aussi
 
 Afficheurs, services et widgets reviennent **champ par champ**, pas seulement

@@ -94,6 +94,9 @@ def export_configuration(session: SessionDep) -> Backup:
                 username=device.username,
                 password=decrypt(device.password_enc) if device.password_enc else None,
                 enabled=device.enabled,
+                quiet_hours=device.quiet_hours,
+                quiet_from=device.quiet_from,
+                quiet_to=device.quiet_to,
             )
             for device in devices
         ],
@@ -245,6 +248,9 @@ def restore_configuration(backup: Backup, session: SessionDep) -> RestoreResult:
                 # Re-encrypted with *this* installation's key.
                 password_enc=encrypt(entry.password) if entry.password else None,
                 enabled=entry.enabled,
+                quiet_hours=entry.quiet_hours,
+                quiet_from=entry.quiet_from,
+                quiet_to=entry.quiet_to,
             )
             session.add(device)
             session.flush()
