@@ -12,12 +12,24 @@ l'aide-mémoire — elle a été écrite après les avoir tous rencontrés.
                                                        git pull + rebuild
 ```
 
-## En une ligne
+## L'ordre, et il n'est pas négociable
+
+**Gogs d'abord. GitHub seulement une fois validé.**
 
 ```bash
-git push origin master    # Gogs, en continu
-git push github master    # GitHub, quand c'est prêt à être vu
+git push origin master     # 1. Gogs, en continu
+                           # 2. déployer sur la VM, regarder, essayer
+git push github master     # 3. GitHub, APRÈS validation — jamais avant
 ```
+
+Les deux dépôts n'existent que pour ça. Les pousser dans la même foulée les
+ramène à un seul, et supprime la seule étape où une bêtise reste rattrapable :
+sur Gogs elle se corrige par un commit, sur GitHub elle est publique et
+clonable.
+
+Ce qui vaut validation est un essai sur une vraie horloge, pas une suite de
+tests verte. La suite dit que le code fait ce qu'on a écrit ; elle ne dit pas
+que c'était la bonne chose à écrire.
 
 Puis, **sur la VM** :
 
