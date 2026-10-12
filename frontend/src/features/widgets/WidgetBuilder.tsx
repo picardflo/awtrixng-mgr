@@ -143,6 +143,29 @@ export function WidgetBuilder({
   const [name, setName] = useState(
     widget ? widget.name : seed ? t("common.copyOf", { name: seed.name }) : "",
   );
+  /** Whether the name is the person's rather than ours.
+   *
+   *  Editing or duplicating starts from a name somebody chose, so it is
+   *  theirs from the first render. A new widget starts from ours, and ours
+   *  must follow the widget type until they overwrite it.
+   */
+  const [namedByHand, setNamedByHand] = useState(Boolean(widget || seed));
+
+  // The name of the widget type, translated — "Lecture en cours", not
+  // "Now playing", and never the raw descriptor name.
+  //
+  // Left empty, the form used to save `descriptor.name`, which is the
+  // English label written in the Python descriptor. That is where the
+  // "Current weather" sitting on a UV widget came from: the name was not a
+  // leftover from a copy, it was the default, untranslated and unrelated to
+  // what the person had just picked.
+  const typeName = descriptor
+    ? tApi(`widgetType.${descriptor.type}.name`, undefined, descriptor.name)
+    : "";
+
+  useEffect(() => {
+    if (!namedByHand) setName(typeName);
+  }, [typeName, namedByHand]);
   // A widget can appear on several clocks. The data is collected once and the
   // rendering computed once; only the push repeats.
   const [deviceIds, setDeviceIds] = useState<number[]>(
@@ -212,7 +235,7 @@ export function WidgetBuilder({
     setBusy(true);
     try {
       const body = {
-        name: name.trim() || descriptor.name,
+        name: name.trim() || typeName,
         connector_id: connectorId,
         device_ids: deviceIds,
         widget_type: descriptor.type,
@@ -331,7 +354,14 @@ export function WidgetBuilder({
 
         <div className="grid gap-4 sm:grid-cols-3">
           <Field label={t("builder.name")}>
-            <Input value={name} onChange={(event) => setName(event.target.value)} required />
+            <Input
+              value={name}
+              onChange={(event) => {
+                setNamedByHand(true);
+                setName(event.target.value);
+              }}
+              required
+            />
           </Field>
           <Field label={t("builder.devices")} hint={t("builder.devicesHelp")}>
             <div className="flex flex-wrap gap-1.5 pt-1">

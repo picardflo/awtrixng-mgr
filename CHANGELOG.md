@@ -5,6 +5,41 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.17.3]
+
+### Tout widget neuf s'appelait « Current weather »
+
+Florian : « par défaut le widget s'appelle "Current weather" et c'est assez
+nul ».
+
+Le champ Nom partait vide, et à l'enregistrement un nom vide devenait
+`descriptor.name` — **le libellé anglais écrit dans le descripteur Python**,
+celui du premier widget de la liste. Quel que soit le widget choisi.
+
+C'est aussi l'explication d'un mystère de la semaine : son widget Indice UV
+s'appelait « Current weather ». Ce n'était pas un reste de duplication, comme
+je l'avais supposé — c'était la valeur par défaut, en anglais et sans rapport
+avec ce qu'il venait de sélectionner.
+
+Le nom suit maintenant le widget choisi, **traduit** :
+
+```
+à l'ouverture        "Météo actuelle"
+après « Indice UV »  "Indice UV"
+après « Pluie »      "Pluie"
+après saisie         "Mon nom à moi"   ← et il ne bouge plus
+```
+
+La dernière ligne est la moitié qui demandait du soin : un nom que quelqu'un a
+tapé ne doit jamais être écrasé par un changement de type. Modifier ou
+dupliquer part d'un nom choisi, donc il est à lui dès le premier rendu.
+
+Vérifié dans l'interface réelle, pas sur relecture. Le premier essai disait
+que ça ne marchait pas : il passait des types de widgets n'appartenant pas au
+service sélectionné, et un `catch` masquait l'échec. Un test qui avale ses
+erreurs ment dans les deux sens.
+
+
 ## [0.17.2]
 
 ### Une carte de service affichait `{reason}` entre accolades
