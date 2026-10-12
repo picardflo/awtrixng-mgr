@@ -78,3 +78,12 @@ Thumbs.db
 *.log
 /tmp/
 .cache/
+
+# Secrets posés à la main à la racine. Larges exprès : un fichier de clés
+# oublié dans un `git add -A` part dans un dépôt public, et une clé publiée
+# est une clé à révoquer, pas à retirer.
+.secrets
+.secrets.*
+*.secret
+*.key
+!**/*.key.example

@@ -5,6 +5,31 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.16.5]
+
+### Un fichier de clés à la racine, que git voyait
+
+Florian a posé sa clé d'API Tautulli dans un `.secrets` à la racine et l'a
+signalé. Le fichier **n'était pas ignoré** : il apparaissait en `??` dans
+`git status`, et le dépôt est désormais public.
+
+Un `git add -A` l'aurait publié. C'est la commande utilisée à chaque commit de
+ce projet.
+
+Vérifié avant de corriger : la clé n'apparaît **dans aucun commit**, local ou
+publié. Le `.gitignore` couvre maintenant `.secrets`, `.secrets.*`, `*.secret`
+et `*.key`, largement exprès — une clé publiée est une clé à révoquer, pas à
+retirer, et le coût d'ignorer trop est nul.
+
+Le fichier est aussi passé en `600` : il était lisible par tous les comptes de
+la machine.
+
+**Ce n'est pas la façon de faire du projet**, et ça vaut d'être redit : les
+identifiants se saisissent dans l'interface, sont chiffrés en base avec la clé
+de l'installation, et ne traversent jamais un fichier du dépôt. C'est pour
+cette raison exacte que `secrets.example.md` avait été supprimé en 0.11.3.
+
+
 ## [0.16.4]
 
 ### `docs/circuit.md` — développer, publier, déployer
