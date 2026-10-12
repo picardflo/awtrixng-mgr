@@ -44,3 +44,5 @@ Les routes sont en `/api/v1/`, que le firmware AWTRIX 3 ne connaît pas. Une
 horloge restée en 0.98 répondra donc 404 et sera signalée injoignable — elle ne
 risque rien, mais elle ne marchera pas. Pour celles-là, l'ancêtre
 Le projet précédent reste en service.
+
+- [Plex, par Tautulli](Widget-Plex.md) — lecture en cours et flux actifs

@@ -399,6 +399,62 @@ SCHOOL = {
 }
 
 
+#: Tautulli, pour la démonstration. Deux flux : un film et un épisode, parce
+#: que les deux formes de titre sont le problème que ce widget résout — un
+#: film n'a pas de saison, un épisode a un titre qui ne tient nulle part.
+#:
+#: Le film est « Le Voyage dans la Lune » (1902), tombé dans le domaine
+#: public : une démonstration ne doit rien emprunter à personne.
+TAUTULLI = {
+    "response": {
+        "result": "success",
+        "data": {
+            "stream_count": 2,
+            "stream_count_transcode": 1,
+            "stream_count_direct_play": 1,
+            "total_bandwidth": 18400,
+            "sessions": [
+                {
+                    "media_type": "movie",
+                    "state": "playing",
+                    "full_title": "Le Voyage dans la Lune",
+                    "title": "Le Voyage dans la Lune",
+                    "year": "1902",
+                    "progress_percent": "62",
+                    "friendly_name": "salon",
+                    "player": "Chromecast",
+                },
+                {
+                    "media_type": "episode",
+                    "state": "paused",
+                    "full_title": "Une série démo - Le pilote qui n'en finit pas",
+                    "title": "Le pilote qui n'en finit pas",
+                    "grandparent_title": "Une série démo",
+                    "parent_media_index": "2",
+                    "media_index": "7",
+                    "year": "2024",
+                    "progress_percent": "18",
+                    "friendly_name": "bureau",
+                    "player": "Plex Web",
+                },
+            ],
+        },
+    }
+}
+
+
+async def tautulli(request: Request) -> JSONResponse:
+    """`get_activity`, et rien d'autre : c'est tout ce que le connecteur
+    appelle. Une clé manquante est refusée comme le vrai le fait — avec un
+    200 et `result: error`, ce qui est précisément le piège que le connecteur
+    doit savoir reconnaître."""
+    if not request.query_params.get("apikey"):
+        return JSONResponse(
+            {"response": {"result": "error", "message": "Invalid apikey"}}
+        )
+    return JSONResponse(TAUTULLI)
+
+
 async def school(request: Request) -> JSONResponse:
     return JSONResponse(SCHOOL)
 
@@ -445,5 +501,6 @@ app = Starlette(
         Route("/v1/search", geocode),
         Route("/fuel", fuel),
         Route("/air", air_quality),
+        Route("/plex/api/v2", tautulli),
     ]
 )

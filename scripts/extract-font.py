@@ -25,7 +25,8 @@ H = f"http://{_PANEL}/api/v1"
 def call(m, p, b=None):
     d = json.dumps(b, ensure_ascii=False).encode("utf-8") if b is not None else None
     r = urllib.request.Request(f"{H}{p}", data=d, method=m)
-    if d: r.add_header("Content-Type", "application/json")
+    if d:
+        r.add_header("Content-Type", "application/json")
     try:
         with urllib.request.urlopen(r, timeout=10) as x:
             return json.loads(x.read() or b"{}")

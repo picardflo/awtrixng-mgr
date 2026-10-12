@@ -11,6 +11,8 @@ whose screenshots show "Widget 1" and "Connector 2" teaches nothing.
 import httpx
 
 OFFICE_PORT, LIVING_PORT = 9101, 9102
+#: La fausse amont, qui sert aussi le Tautulli de démonstration.
+METEO_PORT = 9100
 
 
 async def seed(base: str, password: str = "") -> None:
@@ -39,6 +41,14 @@ async def seed(base: str, password: str = "") -> None:
         })
         lune = await _post(http, "/api/connectors", {
             "type": "moon", "name": "Lune", "config": {},
+        })
+        # Le seul service de la démonstration qui porte un identifiant. Il est
+        # factice, et c'est l'occasion de montrer qu'un secret ne ressort
+        # jamais de l'API une fois enregistré.
+        plex = await _post(http, "/api/connectors", {
+            "type": "tautulli", "name": "Plex",
+            "config": {"url": f"http://127.0.0.1:{METEO_PORT}/plex", "verify_tls": False},
+            "secrets": {"api_key": "cle-de-demonstration"},
         })
         # Two fuels checked, four left out: a RAV4 runs on SP95-E10 and SP98,
         # and the columns for the rest are never even asked for.
@@ -121,6 +131,22 @@ async def seed(base: str, password: str = "") -> None:
             "refresh_seconds": 1800,
             "display": {"text": "UV {{ uv | round }}", "duration": 8,
                         "font": "large", "show_progress": True},
+        })
+        # Deux flux tournent dans la démonstration : un film et un épisode.
+        # Le titre complet défile, d'où la durée allongée — mesuré à 11 s sur
+        # une dalle réelle.
+        await _post(http, "/api/widgets", {
+            "name": "Plex", "connector_id": plex["id"],
+            "widget_type": "tautulli.now_playing", "device_ids": [salon["id"]],
+            "refresh_seconds": 30,
+            "display": {"text": "{{ title }}", "duration": 14,
+                        "font": "small", "show_progress": True},
+        })
+        await _post(http, "/api/widgets", {
+            "name": "Flux Plex", "connector_id": plex["id"],
+            "widget_type": "tautulli.streams", "device_ids": [bureau["id"]],
+            "refresh_seconds": 30,
+            "display": {"text": "{{ streams }}", "duration": 8, "font": "small"},
         })
         await _post(http, "/api/widgets", {
             "name": "Humidité extérieure", "connector_id": meteo["id"],

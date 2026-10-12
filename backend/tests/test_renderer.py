@@ -344,7 +344,7 @@ def _fills_the_bottom_row(widget) -> bool:
 #: and the European index does reach three digits; `air.py` says so and this
 #: project has already been caught treating it as a scale out of a hundred.
 #: A widget that scrolls on exactly the day it matters is the wrong trade.
-NARROW_ON_PURPOSE = {"weather.air"}
+NARROW_ON_PURPOSE = {"weather.air", "tautulli.now_playing"}
 
 
 class TestTheFontRule:

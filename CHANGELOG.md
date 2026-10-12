@@ -5,6 +5,82 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.17.0]
+
+### Plex, par Tautulli
+
+Florian : « peux-tu me faire une rapide maquette pour un widget Plex : lecture
+en cours ? » — puis, avant toute ligne de code : « c'est la longueur du texte
+qui me fait peur ! teste d'abord avant de coder ! »
+
+Il avait raison, et la mesure sur son propre serveur l'a chiffré :
+
+```
+full_title  "Naruto Shippuden Yabai - Les Kage entrent en scène"
+            50 caractères · 185 colonnes pour les 23 disponibles
+            11,0 s pour défiler une fois
+```
+
+**La durée par défaut d'un widget est de 7 à 8 secondes.** Le titre complet
+n'aurait donc jamais le temps de finir : l'app passe la main au milieu d'un
+mot. Mesuré sur la dalle, pas calculé — l'estimation théorique donnait 2,1 s,
+cinq fois trop peu.
+
+Ce widget démarre donc à **14 secondes**, seul de tout le projet, et la forme
+courte `{{ label }}` — `S03E16`, ou l'année pour un film — reste disponible
+pour qui préfère un texte fixe. C'est le seul qui tienne sans bouger : 23
+colonnes pour 23 disponibles.
+
+### Deux widgets, un seul appel
+
+**Lecture en cours** — l'icône porte l'état (▶ ⏸ ⏹), la barre porte la
+progression, le texte porte le reste. Quand plusieurs personnes regardent, le
+widget passe d'un flux à l'autre à chaque rafraîchissement : la rotation se
+déduit de l'heure, donc elle ne garde rien en mémoire et le même widget sur
+deux horloges montre le même flux.
+
+**Flux actifs** — avec le détail transcodage / lecture directe. C'est le
+transcodage qui compte : un flux lu directement ne coûte presque rien, un flux
+transcodé fait recalculer chaque image.
+
+Les deux disparaissent de la rotation quand personne ne regarde. Une horloge
+qui affiche `0` toute la soirée est pire qu'une horloge qui n'affiche rien.
+
+### Les pannes d'un serveur domestique, nommées une par une
+
+Une clé refusée, un conteneur arrêté et un certificat rejeté sont
+indiscernables depuis un widget devenu blanc, et demandent trois corrections
+différentes. Chacune a son code et son message.
+
+Dont un piège : **Tautulli refuse une mauvaise clé avec un 200** et
+`result: error`. Le code de statut seul ne distingue donc pas le succès du
+refus — c'est exactement la forme qui fait qu'un connecteur annonce
+« connecté » au-dessus de rien.
+
+### Et la suite a attrapé trois fautes dans ce qui venait d'être écrit
+
+- `tautulli.streams` utilisait la grande police **sans barre** : mesuré, elle
+  s'assoit une rangée trop haut. Passée en petite.
+- `tautulli.now_playing` utilise la petite police **avec** barre, ce qui
+  demande une entrée dans `NARROW_ON_PURPOSE` — avec sa mesure à côté.
+- Les huit codes d'erreur n'avaient aucune traduction, et seraient remontés en
+  anglais à l'utilisateur.
+
+Puis le test d'internationalisation a refusé « Plex (via Tautulli) », identique
+dans les deux catalogues. Il avait raison de s'en méfier, même si c'étaient
+deux noms propres : le français dit « Plex, par Tautulli ».
+
+### Éprouvé contre le vrai serveur
+
+Connexion, les deux widgets, les douze variables, **et les deux chemins
+d'erreur** — clé erronée nommée comme telle, certificat strict qui échoue, ce
+qui est précisément ce qui justifie l'option de ne pas le vérifier.
+
+La démonstration porte aussi un Plex factice, avec deux flux — un film et un
+épisode, parce que les deux formes de titre sont le problème que ce widget
+résout.
+
+
 ## [0.16.5]
 
 ### Un fichier de clés à la racine, que git voyait
