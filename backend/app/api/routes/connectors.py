@@ -146,11 +146,28 @@ async def test_connector(instance: InstanceDep, session: SessionDep) -> Connecto
     finally:
         await connector.aclose()
 
-    instance.status = HealthStatus.HEALTHY
-    instance.last_success = utcnow()
-    instance.last_error = None
-    instance.last_error_code = None
-    instance.consecutive_failures = 0
+    # **`result.ok`, not "it returned without raising".**
+    #
+    # A well-written connector does not raise when the service answers badly:
+    # it returns `ok=False` with a code the interface can translate. That is
+    # the contract of `Connector.test_connection`, and three of them honour it
+    # — fuel with "no station within the radius", the school calendar, and
+    # Tautulli with a refused key or a certificate it cannot verify.
+    #
+    # Keying on the exception alone therefore stamped HEALTHY on every one of
+    # those. Florian saw it on a Tautulli whose certificate was rejected: the
+    # toast said unreachable and the badge beside it said "En ligne".
+    if not result.ok:
+        instance.status = HealthStatus.ERROR
+        instance.last_error = result.message
+        instance.last_error_code = result.code
+        instance.consecutive_failures += 1
+    else:
+        instance.status = HealthStatus.HEALTHY
+        instance.last_success = utcnow()
+        instance.last_error = None
+        instance.last_error_code = None
+        instance.consecutive_failures = 0
     session.add(instance)
     session.commit()
     return result

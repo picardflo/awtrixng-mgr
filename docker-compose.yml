@@ -17,6 +17,11 @@ services:
       AWTRIXNG_SECURE_COOKIE: ${AWTRIXNG_SECURE_COOKIE:-true}
     volumes:
       - ./data:/data
+      # Autorités de certification de votre réseau. À décommenter si vos
+      # services internes (Tautulli, Plex…) sont en HTTPS avec une CA à vous :
+      # le conteneur a son propre magasin et ne connaît pas celui de l'hôte.
+      # Elles sont AJOUTÉES aux autorités publiques, pas substituées.
+      # - /usr/local/share/ca-certificates:/usr/local/share/ca-certificates:ro
     networks:
       - home.docker
 

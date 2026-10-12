@@ -15,10 +15,15 @@ the interpreter is already there.
 
 import os
 import pwd
+import subprocess
 import sys
 from pathlib import Path
 
 APP_USER = "awtrixng-mgr"
+
+#: Where Debian expects extra authorities, and where a `volumes:` line puts
+#: a home network's own root CA.
+EXTRA_CA_DIR = Path("/usr/local/share/ca-certificates")
 
 
 def own_tree(root: Path, uid: int, gid: int) -> None:
@@ -45,6 +50,44 @@ def drop_privileges(entry: pwd.struct_passwd) -> None:
     os.environ["USER"] = entry.pw_name
 
 
+def trust_mounted_authorities() -> None:
+    """Add any mounted certificate authority to the system store.
+
+    A self-hosted service on a private network is usually served by a
+    certificate from the household's own authority. The host trusts it; the
+    container has its own filesystem and does not, so every outbound HTTPS
+    call to the LAN fails verification — and the only answer left is to turn
+    verification off per service, which is the wrong one.
+
+    So the authority is **added** here, never substituted: replacing the store
+    would take the public roots with it, and Open-Meteo would stop answering
+    on the same day. `update-ca-certificates` appends.
+
+    Silent when nothing is mounted, which is the ordinary case. A failure is
+    reported and not fatal: a container that refuses to start because one
+    certificate is malformed is worse than one that starts without it and says
+    so in its log.
+    """
+    if os.geteuid() != 0:
+        return
+    try:
+        found = sorted(EXTRA_CA_DIR.glob("*.crt"))
+    except OSError:
+        return
+    if not found:
+        return
+    try:
+        subprocess.run(
+            ["update-ca-certificates"],
+            check=True, capture_output=True, text=True, timeout=60,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        print(f"entrypoint: could not trust {EXTRA_CA_DIR}: {exc}", file=sys.stderr)
+        return
+    print(f"entrypoint: trusting {len(found)} mounted authority(ies): "
+          f"{', '.join(p.name for p in found)}")
+
+
 def main(argv: list[str]) -> None:
     if not argv:
         print("entrypoint: no command to run", file=sys.stderr)
@@ -60,6 +103,9 @@ def main(argv: list[str]) -> None:
         pass  # the access check below will produce a useful message
 
     if os.geteuid() == 0:
+        # Before dropping privileges: writing to the system store needs root,
+        # and the process that serves traffic never is.
+        trust_mounted_authorities()
         entry = pwd.getpwnam(APP_USER)
         own_tree(data_dir, entry.pw_uid, entry.pw_gid)
         drop_privileges(entry)

@@ -5,6 +5,56 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.17.1]
+
+### La pastille disait « en ligne » au-dessus d'un test qui échouait
+
+Florian, capture à l'appui : son Tautulli refusait le certificat, le message
+le disait précisément — et la pastille à côté affichait **En ligne**.
+
+Ce n'était pas le connecteur. `POST /connectors/{id}/test` marquait le service
+sain dès que `test_connection()` **retournait**, au lieu de regarder
+`result.ok`. Or un connecteur correct ne lève pas quand le service répond
+mal : il retourne `ok=False` avec un code traduisible, et c'est le contrat de
+la classe de base.
+
+**Trois connecteurs sur cinq honoraient ce contrat** — carburants avec « aucune
+station dans le rayon », calendrier scolaire, et Tautulli avec une clé refusée
+ou un certificat non vérifiable. Tous les trois étaient badgés sains après un
+test raté.
+
+Éprouvé en remettant la faute : le test échoue sur `'healthy' == 'error'`.
+
+### Faire confiance à une autorité de certification interne
+
+Un service auto-hébergé sur un réseau privé est souvent servi par une autorité
+appartenant au foyer. L'hôte lui fait confiance ; **le conteneur a son propre
+magasin** et l'ignore. Toute vérification échoue, et la seule issue apparente
+est de décocher « vérifier le certificat » service par service — ce qui est la
+mauvaise, puisqu'elle renonce à la vérification pour toujours.
+
+Une ligne dans `docker-compose.yml` monte l'autorité, et l'entrypoint
+l'**ajoute** au magasin avant d'abandonner ses privilèges :
+
+```yaml
+- /usr/local/share/ca-certificates:/usr/local/share/ca-certificates:ro
+```
+
+Ajoutée, jamais substituée : remplacer le magasin emporterait les racines
+publiques, et Open-Meteo cesserait de répondre le même jour. L'écriture
+demande root, d'où le placement avant la bascule — et la fonction ne fait rien
+du tout si elle est appelée après, ce qu'un test vérifie.
+
+Silencieuse quand rien n'est monté, et une panne y est signalée sans être
+fatale : un conteneur qui refuse de démarrer parce qu'un certificat est mal
+formé est pire qu'un conteneur qui démarre sans et le dit dans son journal.
+
+**Non vérifié ici** : pas de Docker sur la machine de développement, donc la
+présence d'`update-ca-certificates` dans `python:3.13-slim` reste à confirmer
+sur la VM — `docker compose exec awtrixng-mgr-backend which
+update-ca-certificates`.
+
+
 ## [0.17.0]
 
 ### Plex, par Tautulli

@@ -4,6 +4,38 @@ Le modèle de menace d'awtrixng-mgr : un LAN domestique, derrière un reverse-pr
 et une sauvegarde qu'on ne veut pas voir partir. Pas une exposition sur
 Internet.
 
+## Un service interne en HTTPS avec votre propre autorité
+
+Si vos services internes sont servis par une autorité de certification à vous,
+le conteneur ne la connaît pas : il a son propre magasin, indépendant de celui
+de la machine hôte. Toute vérification échoue, et la seule issue apparente est
+de décocher « vérifier le certificat » service par service — ce qui est la
+mauvaise.
+
+Montez plutôt votre autorité, une fois, dans `docker-compose.yml` :
+
+```yaml
+volumes:
+  - ./data:/data
+  - /usr/local/share/ca-certificates:/usr/local/share/ca-certificates:ro
+```
+
+Elle est **ajoutée** aux autorités publiques, jamais substituée : remplacer le
+magasin emporterait les racines publiques, et les services météo cesseraient
+de répondre le même jour.
+
+Au démarrage, le journal le confirme :
+
+```
+entrypoint: trusting 1 mounted authority(ies): home.lan.crt
+```
+
+Vérifiez que l'outil est présent dans l'image si rien ne s'affiche :
+
+```bash
+docker compose exec awtrixng-mgr-backend which update-ca-certificates
+```
+
 ## Le mot de passe
 
 ![Écran de connexion](../screenshots/connexion.png)

@@ -97,3 +97,60 @@ def test_disabling_a_service(client):
 
 def test_editing_an_unknown_service_is_404(client):
     assert client.patch("/api/connectors/999", json={"name": "x"}).status_code == 404
+
+
+class TestTestingSaysWhatItFound:
+    """The badge must agree with the message beside it.
+
+    A connector that cannot reach its service does not raise — it returns
+    `ok=False` with a translatable code, which is the contract of
+    `Connector.test_connection` and what lets the interface say *why*. The
+    route used to key on the exception alone, so every one of those honest
+    refusals was stamped HEALTHY.
+
+    Florian found it on a Tautulli whose certificate was rejected: a toast
+    reading "injoignable" over a badge reading "En ligne".
+    """
+
+    def service(self, client):
+        return client.post(
+            "/api/connectors",
+            json={
+                "type": "tautulli",
+                "name": "Plex",
+                "config": {"url": "https://nowhere.invalid", "verify_tls": True},
+                "secrets": {"api_key": "k" * 32},
+            },
+        ).json()
+
+    def test_a_refusal_marks_the_service_in_error(self, client):
+        instance = self.service(client)
+        result = client.post(f"/api/connectors/{instance['id']}/test").json()
+        assert result["ok"] is False
+
+        after = client.get(f"/api/connectors/{instance['id']}").json()
+        assert after["status"] == "error", "badged healthy over a failed test"
+        assert after["last_error_code"] == result["code"]
+
+    def test_the_failure_is_counted(self, client):
+        """So that a service failing again and again looks different from one
+        that failed once."""
+        instance = self.service(client)
+        for _ in range(2):
+            client.post(f"/api/connectors/{instance['id']}/test")
+        after = client.get(f"/api/connectors/{instance['id']}").json()
+        assert after["consecutive_failures"] >= 2
+
+    def test_a_success_clears_what_a_failure_left(self, client):
+        """The other direction: a service that comes back must stop showing
+        the error that was true an hour ago."""
+        instance = client.post(
+            "/api/connectors", json={"type": "moon", "name": "Lune", "config": {}}
+        ).json()
+        result = client.post(f"/api/connectors/{instance['id']}/test").json()
+        assert result["ok"] is True
+
+        after = client.get(f"/api/connectors/{instance['id']}").json()
+        assert after["status"] == "healthy"
+        assert after["last_error_code"] is None
+        assert after["consecutive_failures"] == 0
