@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { detectLocale, interpolate, LOCALES } from "./index";
+import { detectLocale, interpolate, LOCALES , translateApi } from "./index";
 import { en } from "./messages.en";
 import { fr } from "./messages.fr";
 
@@ -103,5 +103,39 @@ describe("catalogues", () => {
       (key) => !key.endsWith(".placeholder") && isPhrase(en[key]) && fr[key] === en[key],
     );
     expect(untranslated).toEqual([]);
+  });
+});
+
+describe("translateApi", () => {
+  const FR = "Tautulli est injoignable ({reason}).";
+  const EN_FALLBACK = "Tautulli is unreachable: certificate verify failed.";
+
+  it("translates when it has the parameters", () => {
+    expect(translateApi(FR, { reason: "refusé" }, EN_FALLBACK)).toBe(
+      "Tautulli est injoignable (refusé).",
+    );
+  });
+
+  it("falls back rather than show a placeholder", () => {
+    // The stored form of an error keeps its code and loses its parameters, so
+    // this is the ordinary case on a service card — not an edge one.
+    expect(translateApi(FR, undefined, EN_FALLBACK)).toBe(EN_FALLBACK);
+  });
+
+  it("still translates a message that needs nothing", () => {
+    const simple = "Tautulli a refusé la clé d'API.";
+    expect(translateApi(simple, undefined, "whatever")).toBe(simple);
+  });
+
+  it("keeps the hole when there is nothing better", () => {
+    // Showing `{reason}` is poor; showing an empty card is worse — at least
+    // the code tells a reader which error it was.
+    expect(translateApi(FR, undefined, "")).toBe(FR);
+  });
+
+  it("falls back on a code it does not know", () => {
+    expect(translateApi(undefined, undefined, "from the backend")).toBe(
+      "from the backend",
+    );
   });
 });

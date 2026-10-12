@@ -5,6 +5,45 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.17.2]
+
+### Une carte de service affichait `{reason}` entre accolades
+
+Trouvé par Florian, capture à l'appui, sur un Tautulli dont le certificat
+n'était pas vérifiable. La bulle disait précisément ce qui n'allait pas ; la
+carte à côté affichait littéralement le mot `{reason}`.
+
+La cause est systémique, pas locale. La forme stockée d'une erreur garde son
+**code** et perd ses **paramètres** : `last_error_code` est une colonne, pas
+ce qui l'accompagnait. Six endroits de l'interface rendent exactement ça, en
+passant `undefined` pour les paramètres — et **28 messages traduits portent un
+paramètre**. N'importe lequel affichait un trou.
+
+Corrigé en un seul point, `tApi` : si la traduction contient encore un
+`{…}` après substitution, c'est la phrase anglaise du backend qui est
+affichée — elle a toujours ses valeurs déjà interpolées. Une phrase anglaise
+qui dit ce qui s'est passé vaut mieux qu'une phrase française avec un trou
+dedans : c'est le seul texte qui dise quoi réparer.
+
+La fonction est sortie de la fermeture pour être éprouvée directement, avec le
+cas limite : s'il n'y a **rien** de mieux à afficher, le trou reste — un code
+entre accolades vaut encore mieux qu'une carte vide.
+
+### Et la bonne réponse au certificat n'était pas la mienne
+
+Je proposais de monter l'autorité interne dans le conteneur. Florian a fait
+mieux : **`http://tautulli:8181`**, le nom du conteneur sur le réseau Docker
+qu'ils partagent.
+
+Le diagnostic restait juste — c'était bien la vérification du certificat qui
+refusait, pas le routage. Mais entre deux conteneurs du même réseau, il n'y a
+aucune raison de passer par TLS : le trafic ne quitte pas le pont, donc on ne
+contourne pas la vérification, il n'y a plus rien à vérifier.
+
+L'aide du champ le dit désormais. Le montage d'autorité ajouté en 0.17.1 reste
+utile pour un service qui n'est **pas** sur le même réseau.
+
+
 ## [0.17.1]
 
 ### La pastille disait « en ligne » au-dessus d'un test qui échouait

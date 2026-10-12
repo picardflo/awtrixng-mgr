@@ -71,6 +71,33 @@ export function interpolate(template: string, params?: Params): string {
   });
 }
 
+/** Translate an API code — but never hand back a hole. Exported for tests.
+ *
+ *  Twenty-eight of these messages carry a placeholder, and the stored form of
+ *  an error keeps only its code: `last_error_code` is a column, the parameters
+ *  that went with it are not. Six places render exactly that, and each passed
+ *  `undefined` for the parameters.
+ *
+ *  So a service that failed with "Tautulli is unreachable ({reason})" showed,
+ *  on its card, the word `{reason}` in braces. Florian found it on a
+ *  certificate his container could not verify: the toast, which does have the
+ *  parameters, said what was wrong; the card beside it said nothing at all.
+ *
+ *  The fallback is the backend's own English sentence, which always has its
+ *  values already interpolated. An English sentence that says what happened
+ *  beats a French one with a gap in it — this message is the one thing telling
+ *  someone what to fix.
+ */
+export function translateApi(
+  message: string | undefined,
+  params: Params | undefined,
+  fallback: string,
+): string {
+  if (message === undefined) return fallback;
+  const translated = interpolate(message, params);
+  return /\{\w+\}/.test(translated) && fallback ? fallback : translated;
+}
+
 interface I18n {
   locale: Locale;
   setLocale: (locale: Locale) => void;
@@ -118,7 +145,11 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       interpolate(messages[key] ?? en[key] ?? key, params);
 
     const tApi = (code: string, params: Params | undefined, fallback: string) =>
-      code in en ? t(code as MessageKey, params) : fallback;
+      translateApi(
+        code in en ? (messages[code as MessageKey] ?? en[code as MessageKey]) : undefined,
+        params,
+        fallback,
+      );
 
     return { locale, setLocale, t, tApi };
   }, [locale, setLocale]);

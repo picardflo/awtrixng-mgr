@@ -392,7 +392,7 @@ export const fr: Record<MessageKey, string> = {
   "connector.tautulli.name": "Plex, par Tautulli",
   "connector.tautulli.description": "Ce qui passe en ce moment sur Plex, et combien de personnes regardent. Via Tautulli, le compagnon de statistiques de Plex.",
   "field.tautulli.url.label": "Adresse de Tautulli",
-  "field.tautulli.url.help": "Celle que vous ouvrez dans un navigateur, sans /home.",
+  "field.tautulli.url.help": "Celle que vous ouvrez dans un navigateur, sans /home. Si Tautulli tourne sur le même réseau Docker, préférez son nom de conteneur en HTTP — http://tautulli:8181 — : pas de TLS à vérifier, et le trafic ne quitte pas le pont.",
   "field.tautulli.api_key.label": "Clé d'API",
   "field.tautulli.api_key.help": "Tautulli, Réglages → Interface web → API. Stockée chiffrée.",
   "field.tautulli.verify_tls.label": "Vérifier le certificat",

@@ -410,7 +410,7 @@ export const en = {
   "connector.tautulli.name": "Plex (via Tautulli)",
   "connector.tautulli.description": "What is playing on Plex right now, and how many are watching. Through Tautulli, Plex's statistics companion.",
   "field.tautulli.url.label": "Tautulli address",
-  "field.tautulli.url.help": "The address you open in a browser, without /home.",
+  "field.tautulli.url.help": "The address you open in a browser, without /home. If Tautulli runs on the same Docker network, prefer its container name over HTTP — http://tautulli:8181 — : no TLS to verify, and the traffic never leaves the bridge.",
   "field.tautulli.api_key.label": "API key",
   "field.tautulli.api_key.help": "Tautulli, Settings → Web Interface → API. Stored encrypted.",
   "field.tautulli.verify_tls.label": "Verify the certificate",

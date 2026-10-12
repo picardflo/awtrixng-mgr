@@ -42,7 +42,16 @@ class TautulliConnector(Connector):
                 type="url",
                 required=True,
                 placeholder="https://tautulli.lan",
-                help="The address you open in a browser, without /home.",
+                # Le nom de conteneur plutôt que l'adresse publique quand les
+                # deux tournent sur le même réseau Docker : le trafic ne sort
+                # pas du pont, donc il n'y a ni TLS à vérifier ni autorité à
+                # monter. C'est ce que Florian a trouvé, et c'est mieux que la
+                # confiance en une CA interne, qui reste utile pour un service
+                # qui n'est pas sur le même réseau.
+                help=(
+                    "The address you open in a browser, without /home. On the "
+                    "same Docker network, prefer the container name over HTTP."
+                ),
             ),
             FormField(
                 name="api_key",
