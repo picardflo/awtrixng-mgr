@@ -36,11 +36,25 @@ https://steamcommunity.com/id/unPseudo/      l'URL, telle qu'on la copie
 > « Tester la connexion » affiche **toujours** l'identifiant résolu à côté du
 > nom, précisément pour que vous puissiez les comparer.
 
-### Un réglage à faire côté Steam
+### Les réglages à faire côté Steam
 
-Dans **Profil → Modifier le profil → Confidentialité**, les **détails du jeu**
-doivent être **publics**. C'est le seul réglage qui compte ici, et sans lui
-l'API ne dit jamais à quoi vous jouez — y compris à vous-même.
+Dans **Profil → Modifier le profil → Options de confidentialité**, **deux**
+listes doivent être sur **tout le monde** :
+
+| Réglage | Pourquoi |
+|---|---|
+| **Visibilité de mon profil** | une sous-visibilité ne peut pas dépasser celle du profil qui la contient |
+| **Visibilité sur mes jeux** | c'est elle qui couvre le statut « en jeu », le titre du jeu **et les succès** |
+
+La première est facile à oublier : l'API refuse alors les succès avec un
+littéral *« Profile is not public »*, même quand la seconde est déjà ouverte.
+
+**En revanche, la case « Garder le temps total de jeu privé, même si mes
+détails de jeux sont publics » ne gêne pas.** Mesuré : cochée, les succès
+passent quand même. Vous pouvez garder votre temps de jeu pour vous.
+
+Votre **liste de contacts** et votre **inventaire** ont leurs propres
+réglages, qui n'entrent pas en jeu ici — laissez-les comme vous les voulez.
 
 « Tester la connexion » répond en vous nommant, et en nommant le jeu si vous
 êtes en train d'en lancer un. Une clé refusée se dit comme une clé refusée, et

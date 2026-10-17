@@ -5,6 +5,24 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.20.3]
+
+### Deux réglages Steam, pas un — et une case à cocher qui ne gêne pas
+
+La 0.20.2 n'en documentait qu'un. Mesuré sur le compte de Florian, il en faut
+**deux** sur « tout le monde » : *Visibilité de mon profil* **et** *Visibilité
+sur mes jeux*. Une sous-visibilité ne peut pas dépasser celle du profil qui la
+contient, et c'est le premier qui manquait — d'où le littéral *« Profile is
+not public »* alors que le second était déjà ouvert.
+
+**La case « Garder le temps total de jeu privé » ne bloque rien.** Je l'avais
+annoncée comme un risque ; Florian l'a cochée, les succès sont passés quand
+même — `16/43`. La mise en garde est retirée plutôt que laissée « au cas où » :
+elle aurait poussé quelqu'un à ouvrir sa vie privée pour rien.
+
+La liste de contacts et l'inventaire n'entrent pas en jeu non plus, et le
+manuel le dit maintenant.
+
 ## [0.20.2]
 
 ### « Succès » pouvait rester vide pour toujours sans rien dire
