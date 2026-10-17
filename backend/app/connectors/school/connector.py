@@ -29,6 +29,48 @@ CACHE_SECONDS = 6 * 3600
 #: "Time for school" — checked against the artwork, not picked by its name.
 ICON = "2536"
 
+#: One animated icon per holiday period, and the weather NG draws over the
+#: text for the two that have one. Florian's idea: « plutôt qu'un compteur
+#: 16j à 0, une petite animation — feuille orangée avec du vent pour
+#: l'automne, un père Noël qui défile avec son traîneau pour Noël ».
+#:
+#: Matched on the period's name because that is what the Ministry publishes,
+#: and it is stable: "Vacances de la Toussaint", "Vacances de Noël". The key
+#: is a word that cannot appear in another period's name.
+#:
+#: Every one was pushed to a TC001 and read back before being chosen. Two
+#: were rejected there: a flower that renders as white and red blocks at
+#: eight pixels, and a counter with no icon at all, where the snow falls
+#: across scrolling text and makes it harder to read rather than prettier.
+#:
+#: The overlay is the part that costs nothing: snow is drawn by the firmware,
+#: over the text, and the counter stays legible underneath — measured.
+SEASONS: dict[str, tuple[str, str | None, str]] = {
+    # mot-clé        icône    surimpression  couleur
+    "toussaint": ("70643", None, "#ff8f80"),
+    "noël": ("24817", "snow", "#79c0ff"),
+    "noel": ("24817", "snow", "#79c0ff"),
+    "hiver": ("33131", "snow", "#79c0ff"),
+    "printemps": ("40484", None, "#ff9ecb"),
+    "été": ("27253", None, "#ffb65c"),
+    "ete": ("27253", None, "#ffb65c"),
+    "ascension": ("37677", None, "#6ee7a0"),
+}
+
+
+def season_for(name: str) -> tuple[str, str | None, str] | None:
+    """The icon, overlay and colour of a named holiday period.
+
+    None for a name no release of the dataset has used yet — a period this
+    code has never heard of keeps the ordinary school icon rather than
+    borrowing the wrong season's.
+    """
+    lowered = (name or "").lower()
+    for keyword, season in SEASONS.items():
+        if keyword in lowered:
+            return season
+    return None
+
 #: The letter is the one fact this widget exists to give, and a colour is read
 #: before a word is. Cyan and violet rather than two neighbouring shades: at
 #: eight pixels, across a room, close colours are one colour.
@@ -112,6 +154,21 @@ class SchoolConnector(Connector):
                         label="Days to the next holiday",
                         example="12",
                     ),
+                    Variable(
+                        name="days_to_school",
+                        label="Days until school resumes — only during the holidays",
+                        example="16",
+                    ),
+                    Variable(
+                        name="countdown",
+                        label="Whichever of the two is the one worth showing today",
+                        example="16",
+                    ),
+                    Variable(
+                        name="season",
+                        label="The period being counted, which sets the icon",
+                        example="Vacances de Noël",
+                    ),
                 ],
                 default_display=DisplayOptions(
                     # `{{ summary }}` reads "Semaine A", which is nine
@@ -191,6 +248,7 @@ class SchoolConnector(Connector):
         semaine = cal.week_days(day, periods)
         upcoming = cal.next_holiday(periods, day)
 
+        back_in = None
         if holiday is not None:
             # Counting to the morning school resumes, which is the day after
             # the last day off.
@@ -201,6 +259,13 @@ class SchoolConnector(Connector):
         else:
             summary = _t("week", letter=letter) if letter else ""
 
+        # The season belongs to the period being counted: the one we are in
+        # during the holidays, the one we are waiting for during term. So the
+        # sleigh appears in December while school is still on, which is the
+        # point — it is the arrival being counted down to.
+        counted = holiday or upcoming
+        season = season_for(counted.name) if counted else None
+
         return WidgetData(
             values={
                 "summary": summary,
@@ -210,6 +275,19 @@ class SchoolConnector(Connector):
                 "holiday": holiday is not None,
                 "holiday_name": holiday.name if holiday else "",
                 "days_to_holiday": (upcoming.start - day).days if upcoming else None,
+                # The count that only existed inside a sentence. During the
+                # holidays "63 days to the next ones" is true and useless;
+                # what someone wants is the morning school resumes.
+                "days_to_school": back_in,
+                # The one number that is always the useful one, because a
+                # template has no `if`. During term it counts to the holidays;
+                # during the holidays it counts to the morning school resumes.
+                # `J-{{ countdown }}` therefore says the right thing all year
+                # without anybody composing two widgets.
+                "countdown": back_in if holiday is not None else (
+                    (upcoming.start - day).days if upcoming else None
+                ),
+                "season": counted.name if counted else "",
             },
             # Full on Monday morning, empty once Friday is over. During the
             # holidays there is nothing left to count down.
@@ -217,8 +295,23 @@ class SchoolConnector(Connector):
             # preview needs a figure to show beside the segments.
             progress=round(remaining / total * 100) if total else 0,
             days=semaine,
-            hint_icon=ICON,
-            hint_color=colour_for(letter, holiday=holiday is not None),
+            hint_icon=season[0] if season else ICON,
+            hint_overlay=season[1] if season else None,
+            # **The colour follows the season only during the holidays.**
+            #
+            # In term time this widget exists to say A or B, and the comment
+            # on `colour_for` is right that a colour is read before a word is.
+            # Painting it autumn-orange because Toussaint is coming destroys
+            # the one fact it is there to give. A test caught exactly that,
+            # which is what tests defending a decision are for.
+            #
+            # During the holidays there is no letter, so the season is free to
+            # take the colour too — and that is when it means something.
+            hint_color=(
+                season[2]
+                if season and holiday is not None
+                else colour_for(letter, holiday=holiday is not None)
+            ),
         )
 
     # -- Test -----------------------------------------------------------------

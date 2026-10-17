@@ -178,6 +178,15 @@ async def seed(base: str, password: str = "") -> None:
                         "progress_color": "#3ddc84",
                         "progress_background": "#000000"},
         })
+        # Le décompte saisonnier : un gabarit, et l'icône change toute seule
+        # avec la période comptée. L'icône est laissée vide exprès, pour que
+        # le connecteur propose la sienne.
+        await _post(http, "/api/widgets", {
+            "name": "Vacances", "connector_id": ecole["id"],
+            "widget_type": "school.week", "device_ids": [salon["id"]],
+            "refresh_seconds": 3600,
+            "display": {"text": "J-{{ countdown }}", "duration": 8, "font": "large"},
+        })
         # A reminder, which is not a widget: it interrupts at a set time
         # rather than taking its turn in the rotation.
         await _post(http, "/api/reminders", {

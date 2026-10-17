@@ -294,3 +294,88 @@ def test_the_letter_matches_a_week_someone_actually_lived():
     assert cal.week_letter(today, rentree) == "B"
     # The option exists for schools that count the other way round.
     assert cal.week_letter(today, rentree, invert=True) == "A"
+
+
+class TestTheSeasonOfTheCountdown:
+    """Florian's idea: « plutôt qu'un compteur 16j à 0, une petite animation
+    — feuille orangée avec du vent pour l'automne, un père Noël qui défile
+    avec son traîneau pour Noël ».
+
+    Each icon was pushed to a TC001 and read back before being chosen, and two
+    candidates were rejected there: a flower that renders as white and red
+    blocks at eight pixels, and a counter with no icon, where the snow falls
+    across scrolling text and makes it harder to read rather than prettier.
+    """
+
+    def test_every_period_the_ministry_publishes_has_one(self):
+        from app.connectors.school.connector import season_for
+
+        published = [
+            "Vacances de la Toussaint",
+            "Vacances de Noël",
+            "Vacances d'Hiver",
+            "Vacances de Printemps",
+            "Vacances d'Été",
+            "Pont de l'Ascension",
+        ]
+        missing = [name for name in published if season_for(name) is None]
+        assert not missing, f"no season for: {missing}"
+
+    def test_a_period_it_has_never_heard_of_keeps_the_school_icon(self):
+        """Rather than borrowing the wrong season's. The dataset can grow a
+        name, and a sleigh on an unknown period is worse than no sleigh."""
+        from app.connectors.school.connector import season_for
+
+        assert season_for("Vacances de la Pentecôte lunaire") is None
+        assert season_for("") is None
+
+    def test_accents_do_not_decide_it(self):
+        """`Noël` and `Noel` both appear in the wild, and a missing diaeresis
+        must not cost the sleigh."""
+        from app.connectors.school.connector import season_for
+
+        assert season_for("Vacances de Noel") == season_for("Vacances de Noël")
+
+    def test_snow_falls_only_where_snow_belongs(self):
+        """The overlay is the firmware's, drawn over the text. Charming in
+        December, absurd in July."""
+        from app.connectors.school.connector import season_for
+
+        assert season_for("Vacances de Noël")[1] == "snow"
+        assert season_for("Vacances d'Hiver")[1] == "snow"
+        assert season_for("Vacances d'Été")[1] is None
+        assert season_for("Vacances de la Toussaint")[1] is None
+
+    def test_no_two_periods_share_an_icon(self):
+        """The icon is the whole point: two periods that look alike give a
+        glance nothing to go on."""
+        from app.connectors.school.connector import SEASONS
+
+        # "noel" and "noël" are one period spelt two ways, as are "ete"/"été".
+        icons = {icon for icon, _, _ in SEASONS.values()}
+        assert len(icons) == len(SEASONS) - 2
+
+
+#: Two periods, so that there is always a "next one" to count towards.
+ANNEE = holidays(
+    ("Vacances de la Toussaint", "2026-10-17", "2026-11-01"),
+    ("Vacances de Noël", "2026-12-19", "2027-01-03"),
+)
+
+
+class TestTheOneNumberWorthShowing:
+    """A template has no `if`, so a single widget cannot choose between two
+    counts — unless the connector chooses for it. `J-{{ countdown }}` then
+    says the right thing all year without anybody composing two widgets."""
+
+    def test_during_the_holidays_it_counts_to_school(self):
+        values = SchoolConnector._describe(date(2026, 10, 20), ANNEE, invert=False).values
+        assert values["days_to_school"] == 13
+        assert values["countdown"] == 13
+        assert values["days_to_holiday"] == 60, "the next holidays are still ahead"
+
+    def test_in_term_time_it_counts_to_the_holidays(self):
+        values = SchoolConnector._describe(date(2026, 12, 10), ANNEE, invert=False).values
+        assert values["days_to_holiday"] == 9
+        assert values["countdown"] == 9
+        assert values["days_to_school"] is None, "school is in, there is nothing to resume"

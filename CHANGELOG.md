@@ -5,6 +5,57 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.18.0]
+
+### Un décompte qui change de saison
+
+Florian : « plutôt qu'un compteur 16j à 0, je suis d'avis d'avoir une petite
+animation — feuille orangée avec du vent pour les vacances d'automne, un père
+Noël qui défile avec son traîneau pour Noël ».
+
+Il n'a pas fallu dessiner : la galerie LaMetric en compte 71 858, et le
+firmware sait déjà superposer de la météo au texte.
+
+| période | icône | surimpression |
+|---|---|---|
+| Toussaint | un arbre qui se dépouille | — |
+| Noël | le traîneau qui traverse | **neige** |
+| Hiver | un flocon | **neige** |
+| Printemps | un cerisier en fleurs | — |
+| Été | une plage | — |
+
+Chacune a été poussée sur une TC001 et relue. **Deux candidates y sont
+tombées** : une « flower evolution » qui rend en blocs blancs et rouges à huit
+pixels, et un compteur sans icône, où la neige traverse un texte qui défile et
+le rend moins lisible plutôt que plus joli.
+
+La surimpression est la bonne surprise : elle est native, elle ne coûte rien,
+et le chiffre reste lisible dessous — mesuré.
+
+### `{{ countdown }}`, parce qu'un gabarit n'a pas de `if`
+
+Le compte vers la rentrée existait déjà — il alimentait la phrase
+`{{ summary }}` — mais **n'était exposé nulle part**. Pendant les vacances,
+« 63 jours avant les prochaines » est exact et sans intérêt ; ce qu'on veut
+savoir, c'est quand on rentre.
+
+`{{ countdown }}` choisit : vers les vacances en classe, vers la rentrée en
+vacances. Un seul gabarit, `J-{{ countdown }}`, dit la bonne chose toute
+l'année. Les deux comptes restent disponibles séparément.
+
+### Et un test a défendu une décision que j'allais casser
+
+J'avais fait suivre la **couleur** à la saison. Deux tests sont tombés, et ils
+avaient raison : en période scolaire la couleur dit la semaine A ou B, et le
+commentaire de `colour_for` dit pourquoi — une couleur se lit avant un mot.
+Repeindre le widget aux couleurs de l'automne parce que la Toussaint approche
+détruisait la seule information qu'il existe pour donner.
+
+Donc l'icône et la neige suivent la saison ; la couleur ne la suit que pendant
+les vacances, quand il n'y a plus de lettre. Le traîneau apparaît neuf jours
+avant Noël sur un **J-9 resté bleu semaine A**.
+
+
 ## [0.17.3]
 
 ### Tout widget neuf s'appelait « Current weather »

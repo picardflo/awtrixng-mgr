@@ -46,3 +46,4 @@ risque rien, mais elle ne marchera pas. Pour celles-là, l'ancêtre
 Le projet précédent reste en service.
 
 - [Plex, par Tautulli](Widget-Plex.md) — lecture en cours et flux actifs
+- [Calendrier scolaire](Widget-Ecole.md) — semaine A/B, et un décompte qui change de saison
