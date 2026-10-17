@@ -45,6 +45,7 @@ def _read(device: Device) -> DeviceRead:
         last_seen=device.last_seen,
         last_error=device.last_error,
         last_error_code=device.last_error_code,
+        last_error_params=device.last_error_params,
     )
 
 
@@ -52,6 +53,7 @@ def _record_failure(device: Device, exc: AwtrixNgError, session: SessionDep) -> 
     device.status = HealthStatus.ERROR
     device.last_error = exc.message
     device.last_error_code = exc.code
+    device.last_error_params = exc.params
     device.updated_at = utcnow()
     session.add(device)
     session.commit()
@@ -81,6 +83,7 @@ async def _probe(device: Device, session: SessionDep) -> DeviceTestResult:
     device.last_seen = utcnow()
     device.last_error = None
     device.last_error_code = None
+    device.last_error_params = None
     device.updated_at = utcnow()
     session.add(device)
     session.commit()

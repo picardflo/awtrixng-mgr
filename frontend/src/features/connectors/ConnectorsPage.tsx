@@ -198,7 +198,7 @@ function ConnectorCard({
   }
 
   const error = instance.last_error_code
-    ? tApi(instance.last_error_code, undefined, instance.last_error ?? "")
+    ? tApi(instance.last_error_code, instance.last_error_params ?? undefined, instance.last_error ?? "")
     : instance.last_error;
 
   return (

@@ -37,4 +37,7 @@ class ConnectorRead(BaseModel):
     last_success: datetime | None
     last_error: str | None
     last_error_code: str | None
+    #: Ce qui complète le code. Sans eux, un message traduit qui porte
+    #: un `{reason}` ne peut pas être rendu en français.
+    last_error_params: dict[str, Any] | None = None
     consecutive_failures: int

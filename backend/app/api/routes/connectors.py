@@ -31,6 +31,7 @@ def _read(instance: ConnectorInstance) -> ConnectorRead:
         last_success=instance.last_success,
         last_error=instance.last_error,
         last_error_code=instance.last_error_code,
+        last_error_params=instance.last_error_params,
         consecutive_failures=instance.consecutive_failures,
     )
 
@@ -137,6 +138,7 @@ async def test_connector(instance: InstanceDep, session: SessionDep) -> Connecto
         instance.status = HealthStatus.ERROR
         instance.last_error = exc.message
         instance.last_error_code = exc.code
+        instance.last_error_params = exc.params
         instance.consecutive_failures += 1
         session.add(instance)
         session.commit()
@@ -161,12 +163,14 @@ async def test_connector(instance: InstanceDep, session: SessionDep) -> Connecto
         instance.status = HealthStatus.ERROR
         instance.last_error = result.message
         instance.last_error_code = result.code
+        instance.last_error_params = result.params
         instance.consecutive_failures += 1
     else:
         instance.status = HealthStatus.HEALTHY
         instance.last_success = utcnow()
         instance.last_error = None
         instance.last_error_code = None
+        instance.last_error_params = None
         instance.consecutive_failures = 0
     session.add(instance)
     session.commit()

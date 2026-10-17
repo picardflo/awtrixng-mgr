@@ -115,7 +115,7 @@ export function DeviceCard({
   }
 
   const error = device.last_error_code
-    ? tApi(device.last_error_code, undefined, device.last_error ?? "")
+    ? tApi(device.last_error_code, device.last_error_params ?? undefined, device.last_error ?? "")
     : device.last_error;
 
   return (

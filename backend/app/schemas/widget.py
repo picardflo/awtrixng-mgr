@@ -48,6 +48,9 @@ class WidgetTargetRead(BaseModel):
     status: HealthStatus
     last_error: str | None
     last_error_code: str | None
+    #: Ce qui complète le code. Sans eux, un message traduit qui porte
+    #: un `{reason}` ne peut pas être rendu en français.
+    last_error_params: dict[str, Any] | None = None
     last_pushed_at: datetime | None
 
 
@@ -67,6 +70,9 @@ class WidgetRead(BaseModel):
     last_success: datetime | None
     last_error: str | None
     last_error_code: str | None
+    #: Ce qui complète le code. Sans eux, un message traduit qui porte
+    #: un `{reason}` ne peut pas être rendu en français.
+    last_error_params: dict[str, Any] | None = None
     #: AWTRIX Custom App name, useful when debugging against the device.
     app_name: str
     #: The icon last pushed — the connector's when none was chosen.

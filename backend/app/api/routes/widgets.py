@@ -44,6 +44,7 @@ def _read(widget: Widget) -> WidgetRead:
                 status=target.status,
                 last_error=target.last_error,
                 last_error_code=target.last_error_code,
+                last_error_params=target.last_error_params,
                 last_pushed_at=target.last_pushed_at,
             )
             for target in sorted(widget.targets, key=lambda t: t.device_id)
@@ -62,6 +63,7 @@ def _read(widget: Widget) -> WidgetRead:
         last_success=widget.last_success,
         last_error=widget.last_error,
         last_error_code=widget.last_error_code,
+        last_error_params=widget.last_error_params,
         app_name=app_name(widget.id),
         last_icon=widget.last_icon,
     )
@@ -311,7 +313,7 @@ async def refresh_widget(widget: WidgetDep, session: SessionDep) -> WidgetRead:
     if outcome.collected:
         widget.status = HealthStatus.HEALTHY
         widget.last_success = utcnow()
-        widget.last_error = widget.last_error_code = None
+        widget.last_error = widget.last_error_code = widget.last_error_params = None
         widget.consecutive_failures = 0
     else:
         widget.consecutive_failures += 1
@@ -319,6 +321,7 @@ async def refresh_widget(widget: WidgetDep, session: SessionDep) -> WidgetRead:
         if outcome.error is not None:
             widget.last_error = outcome.error.message
             widget.last_error_code = outcome.error.code
+            widget.last_error_params = outcome.error.params
 
     for result in outcome.targets:
         target = session.get(WidgetTarget, (widget.id, result.device_id))
@@ -326,7 +329,7 @@ async def refresh_widget(widget: WidgetDep, session: SessionDep) -> WidgetRead:
             continue
         if result.ok:
             target.status = HealthStatus.HEALTHY
-            target.last_error = target.last_error_code = None
+            target.last_error = target.last_error_code = target.last_error_params = None
             target.consecutive_failures = 0
             if not result.removed:
                 target.last_pushed_at = utcnow()
@@ -336,6 +339,7 @@ async def refresh_widget(widget: WidgetDep, session: SessionDep) -> WidgetRead:
             if result.error is not None:
                 target.last_error = result.error.message
                 target.last_error_code = result.error.code
+                target.last_error_params = result.error.params
         session.add(target)
 
     widget.updated_at = utcnow()

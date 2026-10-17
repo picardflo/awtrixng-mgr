@@ -5,6 +5,48 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.19.1]
+
+### Une interface en français, et une ligne en anglais au milieu
+
+Florian, capture à l'appui : « heu ya un raté ! ». Ses widgets météo
+affichaient **« Open-Meteo refused the request: The service is overloaded »**
+en anglais, sur une interface entièrement française.
+
+La surcharge d'Open-Meteo était passagère. L'anglais, non : c'était le repli
+que j'avais posé en 0.17.2.
+
+La forme stockée d'une erreur gardait son **code** et perdait ses
+**paramètres**. La traduction française existe pourtant —
+`"Open-Meteo a refusé la requête : {reason}"` — mais sans `reason` à y mettre.
+La 0.17.2 avait cessé d'afficher le trou en retombant sur la phrase anglaise
+du backend, qui a toujours ses valeurs interpolées. C'était le correctif
+rapide ; en voici le vrai.
+
+### `last_error_params`, partout où un code est stocké
+
+Quatre colonnes — `connector`, `device`, `widget`, `widget_target` — et
+**treize points d'écriture**, parce qu'un code sans ses paramètres dans un
+seul d'entre eux suffit à faire réapparaître l'anglais.
+
+Nullables : toute ligne existante est antérieure, et une erreur de la semaine
+dernière n'a pas de paramètres à retrouver. Elles se remplissent à la panne
+suivante, c'est-à-dire quand elles servent.
+
+Un succès les efface aussi. Laissés derrière, ils compléteraient le message
+**précédent**.
+
+### Et un test qui lit le catalogue plutôt qu'une phrase recopiée
+
+`test_every_placeholder_can_be_filled` relit `messages.fr.ts`, extrait les
+`{…}` du message correspondant au code, et vérifie que les paramètres stockés
+les couvrent tous. Un message auquel on ajoute un paramètre sans le fournir
+fait donc échouer la suite, au lieu d'attendre qu'on le voie sur une carte.
+
+Éprouvé sur une vraie panne : `tautulli.unreachable` avec son `reason`, rendu
+en français **sans trou**.
+
+
 ## [0.19.0]
 
 ### Voir une autre saison sans l'attendre

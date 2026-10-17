@@ -11,6 +11,7 @@ interface Failure {
   name: string;
   status: Device["status"];
   code: string | null;
+  params: Record<string, string | number | null> | null;
   message: string | null;
 }
 
@@ -65,6 +66,7 @@ export function Dashboard() {
       name: item.name,
       status: item.status,
       code: item.last_error_code,
+      params: item.last_error_params,
       message: item.last_error,
     }));
 
@@ -113,7 +115,9 @@ export function Dashboard() {
                 <StatusBadge status={item.status} />
                 <span className="font-medium">{item.name}</span>
                 <span className="text-[var(--color-text-muted)]">
-                  {item.code ? tApi(item.code, undefined, item.message ?? "") : item.message}
+                  {item.code
+                    ? tApi(item.code, item.params ?? undefined, item.message ?? "")
+                    : item.message}
                 </span>
               </li>
             ))}

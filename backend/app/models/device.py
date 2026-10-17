@@ -1,7 +1,9 @@
 """A Device is one AWTRIX display."""
 
 from datetime import datetime, time
+from typing import Any
 
+from sqlalchemy import JSON, Column
 from sqlmodel import Field, SQLModel
 
 from app.models.base import HealthStatus, utcnow
@@ -31,6 +33,18 @@ class Device(SQLModel, table=True):
     last_error: str | None = None
     #: Translatable code matching ``last_error`` (see app/core/errors.py).
     last_error_code: str | None = None
+    #: Les paramètres qui accompagnaient ce code.
+    #:
+    #: Sans eux, un message traduit qui porte un `{reason}` affiche le mot
+    #: `{reason}` entre accolades — ou, depuis la 0.17.2, retombe sur la
+    #: phrase anglaise du backend. Florian l'a vu sur ses widgets météo : une
+    #: interface en français, et une ligne en anglais au milieu.
+    #:
+    #: Le code seul ne suffit donc pas : ce qui se traduit, c'est le code
+    #: **avec** ce qui le complète.
+    last_error_params: dict[str, Any] | None = Field(
+        default=None, sa_column=Column(JSON)
+    )
 
     # -- Quiet hours ----------------------------------------------------------
     #

@@ -43,6 +43,9 @@ class DeviceRead(BaseModel):
     last_error: str | None
     #: Translatable code for ``last_error``, when the failure produced one.
     last_error_code: str | None = None
+    #: Ce qui complète le code. Sans eux, un message traduit qui porte un
+    #: `{reason}` ne peut pas être rendu en français.
+    last_error_params: dict[str, Any] | None = None
 
 
 class DeviceTestResult(BaseModel):

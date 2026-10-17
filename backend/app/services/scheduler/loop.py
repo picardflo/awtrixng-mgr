@@ -308,6 +308,7 @@ class Scheduler:
             widget.last_success = utcnow()
             widget.last_error = None
             widget.last_error_code = None
+            widget.last_error_params = None
             widget.consecutive_failures = 0
             if any(not target.ok for target in outcome.targets):
                 # A display refused the push — it is rebooting, or unplugged.
@@ -323,6 +324,7 @@ class Scheduler:
         if outcome.error is not None:
             widget.last_error = outcome.error.message
             widget.last_error_code = outcome.error.code
+            widget.last_error_params = outcome.error.params
         return backoff(widget.refresh_seconds, widget.consecutive_failures)
 
     @staticmethod
@@ -336,6 +338,7 @@ class Scheduler:
                 target.status = HealthStatus.HEALTHY
                 target.last_error = None
                 target.last_error_code = None
+                target.last_error_params = None
                 target.consecutive_failures = 0
                 if not result.removed:
                     target.last_pushed_at = utcnow()
@@ -349,6 +352,7 @@ class Scheduler:
                 if result.error is not None:
                     target.last_error = result.error.message
                     target.last_error_code = result.error.code
+                    target.last_error_params = result.error.params
             session.add(target)
 
     async def reconcile(self) -> list[Reconciliation]:

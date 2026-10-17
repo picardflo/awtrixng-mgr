@@ -18,6 +18,14 @@ export interface Device {
   last_seen: string | null;
   last_error: string | null;
   last_error_code: string | null;
+  /** What completes the code. Without it a translated message carrying a
+   *  `{reason}` cannot be rendered in French at all — the interface either
+   *  shows the placeholder or falls back to the backend's English.
+   *
+   *  Scalars only, which is what the backend puts there: a reason, a status,
+   *  a radius. Typed as such rather than as `unknown` so that it can be
+   *  handed straight to the translator without a cast. */
+  last_error_params: Record<string, string | number | null> | null;
 }
 
 /** What `GET /api/v1/device` reports, as the backend passes it on.
@@ -231,6 +239,14 @@ export interface ConnectorInstance {
   last_success: string | null;
   last_error: string | null;
   last_error_code: string | null;
+  /** What completes the code. Without it a translated message carrying a
+   *  `{reason}` cannot be rendered in French at all — the interface either
+   *  shows the placeholder or falls back to the backend's English.
+   *
+   *  Scalars only, which is what the backend puts there: a reason, a status,
+   *  a radius. Typed as such rather than as `unknown` so that it can be
+   *  handed straight to the translator without a cast. */
+  last_error_params: Record<string, string | number | null> | null;
   consecutive_failures: number;
 }
 
@@ -248,6 +264,14 @@ export interface WidgetTarget {
   status: HealthStatus;
   last_error: string | null;
   last_error_code: string | null;
+  /** What completes the code. Without it a translated message carrying a
+   *  `{reason}` cannot be rendered in French at all — the interface either
+   *  shows the placeholder or falls back to the backend's English.
+   *
+   *  Scalars only, which is what the backend puts there: a reason, a status,
+   *  a radius. Typed as such rather than as `unknown` so that it can be
+   *  handed straight to the translator without a cast. */
+  last_error_params: Record<string, string | number | null> | null;
   last_pushed_at: string | null;
 }
 
@@ -266,6 +290,14 @@ export interface WidgetInstance {
   last_success: string | null;
   last_error: string | null;
   last_error_code: string | null;
+  /** What completes the code. Without it a translated message carrying a
+   *  `{reason}` cannot be rendered in French at all — the interface either
+   *  shows the placeholder or falls back to the backend's English.
+   *
+   *  Scalars only, which is what the backend puts there: a reason, a status,
+   *  a radius. Typed as such rather than as `unknown` so that it can be
+   *  handed straight to the translator without a cast. */
+  last_error_params: Record<string, string | number | null> | null;
   app_name: string;
   /** The icon last pushed — the connector's own when none was chosen. */
   last_icon: string | null;

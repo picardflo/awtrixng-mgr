@@ -235,7 +235,7 @@ function WidgetCard({
       toast(
         updated.status === "healthy" ? "success" : "error",
         updated.last_error_code
-          ? tApi(updated.last_error_code, undefined, updated.last_error ?? "")
+          ? tApi(updated.last_error_code, updated.last_error_params ?? undefined, updated.last_error ?? "")
           : `${widget.name} — ${t("widgets.refreshed")}`,
       );
     } catch (error) {
@@ -272,7 +272,7 @@ function WidgetCard({
   }
 
   const error = widget.last_error_code
-    ? tApi(widget.last_error_code, undefined, widget.last_error ?? "")
+    ? tApi(widget.last_error_code, widget.last_error_params ?? undefined, widget.last_error ?? "")
     : widget.last_error;
 
   return (
@@ -353,7 +353,7 @@ function WidgetCard({
         {widget.targets.map((target) => {
           const device = devices.find((d) => d.id === target.device_id);
           const targetError = target.last_error_code
-            ? tApi(target.last_error_code, undefined, target.last_error ?? "")
+            ? tApi(target.last_error_code, target.last_error_params ?? undefined, target.last_error ?? "")
             : target.last_error;
           return (
             <li

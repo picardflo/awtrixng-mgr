@@ -154,3 +154,67 @@ class TestTestingSaysWhatItFound:
         assert after["status"] == "healthy"
         assert after["last_error_code"] is None
         assert after["consecutive_failures"] == 0
+
+
+class TestAnErrorKeepsWhatCompletesIt:
+    """Florian, capture à l'appui : une interface en français, et une ligne en
+    anglais au milieu — « heu ya un raté ! ».
+
+    The stored form of an error kept only its **code**. A translated message
+    carrying a placeholder — "Open-Meteo a refusé la requête : {reason}" —
+    therefore had nothing to fill it with. 0.17.2 stopped showing the hole by
+    falling back to the backend's English sentence; that was the quick fix,
+    and he saw its cost the next day.
+    """
+
+    def failing(self, client):
+        return client.post(
+            "/api/connectors",
+            json={
+                "type": "tautulli",
+                "name": "Plex",
+                "config": {"url": "https://nowhere.invalid", "verify_tls": True},
+                "secrets": {"api_key": "k" * 32},
+            },
+        ).json()
+
+    def test_the_parameters_are_stored_beside_the_code(self, client):
+        instance = self.failing(client)
+        result = client.post(f"/api/connectors/{instance['id']}/test").json()
+        assert result["params"], "the failure carried no parameters to keep"
+
+        after = client.get(f"/api/connectors/{instance['id']}").json()
+        assert after["last_error_params"] == result["params"]
+
+    def test_a_success_clears_them_too(self, client):
+        """Left behind, they would complete the *previous* message."""
+        instance = client.post(
+            "/api/connectors", json={"type": "moon", "name": "Lune", "config": {}}
+        ).json()
+        client.post(f"/api/connectors/{instance['id']}/test")
+        after = client.get(f"/api/connectors/{instance['id']}").json()
+        assert after["last_error_params"] is None
+
+    def test_every_placeholder_can_be_filled(self, client):
+        """The point of the whole exercise: the French message must come out
+        whole. Checked against the catalogue itself rather than against a
+        sentence retyped here."""
+        import re
+        from pathlib import Path
+
+        instance = self.failing(client)
+        client.post(f"/api/connectors/{instance['id']}/test")
+        after = client.get(f"/api/connectors/{instance['id']}").json()
+
+        catalogue = (
+            Path(__file__).resolve().parents[2]
+            / "frontend" / "src" / "i18n" / "messages.fr.ts"
+        ).read_text(encoding="utf-8")
+        found = re.search(rf'"{after["last_error_code"]}": "([^"]*)"', catalogue)
+        assert found, "no French message for that code"
+
+        wanted = set(re.findall(r"\{(\w+)\}", found.group(1)))
+        assert wanted <= set(after["last_error_params"] or {}), (
+            f"{sorted(wanted - set(after['last_error_params'] or {}))} would stay "
+            "in braces on the card"
+        )
