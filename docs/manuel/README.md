@@ -15,6 +15,9 @@ une fois qu'awtrixng-mgr tourne.
 | [Widgets](Widgets.md) | Créer et régler ce que l'horloge affiche |
 | [Widget Météo](Widget-Meteo.md) | Météo, pluie, humidité, soleil, air, UV |
 | [Widget Carburants](Widget-Carburants.md) | Le prix le plus bas près de chez vous |
+| [Widget Plex](Widget-Plex.md) | Lecture en cours et flux actifs, par Tautulli |
+| [Widget Steam](Widget-Steam.md) | Le jeu en cours, et ses succès |
+| [Widget École](Widget-Ecole.md) | Semaine A/B, et un décompte qui change de saison |
 | [Rappels](Rappels.md) | Un message à une heure fixe, qui interrompt la rotation |
 | [Ce que NG change](AWTRIX-NG.md) | Pour qui vient d'AWTRIX 3 |
 | [Maintenance](Maintenance.md) | Mise à jour, sauvegarde, journaux |
@@ -42,8 +45,6 @@ vous ayez à y revenir.
 
 Les routes sont en `/api/v1/`, que le firmware AWTRIX 3 ne connaît pas. Une
 horloge restée en 0.98 répondra donc 404 et sera signalée injoignable — elle ne
-risque rien, mais elle ne marchera pas. Pour celles-là, l'ancêtre
-Le projet précédent reste en service.
-
-- [Plex, par Tautulli](Widget-Plex.md) — lecture en cours et flux actifs
-- [Calendrier scolaire](Widget-Ecole.md) — semaine A/B, et un décompte qui change de saison
+risque rien, mais elle ne marchera pas. Pour celles-là, il faut un
+gestionnaire prévu pour AWTRIX 3 ; awtrixng-mgr ne sait pas leur parler et ne
+cherche pas à le faire.

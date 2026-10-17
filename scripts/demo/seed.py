@@ -50,6 +50,14 @@ async def seed(base: str, password: str = "") -> None:
             "config": {"url": f"http://127.0.0.1:{METEO_PORT}/plex", "verify_tls": False},
             "secrets": {"api_key": "cle-de-demonstration"},
         })
+        # Le second service à identifiant, et le seul dont la clé et le
+        # profil sont deux secrets différents : l'un est chiffré, l'autre non,
+        # parce qu'un SteamID64 est public par construction.
+        steam = await _post(http, "/api/connectors", {
+            "type": "steam", "name": "Steam",
+            "config": {"steam_id": "76561190000000000"},
+            "secrets": {"api_key": "cle-de-demonstration"},
+        })
         # Two fuels checked, four left out: a RAV4 runs on SP95-E10 and SP98,
         # and the columns for the rest are never even asked for.
         carburants = await _post(http, "/api/connectors", {
@@ -147,6 +155,24 @@ async def seed(base: str, password: str = "") -> None:
             "widget_type": "tautulli.streams", "device_ids": [bureau["id"]],
             "refresh_seconds": 30,
             "display": {"text": "{{ streams }}", "duration": 8, "font": "small"},
+        })
+        # « Hades » tient sans défiler — 19 colonnes sur 23, mesuré. La moitié
+        # des titres défilent, 5 s en moyenne, ce qui tient dans un passage
+        # ordinaire : contrairement à Plex, la durée n'est pas rallongée.
+        await _post(http, "/api/widgets", {
+            "name": "En jeu", "connector_id": steam["id"],
+            "widget_type": "steam.playing", "device_ids": [bureau["id"]],
+            "refresh_seconds": 60,
+            "display": {"text": "{{ game }}", "duration": 8, "font": "small"},
+        })
+        # Une barre qui dit quelque chose : 23 sur 49, pas un pourcentage
+        # inventé. Et grande police, puisqu'il y a une barre.
+        await _post(http, "/api/widgets", {
+            "name": "Succès", "connector_id": steam["id"],
+            "widget_type": "steam.achievements", "device_ids": [bureau["id"]],
+            "refresh_seconds": 180,
+            "display": {"text": "{{ unlocked }}/{{ total }}", "duration": 8,
+                        "font": "large", "show_progress": True},
         })
         await _post(http, "/api/widgets", {
             "name": "Humidité extérieure", "connector_id": meteo["id"],

@@ -91,3 +91,44 @@ describe("the rest", () => {
     expect(textWidth("Lune gibbeuse décroissante")).toBeGreaterThan(32 - 9);
   });
 });
+
+describe("the measurements the Steam widgets were built on", () => {
+  // Written into docs/manuel/Widget-Steam.md and into the descriptors as
+  // reasons, so they are pinned here rather than left as prose. The Plex
+  // lesson is what put them here: a guess at text width was five times short,
+  // and the widget had to be redesigned after the fact.
+  const FREE = 23; // columns left beside an 8×8 icon
+  const RATE = 15.2; // columns per second, pinned by the Plex measurement
+
+  const seconds = (text: string) =>
+    (textWidth(text) + FREE) / RATE;
+
+  it("lets 23/49 sit still", () => {
+    expect(textWidth("23/49", "large")).toBeLessThanOrEqual(FREE);
+    expect(textWidth("49/49", "large")).toBeLessThanOrEqual(FREE);
+  });
+
+  it("admits that a hundred achievements overflow", () => {
+    // The one case the manual owns up to, rather than claiming it always
+    // fits: a game with a hundred achievements, all unlocked.
+    expect(textWidth("100/100", "large")).toBeGreaterThan(FREE);
+  });
+
+  it("keeps the median game title inside an ordinary turn", () => {
+    // Why this connector stays at 8 s where Plex had to go to 14.
+    expect(seconds("Baldur's Gate 3")).toBeLessThan(8);
+    expect(seconds("Red Dead Redemption 2")).toBeLessThan(8);
+  });
+
+  it("leaves the short titles static", () => {
+    for (const title of ["Hades", "Rust", "Dota 2"]) {
+      expect(textWidth(title)).toBeLessThanOrEqual(FREE);
+    }
+  });
+
+  it("shows what the short form buys on the worst case", () => {
+    const full = "The Elder Scrolls V: Skyrim Special Edition";
+    expect(seconds(full)).toBeGreaterThan(8);
+    expect(seconds("The Elder Scrolls V")).toBeLessThan(8);
+  });
+});

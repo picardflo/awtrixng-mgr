@@ -89,6 +89,7 @@ enough in a browser.
 - [Getting started](docs/manuel/Demarrage.md) — from a bare clock to a first widget
 - [Widgets](docs/manuel/Widgets.md) — the display options in detail
 - [Plex via Tautulli](docs/manuel/Widget-Plex.md) — now playing, and why titles do not fit
+- [Steam](docs/manuel/Widget-Steam.md) — the game you are in, and its achievements
 - [School calendar](docs/manuel/Widget-Ecole.md) — A/B weeks, and a countdown that changes season
 - [Reminders](docs/manuel/Rappels.md) · [Displays](docs/manuel/Afficheurs.md)
 - [Security](docs/manuel/Securite.md) · [Backup and maintenance](docs/manuel/Maintenance.md)

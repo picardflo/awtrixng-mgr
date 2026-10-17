@@ -5,6 +5,82 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.20.0]
+
+### Steam : le jeu en cours, et ses succès
+
+Idée de Florian : « penses-tu possible une intégration Steam (jeux en cours,
+nombre de messages reçus, achievements ?) ». Deux des trois, et la troisième
+est refusée pour une raison qui mérite d'être écrite.
+
+**En jeu** affiche le jeu que vous avez lancé. **Succès** affiche ce que vous
+en avez débloqué, sur le total, avec une barre — la fraction d'un total connu,
+ce pour quoi une barre de progression existe. Les deux quittent la rotation
+quand vous ne jouez pas.
+
+### La leçon de Plex, appliquée avant d'écrire une ligne
+
+Le connecteur Plex avait dû passer à 14 secondes après coup, parce que mon
+estimation de la largeur d'un titre était cinq fois trop courte. Cette fois la
+mesure est venue d'abord, sur les vingt-quatre jeux les plus joués de Steam,
+rendus dans la police relevée sur la dalle :
+
+```
+"Hades", "Rust", "Dota 2"               ≤ 23 colonnes   fixes
+médiane                                   53 colonnes   5,0 s
+"The Elder Scrolls V: Skyrim Special…"   149 colonnes  11,3 s
+```
+
+Trois titres sur quatre finissent dans un passage ordinaire. **Ce widget garde
+donc les 8 secondes habituelles**, contrairement à Plex — et c'est la mesure
+qui le dit, pas une préférence.
+
+Pour le quatrième, `{{ short }}` retire la marque, le sous-titre et le nom de
+l'éditeur quand il est collé devant en deux mots : « Tom Clancy's Rainbow Six
+Siege » devient « Rainbow Six Siege », et le pire cas tombe de 11,3 s à 6,1 s.
+Il ne touche pas à « Baldur's Gate 3 » ni à « Garry's Mod », où le possessif
+**est** le titre. Ces mesures sont épinglées dans `pixelFont.test.ts` plutôt
+que laissées en commentaire.
+
+### Trois façons de n'avoir aucun succès, et une seule est une panne
+
+Steam répond `403` aussi bien pour une clé révoquée que pour un profil dont
+les détails sont privés. Les deux sont pourtant deux réglages différents à
+aller corriger, alors le connecteur les sépare : `GetPlayerSummaries`
+fonctionne sur un inconnu, donc un refus à cet appel-là ne peut être que la
+clé.
+
+Un jeu sans aucun succès renvoie `400`, ce qui est ordinaire et n'allume pas
+la carte du service en rouge. Et il ne devient pas `0/0` : un jeu qui ne tient
+aucun score n'est pas un jeu dont vous auriez zéro succès, et une barre à zéro
+toute la soirée serait un mensonge. Le widget s'efface.
+
+Un test a d'ailleurs rattrapé une erreur de ma part : j'avais cherché le mot
+« private » dans la réponse de Steam, qui écrit « Profile is not public ».
+Tous les profils cachés auraient été classés « ce jeu ne tient pas de score »,
+c'est-à-dire sous le mauvais correctif.
+
+### Ce qui n'y est pas
+
+**Les messages non lus**, et ce n'est pas un oubli. Steam ne publie aucun
+point d'entrée pour la messagerie, les notifications ou un compteur de
+non-lus — ni dans `ISteamUser`, ni dans `ISteamFriends`. Les seules voies
+seraient les interfaces internes du client ou un cookie de session récupéré à
+la main, et ni l'une ni l'autre ne tiendrait un mois.
+
+### Le profil se donne comme on l'a sous la main
+
+Personne ne connaît ses dix-sept chiffres. Le champ accepte le SteamID64, le
+nom personnalisé, ou l'URL entière du profil collée telle quelle — elle n'est
+pas refusée pour un slash quand la moitié utile est juste là.
+
+### Au passage
+
+Une phrase du manuel était restée cassée par le nettoyage d'awtrixhub :
+« Pour celles-là, l'ancêtre / Le projet précédent reste en service. » Elle est
+réécrite, et les pages des connecteurs rejoignent le sommaire, où on les
+cherche.
+
 ## [0.19.1]
 
 ### Une interface en français, et une ligne en anglais au milieu

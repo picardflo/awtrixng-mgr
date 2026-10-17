@@ -38,6 +38,7 @@ def redirect_upstream() -> None:
     """
     import app.connectors.fuel.prices as fuel
     import app.connectors.school.calendar as school
+    import app.connectors.steam.api as steam
     import app.connectors.weather.air as air
     import app.connectors.weather.connector as weather
     import app.services.places as places
@@ -47,6 +48,7 @@ def redirect_upstream() -> None:
     school.ENDPOINT = f"http://127.0.0.1:{METEO_PORT}/school"
     fuel.ENDPOINT = f"http://127.0.0.1:{METEO_PORT}/fuel"
     air.ENDPOINT = f"http://127.0.0.1:{METEO_PORT}/air"
+    steam.BASE = f"http://127.0.0.1:{METEO_PORT}/steam"
 
 
 async def serve(app, port: int) -> None:

@@ -88,7 +88,7 @@ Dans [`docs/manuel/`](docs/manuel/README.md) :
 
 - [Démarrage](docs/manuel/Demarrage.md) — de l'horloge nue au premier widget
 - [Widgets](docs/manuel/Widgets.md) — les options d'affichage en détail
-- [Météo](docs/manuel/Widget-Meteo.md) · [Carburants](docs/manuel/Widget-Carburants.md) · [Plex](docs/manuel/Widget-Plex.md) · [École](docs/manuel/Widget-Ecole.md)
+- [Météo](docs/manuel/Widget-Meteo.md) · [Carburants](docs/manuel/Widget-Carburants.md) · [Plex](docs/manuel/Widget-Plex.md) · [Steam](docs/manuel/Widget-Steam.md) · [École](docs/manuel/Widget-Ecole.md)
 - [Rappels](docs/manuel/Rappels.md) — messages à heure fixe
 - [Afficheurs](docs/manuel/Afficheurs.md) — régler l'horloge elle-même
 - [Sécurité](docs/manuel/Securite.md) · [Sauvegarde et maintenance](docs/manuel/Maintenance.md)

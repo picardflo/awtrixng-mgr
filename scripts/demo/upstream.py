@@ -455,6 +455,56 @@ async def tautulli(request: Request) -> JSONResponse:
     return JSONResponse(TAUTULLI)
 
 
+#: Un profil en train de jouer, et un jeu qui tient sans défiler : une capture
+#: doit se lire. « Hades » fait 19 colonnes sur les 23 libres, mesuré.
+STEAM_PLAYER = {
+    "steamid": "76561190000000000",
+    "personaname": "bureau",
+    "personastate": 1,
+    "gameextrainfo": "Hades",
+    "gameid": "1145360",
+}
+
+#: 23 débloqués sur 49 : la fraction d'un total connu, ce pour quoi une barre
+#: de progression existe. C'est le seul widget de la démonstration qui en a
+#: une qui veuille dire quelque chose d'autre qu'un pourcentage.
+STEAM_ACHIEVEMENTS = {
+    "playerstats": {
+        "success": True,
+        "achievements": [
+            {"apiname": f"ACH_{i}", "achieved": 1 if i < 23 else 0} for i in range(49)
+        ],
+    }
+}
+
+
+def _no_key() -> JSONResponse:
+    """Steam refuse une clé absente par un 403 nu, sans corps JSON. C'est ce
+    que le connecteur doit savoir lire comme « la clé », et pas comme « le
+    profil est privé » — les deux donnent 403 chez Steam."""
+    return JSONResponse({}, status_code=403)
+
+
+async def steam_summary(request: Request) -> JSONResponse:
+    if not request.query_params.get("key"):
+        return _no_key()
+    return JSONResponse({"response": {"players": [STEAM_PLAYER]}})
+
+
+async def steam_achievements(request: Request) -> JSONResponse:
+    if not request.query_params.get("key"):
+        return _no_key()
+    return JSONResponse(STEAM_ACHIEVEMENTS)
+
+
+async def steam_vanity(request: Request) -> JSONResponse:
+    if not request.query_params.get("key"):
+        return _no_key()
+    return JSONResponse(
+        {"response": {"success": 1, "steamid": STEAM_PLAYER["steamid"]}}
+    )
+
+
 async def school(request: Request) -> JSONResponse:
     return JSONResponse(SCHOOL)
 
@@ -502,5 +552,8 @@ app = Starlette(
         Route("/fuel", fuel),
         Route("/air", air_quality),
         Route("/plex/api/v2", tautulli),
+        Route("/steam/ISteamUser/GetPlayerSummaries/v2/", steam_summary),
+        Route("/steam/ISteamUserStats/GetPlayerAchievements/v1/", steam_achievements),
+        Route("/steam/ISteamUser/ResolveVanityURL/v1/", steam_vanity),
     ]
 )
