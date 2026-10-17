@@ -40,8 +40,11 @@ class SteamConnector(Connector):
                 # copy their profile URL. Both are accepted, and a whole URL
                 # is reduced to its last segment rather than refused.
                 help=(
-                    "Your SteamID64, or the name at the end of your profile "
-                    "URL. Pasting the whole URL works too."
+                    "Your SteamID64, or your custom URL name — the tail of "
+                    "steamcommunity.com/id/… . Pasting the whole URL works "
+                    "too. Careful: this is not your display name. If you "
+                    "never set a custom URL, use the number in your profile "
+                    "address, or someone else's account may answer."
                 ),
             ),
             FormField(
@@ -202,20 +205,28 @@ class SteamConnector(Connector):
 
         name = str(player.get("personaname") or who)
         game = str(player.get("gameextrainfo") or "").strip()
+        # The resolved ID is named, every time, and that is not decoration.
+        # A vanity name belongs to whoever registered it, and it is *not* the
+        # display name: a persona name typed as-is resolved to a stranger's
+        # account on the other side of the world, with a 200 and no error
+        # anywhere — the connector working perfectly on the wrong person.
+        # Printing the seventeen digits next to
+        # the display name is what lets someone compare it with their own
+        # profile URL and catch it. Measured the hard way, 17 October 2026.
         if game:
             return ConnectorTestResult(
                 ok=True,
-                message=f"Connected as {name}, playing {game}.",
+                message=f"Connected as {name} ({who}), playing {game}.",
                 code="steam.ok_playing",
-                params={"name": name, "game": game},
+                params={"name": name, "game": game, "steamid": who},
             )
         # Not playing is a success. Naming the profile is what proves the key
         # worked — an empty "ok" proves nothing a typo could not also produce.
         return ConnectorTestResult(
             ok=True,
-            message=f"Connected as {name}. Not in a game right now.",
+            message=f"Connected as {name} ({who}). Not in a game right now.",
             code="steam.ok",
-            params={"name": name},
+            params={"name": name, "steamid": who},
         )
 
     # -- Projection -----------------------------------------------------------

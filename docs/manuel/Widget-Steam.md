@@ -19,9 +19,22 @@ dix-sept chiffres par cœur :
 
 ```
 76561197960435530                            l'identifiant
-unPseudo                                     le nom personnalisé
+unPseudo                                     le nom d'URL personnalisée
 https://steamcommunity.com/id/unPseudo/      l'URL, telle qu'on la copie
 ```
+
+> **Le piège, et il est silencieux.** Le nom d'URL personnalisée **n'est pas**
+> votre nom affiché. Si vous n'avez jamais rempli le champ « URL perso. » de
+> votre profil Steam, votre pseudo appartient peut-être à quelqu'un d'autre —
+> et Steam répondra `200`, sans la moindre erreur, avec le compte de cet
+> inconnu. Le connecteur marchera parfaitement, sur la mauvaise personne.
+>
+> C'est arrivé pendant l'écriture de cette page : un pseudo tapé tel quel a
+> résolu vers le compte d'un inconnu à l'autre bout du monde. Dans le doute, ouvrez votre profil et prenez le
+> numéro dans l'adresse — `steamcommunity.com/profiles/`**`76561197960435530`**`/`.
+>
+> « Tester la connexion » affiche **toujours** l'identifiant résolu à côté du
+> nom, précisément pour que vous puissiez les comparer.
 
 ### Un réglage à faire côté Steam
 

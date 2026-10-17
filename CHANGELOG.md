@@ -5,6 +5,42 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.20.1]
+
+### Le connecteur marchait parfaitement, sur la mauvaise personne
+
+Mesuré contre le vrai Steam de Florian, et c'est la mesure qui l'a attrapé :
+j'ai tapé son pseudo affiché dans le champ « Profil ». Steam a répondu `200`,
+sans la moindre erreur — avec le compte d'un inconnu à l'autre bout du monde,
+qui avait enregistré ce nom comme URL personnalisée.
+
+Rien en aval ne pouvait le voir. Les données étaient valides, le connecteur
+faisait son travail, la carte du service aurait été verte. Elles étaient
+simplement celles de quelqu'un d'autre.
+
+**Un nom d'URL personnalisée n'est pas un nom affiché**, et Florian n'en avait
+jamais défini. Trois corrections :
+
+- « Tester la connexion » affiche désormais **toujours** l'identifiant résolu
+  à côté du nom — `Connecté en tant que untel (76561197960435530)`. C'est la
+  seule chose qui permet de comparer avec sa propre URL de profil ;
+- l'aide du champ le dit explicitement, dans les deux langues ;
+- le manuel en fait un encadré, parce que c'est le genre de piège qu'on ne
+  soupçonne qu'une fois tombé dedans.
+
+Épinglé par un test qui vérifie que les dix-sept chiffres sont bien dans le
+message, et pas seulement dans les paramètres.
+
+### Le .gitignore laissait passer un fichier de clés
+
+`steam_secrets`, posé à la racine. Les quatre règles existantes — `.secrets`,
+`.secrets.*`, `*.secret`, `*.key` — exigeaient toutes soit un point devant,
+soit une extension. Un nom écrit par quelqu'un qui range n'en a ni l'un ni
+l'autre. Élargi à `*secret*`, `*secrets*` et `*_token`.
+
+Rattrapé avant tout commit, mais le `git add -A` de la 0.20.0 l'aurait avalé
+s'il avait existé une heure plus tôt.
+
 ## [0.20.0]
 
 ### Steam : le jeu en cours, et ses succès

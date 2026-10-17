@@ -348,6 +348,38 @@ class TestTestConnection:
         assert result.params["name"] == "someone"
 
     @respx.mock
+    async def test_it_prints_the_resolved_id_so_a_stranger_can_be_spotted(self):
+        """The failure this exists for, and it is a quiet one.
+
+        A vanity name belongs to whoever registered it, and it is not the
+        display name. A persona name typed as-is resolved to an unrelated
+        account on the other side of the world — 200 OK, no error, the
+        connector working perfectly on the wrong person. Nothing downstream
+        can catch that: the data is valid, it is simply somebody else's.
+
+        So the seventeen digits are printed next to the name, every time, and
+        a user who compares them with their own profile URL sees it at once.
+        """
+        other = "76561190000000001"
+        respx.get(VANITY).mock(
+            return_value=httpx.Response(200, json={"response": {"success": 1, "steamid": other}})
+        )
+        respx.get(SUMMARY).mock(return_value=summary_response(player(personaname="someone else")))
+
+        from app.connectors.steam.connector import SteamConnector
+
+        typed = SteamConnector(config={"steam_id": "aname"}, secrets={"api_key": "k" * 32})
+        result = await typed.test_connection()
+        assert result.params["steamid"] == other
+        assert other in result.message
+
+    @respx.mock
+    async def test_the_id_is_printed_for_a_game_in_progress_too(self):
+        respx.get(SUMMARY).mock(return_value=summary_response(playing()))
+        result = await connector().test_connection()
+        assert result.params["steamid"] == WHO
+
+    @respx.mock
     async def test_a_game_in_progress_is_worth_saying(self):
         respx.get(SUMMARY).mock(return_value=summary_response(playing()))
         result = await connector().test_connection()
