@@ -1,6 +1,6 @@
 """Widget DTOs, including the preview that works without a saved widget."""
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -73,6 +73,13 @@ class WidgetRead(BaseModel):
     last_icon: str | None = None
 
 
+class PreviewDate(BaseModel):
+    """A date the builder can offer as a button, named by its source."""
+
+    label: str
+    date: date
+
+
 class PreviewRequest(BaseModel):
     """Preview an unsaved widget — this is what makes the builder live (§11)."""
 
@@ -82,6 +89,11 @@ class PreviewRequest(BaseModel):
     #: Omit to render the widget's sample data, which is what lets the builder
     #: work before a service is configured or reachable.
     connector_id: int | None = None
+    #: Render as if this were today. Only connectors whose data already spans
+    #: the year can answer — the school calendar is published years ahead, a
+    #: weather forecast is about now. Ignored by the others, which is better
+    #: than refusing: the control is simply not offered for them.
+    as_of: date | None = None
 
 
 class PreviewResponse(BaseModel):
@@ -97,6 +109,11 @@ class PreviewResponse(BaseModel):
     #: back to the sample rather than showing nothing.
     warning: str | None = None
     warning_code: str | None = None
+    #: Dates this widget can be previewed at, with the label to put on the
+    #: button. Empty for most — see `Connector.preview_dates`.
+    dates: list[PreviewDate] = Field(default_factory=list)
+    #: Which of them is being shown, when one was asked for.
+    as_of: date | None = None
 
 
 class OrderRequest(BaseModel):

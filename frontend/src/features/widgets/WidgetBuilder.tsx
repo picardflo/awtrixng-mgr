@@ -184,6 +184,14 @@ export function WidgetBuilder({
   );
   const [advanced, setAdvanced] = useState(false);
   const [preview, setPreview] = useState<PreviewResponse | null>(null);
+  /** The date the preview is rendered at, or null for today.
+   *
+   *  Florian's idea, on a countdown whose icon changes with the season: he
+   *  did not want to wait until December to see the sleigh. Only connectors
+   *  whose data already spans the year answer — the buttons come from the
+   *  preview itself, so a widget that cannot time-travel simply shows none.
+   */
+  const [asOf, setAsOf] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const debounce = useRef<number | undefined>(undefined);
 
@@ -218,12 +226,17 @@ export function WidgetBuilder({
           display,
           config,
           connector_id: connectorId,
+          as_of: asOf,
         })
         .then(setPreview)
         .catch(() => setPreview(null));
     }, 300);
     return () => window.clearTimeout(debounce.current);
-  }, [descriptor, display, config, connectorId]);
+  }, [descriptor, display, config, connectorId, asOf]);
+
+  // A date belongs to the widget type that offered it: keeping it across a
+  // change would ask the school calendar's December of a moon phase.
+  useEffect(() => setAsOf(null), [widgetType, connectorId]);
 
   function patch(changes: Partial<DisplayOptions>) {
     setDisplay((current) => (current ? { ...current, ...changes } : current));
@@ -618,6 +631,54 @@ export function WidgetBuilder({
             {columnsUsed}/{columnsFree}
           </span>
         </p>
+
+        {/* Dates this widget can be shown at, offered by the connector and
+            labelled by its source — "Vacances de Noël" is the Ministry's own
+            wording, so a year that renames a period renames the button.
+            Absent for a widget that cannot answer about another date, which
+            is most of them. */}
+        {(preview?.dates?.length ?? 0) > 0 && (
+          <div className="space-y-1.5">
+            <p className="text-[11px] text-[var(--color-text-muted)]">
+              {t("builder.previewAt")}
+            </p>
+            <div className="flex flex-wrap gap-1">
+              <button
+                type="button"
+                onClick={() => setAsOf(null)}
+                className={`rounded-lg px-2 py-0.5 text-[11px] transition ${
+                  asOf === null
+                    ? "bg-[var(--color-accent)] text-[var(--color-on-accent)]"
+                    : "border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                }`}
+              >
+                {t("builder.previewToday")}
+              </button>
+              {preview?.dates.map((entry) => (
+                <button
+                  key={entry.date}
+                  type="button"
+                  onClick={() => setAsOf(entry.date)}
+                  title={entry.date}
+                  className={`rounded-lg px-2 py-0.5 text-[11px] transition ${
+                    asOf === entry.date
+                      ? "bg-[var(--color-accent)] text-[var(--color-on-accent)]"
+                      : "border border-[var(--color-border)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                  }`}
+                >
+                  {entry.label}
+                </button>
+              ))}
+            </div>
+            {asOf && (
+              // Said plainly: the matrix above is a simulation, and nothing
+              // in it will reach a clock until that date comes round.
+              <p className="text-[11px] text-[var(--color-warning)]">
+                {t("builder.previewSimulated")}
+              </p>
+            )}
+          </div>
+        )}
 
         {shownAsCode.length > 0 && (
           <p className="rounded-lg border border-[var(--color-warning)]/30 bg-[var(--color-warning)]/10 px-2 py-1.5 text-xs text-[var(--color-warning)]">

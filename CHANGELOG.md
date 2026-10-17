@@ -5,6 +5,55 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.19.0]
+
+### Voir une autre saison sans l'attendre
+
+Florian, sur le décompte saisonnier : « des boutons pour voir les autres
+saisons, histoire que je check et pas les attendre ». Et, sur le choix entre
+simuler dans l'interface ou pousser sur la dalle : « je préfère voir dans la
+GUI avant de pousser sur la clock, ça me semble plus logique ».
+
+Sous l'aperçu, un bouton par période de l'année. L'aperçu se redessine comme
+il le sera ce jour-là : le traîneau en décembre, le flocon en février.
+
+**Les libellés viennent du Ministère**, pas de ce projet — une année qui
+renomme une période renomme le bouton, et il n'y a rien à rééditer ici.
+
+La date offerte est le **deuxième** jour de chaque période, pas le premier :
+au premier, le décompte vers la rentrée est à son maximum et l'aperçu affiche
+le même chiffre que la veille, ce qui ressemble à un bouton qui n'a rien fait.
+
+### Un contrat facultatif, plutôt qu'un contrat que quatre connecteurs
+mentiraient
+
+Deux méthodes s'ajoutent à `Connector`, vides par défaut :
+
+```python
+preview_dates(widget_type, raw)   -> []     # les dates proposables
+project_as_of(widget_type, …, day) -> None  # rendre comme si c'était ce jour
+```
+
+`None` est la réponse honnête pour la plupart : un bulletin météo, un prix de
+carburant et une lecture Plex parlent de **maintenant**. Faire prendre une
+date à tous aurait été un contrat que quatre d'entre eux ne pourraient
+qu'ignorer — et une date ignorée en silence, c'est un bouton qui ne fait rien
+à côté d'un aperçu qui ne bouge pas.
+
+L'école l'implémente ; la lune pourrait, elle ne le fait pas encore. Les
+boutons n'apparaissent donc **que là où ils ont un sens**, parce qu'ils sont
+portés par la réponse d'aperçu elle-même.
+
+### Et l'aperçu dit qu'il simule
+
+Une ligne orange sous les boutons, dès qu'une date est choisie : *« Simulation :
+rien n'est envoyé sur l'horloge. »* La date n'est pas enregistrée avec le
+widget, et elle se remet à aujourd'hui dès qu'on change de service ou de type.
+
+La collecte n'est faite **qu'une fois** : demander une autre date ne redemande
+rien au service.
+
+
 ## [0.18.0]
 
 ### Un décompte qui change de saison

@@ -6,7 +6,7 @@ it rides on, so the rule here is anchored on the first day back and can be
 flipped in one click for a school that numbers them the other way.
 """
 
-from datetime import date
+from datetime import date, timedelta
 from typing import Any
 
 from app.connectors.base import (
@@ -313,6 +313,28 @@ class SchoolConnector(Connector):
                 else colour_for(letter, holiday=holiday is not None)
             ),
         )
+
+    def preview_dates(self, widget_type: str, raw: Any) -> list[tuple[str, date]]:
+        """One per holiday period of the year ahead, labelled by the Ministry.
+
+        The labels are not written here: they are the names the dataset
+        publishes, so a year that renames a period renames the button too.
+        The date offered is the period's **second day** rather than its first
+        — on the first, the countdown to school is at its maximum and the
+        preview shows the same figure as the day before.
+        """
+        periods: list[cal.Period] = raw["periods"]
+        today = cal.today()
+        ahead = sorted((p for p in periods if p.end >= today), key=lambda p: p.start)
+        return [(p.name, p.start + timedelta(days=1)) for p in ahead[:6]]
+
+    def project_as_of(
+        self, widget_type: str, config: dict[str, Any], raw: Any, day: date
+    ) -> WidgetData | None:
+        if widget_type != "school.week":
+            return None
+        periods: list[cal.Period] = raw["periods"]
+        return self._describe(day, periods, invert=bool(self.config.get("invert")))
 
     # -- Test -----------------------------------------------------------------
 

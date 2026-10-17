@@ -379,3 +379,63 @@ class TestTheOneNumberWorthShowing:
         assert values["days_to_holiday"] == 9
         assert values["countdown"] == 9
         assert values["days_to_school"] is None, "school is in, there is nothing to resume"
+
+
+class TestPreviewingAnotherDate:
+    """Florian, sur un décompte dont l'icône change avec la saison : « des
+    boutons pour voir les autres saisons, histoire que je check et pas les
+    attendre ».
+
+    The calculation was already a pure function of a date, so what this
+    needed was a way to ask — and a way for connectors that cannot answer to
+    say so rather than lie.
+    """
+
+    RAW = {"periods": ANNEE}
+
+    def connector(self):
+        from app.connectors.school.connector import SchoolConnector
+
+        return SchoolConnector(config={"academie": "Versailles"}, secrets={})
+
+    def test_it_offers_one_date_per_period(self):
+        offered = self.connector().preview_dates("school.week", self.RAW)
+        assert [label for label, _ in offered] == [
+            "Vacances de la Toussaint",
+            "Vacances de Noël",
+        ]
+
+    def test_the_labels_are_the_ministrys_own(self):
+        """Not written here. A year that renames a period renames the button,
+        and nothing in this project has to be edited for it."""
+        offered = dict(self.connector().preview_dates("school.week", self.RAW))
+        assert all(name in {p.name for p in ANNEE} for name in offered)
+
+    def test_it_offers_the_second_day_not_the_first(self):
+        """On the first day the countdown to school is at its maximum and the
+        preview shows the same figure as the day before — which looks like a
+        button that did nothing."""
+        offered = dict(self.connector().preview_dates("school.week", self.RAW))
+        assert offered["Vacances de Noël"] == date(2026, 12, 20)
+
+    def test_rendering_at_that_date_changes_the_season(self):
+        rendered = self.connector().project_as_of(
+            "school.week", {}, self.RAW, date(2026, 12, 20)
+        )
+        assert rendered is not None
+        assert rendered.hint_overlay == "snow", "no snow at Christmas"
+        assert rendered.values["holiday"] is True
+
+    def test_a_widget_type_it_does_not_own_gets_nothing(self):
+        assert self.connector().project_as_of("moon.phase", {}, self.RAW, date.today()) is None
+
+
+def test_a_connector_that_cannot_time_travel_says_so():
+    """The default, and the honest answer for most: a weather forecast and a
+    fuel price are about *now*. Returning None rather than today's data is
+    what lets the builder hide a control that would do nothing."""
+    from app.connectors.moon.connector import MoonConnector
+
+    moon = MoonConnector(config={}, secrets={})
+    assert moon.preview_dates("moon.phase", {}) == []
+    assert moon.project_as_of("moon.phase", {}, {}, date(2026, 12, 24)) is None

@@ -60,6 +60,24 @@ toute faite · `{{ days_left }}` jours de classe restants cette semaine ·
 `{{ school_days }}` · `{{ holiday }}` · `{{ holiday_name }}` ·
 `{{ season }}` la période comptée
 
+## Voir une autre saison sans l'attendre
+
+Sous l'aperçu, un bouton par période de l'année : **Toussaint, Noël, Hiver,
+Printemps, Pont de l'Ascension, Été**. Cliquez, et l'aperçu se redessine comme
+il le sera ce jour-là — le traîneau en décembre, le flocon en février.
+
+Les libellés ne sont pas écrits dans ce projet : ce sont les noms que publie
+le Ministère, donc une année qui renomme une période renomme le bouton.
+
+> **C'est une simulation**, et l'aperçu le dit en toutes lettres quand une
+> date est sélectionnée. Rien n'est envoyé sur l'horloge, et l'enregistrement
+> ne retient pas la date choisie.
+
+Ces boutons n'apparaissent que là où ils ont un sens. Un bulletin météo, un
+prix de carburant et une lecture Plex parlent de *maintenant* : on ne peut pas
+leur demander décembre, et un contrôle qui ne ferait rien vaut moins que pas
+de contrôle.
+
 ## La barre des sept jours
 
 À la place d'une barre de progression, le widget peut dessiner **un segment

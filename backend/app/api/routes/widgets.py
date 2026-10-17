@@ -13,6 +13,7 @@ from app.core.errors import AwtrixNgError
 from app.models import ConnectorInstance, Device, HealthStatus, Widget, WidgetTarget, utcnow
 from app.schemas.widget import (
     OrderRequest,
+    PreviewDate,
     PreviewRequest,
     PreviewResponse,
     ReorderResult,
@@ -239,6 +240,8 @@ async def preview(payload: PreviewRequest, session: SessionDep) -> PreviewRespon
     )
     sample = True
     warning = warning_code = None
+    dates: list[PreviewDate] = []
+    as_of = None
 
     if payload.connector_id is not None:
         instance = session.get(ConnectorInstance, payload.connector_id)
@@ -246,8 +249,26 @@ async def preview(payload: PreviewRequest, session: SessionDep) -> PreviewRespon
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Connector not found.")
         connector = factory.build(instance, session)
         try:
-            data = await connector.fetch(payload.widget_type, payload.config)
+            # Collected once, then projected once or twice: asking for another
+            # date must not mean asking the service again.
+            raw = await connector.collect(payload.widget_type, payload.config)
             sample = False
+            dates = [
+                PreviewDate(label=label, date=when)
+                for label, when in connector.preview_dates(payload.widget_type, raw)
+            ]
+            data = None
+            if payload.as_of is not None:
+                data = connector.project_as_of(
+                    payload.widget_type, payload.config, raw, payload.as_of
+                )
+                # None means this connector cannot speak about another date.
+                # Falling back to today beats refusing: the control is not
+                # offered for it anyway, so a stale `as_of` is a leftover.
+                if data is not None:
+                    as_of = payload.as_of
+            if data is None:
+                data = connector.project(payload.widget_type, payload.config, raw)
         except AwtrixNgError as exc:
             warning, warning_code = exc.message, exc.code
         finally:
@@ -261,6 +282,8 @@ async def preview(payload: PreviewRequest, session: SessionDep) -> PreviewRespon
         sample=sample,
         warning=warning,
         warning_code=warning_code,
+        dates=dates,
+        as_of=as_of,
     )
 
 

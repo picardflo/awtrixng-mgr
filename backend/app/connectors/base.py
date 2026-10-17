@@ -10,6 +10,7 @@ file, and no frontend file either, since the forms are generated from
 """
 
 from abc import ABC, abstractmethod
+from datetime import date
 from typing import Any, ClassVar
 
 import httpx
@@ -116,6 +117,32 @@ class Connector(ABC):
         """
         descriptor = cls.descriptor.widget(widget_type)
         return descriptor.sample_data if descriptor else WidgetData()
+
+    def preview_dates(self, widget_type: str, raw: Any) -> list[tuple[str, date]]:
+        """Dates this connector can render as if they were today, and labels.
+
+        Empty by default, which is the honest answer for most: a weather
+        forecast, a fuel price and a Plex session are about *now* and cannot
+        be asked about December. A connector whose data already spans the
+        year — the school calendar is published years ahead, the moon is
+        computed — can offer a few, and the builder then shows one button per
+        entry beside the preview.
+
+        Florian's idea, on a seasonal countdown he did not want to wait two
+        months to see: « des boutons pour voir les autres saisons ».
+        """
+        return []
+
+    def project_as_of(
+        self, widget_type: str, config: dict[str, Any], raw: Any, day: date
+    ) -> WidgetData | None:
+        """Render as if `day` were today, or None when that means nothing here.
+
+        Separate from `project` on purpose. Making every connector take a date
+        would be a contract four of them could only lie about, and a lie here
+        shows up as a preview that quietly ignores the button next to it.
+        """
+        return None
 
     @abstractmethod
     def request_key(self, widget_type: str, config: dict[str, Any]) -> tuple[str, int]:

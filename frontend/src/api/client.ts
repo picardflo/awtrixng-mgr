@@ -459,6 +459,20 @@ export interface PreviewResponse {
   sample: boolean;
   warning: string | null;
   warning_code: string | null;
+  /** Dates this widget can be previewed at, labelled by their source.
+   *
+   *  Empty for most. A weather forecast and a fuel price are about *now*;
+   *  the school calendar is published years ahead, so it can answer for
+   *  December in October — which is the whole point of the buttons. */
+  dates: PreviewDate[];
+  /** Which of them is being shown, when one was asked for. */
+  as_of: string | null;
+}
+
+export interface PreviewDate {
+  label: string;
+  /** "2026-12-20" */
+  date: string;
 }
 
 export interface DeviceInput {
@@ -685,6 +699,8 @@ export const api = {
     display: DisplayOptions;
     config?: Record<string, unknown>;
     connector_id?: number | null;
+    /** Render as if this were today. Ignored by connectors that cannot. */
+    as_of?: string | null;
   }) => request<PreviewResponse>("/widgets/preview", { method: "POST", body: JSON.stringify(input) }),
   refreshWidget: (id: number) =>
     request<WidgetInstance>(`/widgets/${id}/refresh`, { method: "POST" }),
