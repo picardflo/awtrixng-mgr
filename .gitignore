@@ -86,4 +86,14 @@ Thumbs.db
 .secrets.*
 *.secret
 *.key
+# Et tout ce qui *dit* contenir des secrets, sous n'importe quelle forme.
+# Les quatre règles au-dessus laissaient passer `steam_secrets`, posé à la
+# racine le 17 octobre 2026 : ni point devant, ni extension. Le nom d'un
+# fichier de clés est écrit par quelqu'un qui range, pas par quelqu'un qui
+# relit une liste de motifs.
+*secret*
+*secrets*
+*_token
+*_token.*
 !**/*.key.example
+!docs/ng-api/payload-keys.md
