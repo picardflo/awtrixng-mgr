@@ -376,12 +376,48 @@ class TestTestConnection:
     @respx.mock
     async def test_the_id_is_printed_for_a_game_in_progress_too(self):
         respx.get(SUMMARY).mock(return_value=summary_response(playing()))
+        respx.get(ACHIEVEMENTS).mock(
+            return_value=httpx.Response(200, json={"playerstats": unlocked(1, 10)})
+        )
         result = await connector().test_connection()
         assert result.params["steamid"] == WHO
 
     @respx.mock
     async def test_a_game_in_progress_is_worth_saying(self):
         respx.get(SUMMARY).mock(return_value=summary_response(playing()))
+        respx.get(ACHIEVEMENTS).mock(
+            return_value=httpx.Response(200, json={"playerstats": unlocked(1, 10)})
+        )
         result = await connector().test_connection()
         assert result.ok and result.code == "steam.ok_playing"
         assert result.params["game"] == "Baldur's Gate 3"
+
+    @respx.mock
+    async def test_it_says_when_the_achievements_are_out_of_reach(self):
+        """The symptom this exists for has none of its own.
+
+        Measured on a real account: "Game details" was not Public, so
+        GetPlayerAchievements answered 403 while everything else kept
+        working — the in-game widget fine, the service card green, and the
+        achievements widget empty for ever with nothing pointing anywhere.
+
+        Steam's own exception is what hides it: a key tied to the account
+        being asked about bypasses privacy on GetPlayerSummaries and
+        GetOwnedGames, but *not* on GetPlayerAchievements. So the profile
+        looks open from every angle except the one that matters.
+        """
+        respx.get(SUMMARY).mock(return_value=summary_response(playing()))
+        respx.get(ACHIEVEMENTS).mock(return_value=httpx.Response(403))
+        result = await connector().test_connection()
+        # Still a success: the key is good and one of the two widgets works.
+        assert result.ok and result.code == "steam.ok_no_stats"
+        assert result.params["game"] == "Baldur's Gate 3"
+
+    @respx.mock
+    async def test_a_game_without_achievements_is_not_reported_as_private(self):
+        """400 means the game keeps no score, which is nobody's mistake and
+        must not send someone into their privacy settings."""
+        respx.get(SUMMARY).mock(return_value=summary_response(playing()))
+        respx.get(ACHIEVEMENTS).mock(return_value=httpx.Response(400))
+        result = await connector().test_connection()
+        assert result.code == "steam.ok_playing"

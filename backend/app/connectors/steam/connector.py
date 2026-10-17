@@ -214,6 +214,26 @@ class SteamConnector(Connector):
         # the display name is what lets someone compare it with their own
         # profile URL and catch it. Measured the hard way, 17 October 2026.
         if game:
+            # The achievements call is made here and nowhere else in the test,
+            # because it is the only one that can fail on its own. Measured on
+            # a real account: "Game details" was not Public, and the widget
+            # would have sat empty for ever with nothing to say why — the
+            # service card green, the in-game widget working, and no symptom
+            # pointing anywhere. Worth one extra call during a test a human
+            # asked for.
+            stats = await api.achievements(
+                self.client, key, who, str(player.get("gameid") or "")
+            )
+            if stats.get("reason") == "private":
+                return ConnectorTestResult(
+                    ok=True,
+                    message=(
+                        f"Connected as {name} ({who}), playing {game}. "
+                        "Achievements are out of reach: Game details is not Public."
+                    ),
+                    code="steam.ok_no_stats",
+                    params={"name": name, "game": game, "steamid": who},
+                )
             return ConnectorTestResult(
                 ok=True,
                 message=f"Connected as {name} ({who}), playing {game}.",

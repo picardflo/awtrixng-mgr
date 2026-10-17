@@ -583,6 +583,7 @@ export const fr: Record<MessageKey, string> = {
   "tautulli.refused": "Tautulli a refusé la requête ({reason}).",
   "steam.ok": "Connecté en tant que {name} ({steamid}). Aucun jeu en cours.",
   "steam.ok_playing": "Connecté en tant que {name} ({steamid}), en train de jouer à {game}.",
+  "steam.ok_no_stats": "Connecté en tant que {name} ({steamid}), en train de jouer à {game}. Les succès sont hors de portée : « Détails du jeu » n'est pas sur Public, dans les options de confidentialité de votre profil Steam.",
   "steam.no_key": "Donnez sa clé Web API à ce service.",
   "steam.no_id": "Donnez un profil Steam à ce service.",
   "steam.unreachable": "Steam est injoignable ({reason}).",

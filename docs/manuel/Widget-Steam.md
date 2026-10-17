@@ -121,7 +121,30 @@ Trois situations, et une seule est un problème :
 |---|---|
 | Vous ne jouez pas | il quitte la rotation, c'est voulu |
 | Le jeu n'a aucun succès | **Succès** quitte la rotation ; beaucoup de jeux n'en ont pas |
-| Les détails du jeu sont privés | les deux restent vides, et c'est le réglage à corriger |
+| Les détails du jeu sont privés | **Succès** reste vide, et c'est le réglage à corriger |
+
+### Le cas qui n'a aucun symptôme
+
+**« En jeu » marche, « Succès » reste vide pour toujours, et tout a l'air
+normal.** La carte du service est verte, le jeu s'affiche sur l'horloge, et
+rien ne pointe nulle part.
+
+C'est que **« Détails du jeu » n'est pas sur Public**, dans
+*Profil → Modifier le profil → Options de confidentialité*.
+
+Ce qui le rend invisible, c'est une exception de Steam : **une clé liée au
+compte qu'on interroge contourne la confidentialité** sur certains appels et
+pas sur celui des succès.
+
+```
+vos jeux possédés       répond    ← l'exception s'applique
+le jeu en cours         répond    ← l'exception s'applique
+vos succès              403       ← elle ne s'applique pas
+```
+
+Le profil a donc l'air ouvert depuis tous les angles sauf celui qui compte.
+**« Tester la connexion » le dit explicitement** quand c'est le cas : c'est le
+seul endroit où ce réglage se signale.
 
 Un jeu sans succès n'est pas un jeu dont vous auriez zéro succès : une barre à
 zéro toute la soirée serait un mensonge sur un jeu qui n'en propose pas. La

@@ -602,6 +602,7 @@ export const en = {
   "tautulli.refused": "Tautulli refused the request ({reason}).",
   "steam.ok": "Connected as {name} ({steamid}). Not in a game right now.",
   "steam.ok_playing": "Connected as {name} ({steamid}), playing {game}.",
+  "steam.ok_no_stats": "Connected as {name} ({steamid}), playing {game}. Achievements are out of reach: Game details is not set to Public, in your Steam profile privacy settings.",
   "steam.no_key": "Give this service its Web API key.",
   "steam.no_id": "Give this service a Steam profile.",
   "steam.unreachable": "Steam is unreachable ({reason}).",

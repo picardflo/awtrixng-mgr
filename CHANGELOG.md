@@ -5,6 +5,36 @@ numérotation la règle décrite dans le [README](README.md#versions).
 
 ## [Non publié]
 
+## [0.20.2]
+
+### « Succès » pouvait rester vide pour toujours sans rien dire
+
+Mesuré sur le compte de Florian, 7 Days to Die lancé. Le jeu déclare 43
+succès, « En jeu » affichait son titre, la carte du service était verte — et
+l'appel aux succès répondait `403 "Profile is not public"`.
+
+Le défaut n'est pas le refus, qui est légitime : c'est qu'il **n'avait aucun
+symptôme**. Le widget s'effaçait proprement, comme il doit le faire quand un
+jeu ne tient pas de score, et rien ne distinguait les deux cas.
+
+Ce qui le cachait est une exception de Steam que j'ignorais : **une clé liée
+au compte interrogé contourne la confidentialité** sur `GetPlayerSummaries` et
+`GetOwnedGames`, mais **pas** sur `GetPlayerAchievements`. Le profil a donc
+l'air ouvert depuis tous les angles sauf celui qui compte — c'est d'ailleurs ce
+qui m'a fait conclure trop vite que les détails du jeu étaient publics.
+
+« Tester la connexion » fait désormais l'appel et le dit :
+
+```
+Connecté en tant que untel (765…), en train de jouer à 7 Days to Die.
+Les succès sont hors de portée : « Détails du jeu » n'est pas sur Public.
+```
+
+Toujours un succès — la clé est bonne et l'un des deux widgets marche. Un jeu
+sans aucun succès (`400`) reste distingué d'un profil fermé (`403`) : le
+premier n'est la faute de personne et ne doit envoyer personne fouiller dans
+ses réglages de confidentialité.
+
 ## [0.20.1]
 
 ### Le connecteur marchait parfaitement, sur la mauvaise personne
